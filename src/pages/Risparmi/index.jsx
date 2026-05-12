@@ -26,7 +26,7 @@ function Risparmi() {
         title="Risparmi" 
         showNotification 
         actions={
-          <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditingPlan(null); setModalOpen(true) }}>
+          <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditingPlan(null); setModalOpen(true) }} hideTextMobile>
             Nuovo Obiettivo
           </Button>
         }

@@ -48,7 +48,7 @@ function Note() {
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="primary" size="sm" icon={Plus} onClick={handleNew}>
+            <Button variant="primary" size="sm" icon={Plus} onClick={handleNew} hideTextMobile>
               Nuova Nota
             </Button>
           </div>

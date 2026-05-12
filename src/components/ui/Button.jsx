@@ -47,6 +47,7 @@ const Button = forwardRef(function Button(
     icon: Icon,
     iconRight: IconRight,
     disabled,
+    hideTextMobile = false,
     ...props
   },
   ref
@@ -73,7 +74,11 @@ const Button = forwardRef(function Button(
       ) : (
         Icon && <Icon size={size === 'xs' ? 12 : size === 'sm' ? 14 : 16} className="shrink-0" />
       )}
-      {children && <span>{children}</span>}
+      {children && (
+        <span className={clsx(hideTextMobile && 'max-sm:hidden')}>
+          {children}
+        </span>
+      )}
       {IconRight && !loading && (
         <IconRight size={size === 'xs' ? 12 : size === 'sm' ? 14 : 16} className="shrink-0" />
       )}
