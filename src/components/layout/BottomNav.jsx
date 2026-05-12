@@ -79,10 +79,13 @@ function BottomNav() {
 
       {/* Bottom bar */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 safe-bottom
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-30
           bg-[var(--bg-surface)] border-t border-[var(--border-subtle)]
-          flex items-center justify-around"
-        style={{ height: 'calc(60px + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
+          flex items-center justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          height: 'calc(56px + env(safe-area-inset-bottom, 0px))',
+        }}
         aria-label="Navigazione mobile"
       >
         {MAIN_NAV.map((item) => {

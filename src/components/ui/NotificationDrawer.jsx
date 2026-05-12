@@ -8,7 +8,8 @@ import { it } from 'date-fns/locale'
 
 /**
  * NotificationDrawer — pannello laterale destra (non modal, no blur).
- * Si apre sopra il contenuto senza blurrare la pagina.
+ * Desktop: drawer laterale 320px.
+ * Mobile: pannello fullscreen sopra il contenuto con sfondo solido.
  */
 function NotificationDrawer({ isOpen, onClose }) {
   const { notifications, markAsRead, markAllAsRead, dismiss } = useNotifications()
@@ -26,12 +27,12 @@ function NotificationDrawer({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Backdrop leggero — non blur */}
+      {/* Backdrop — desktop only, subtle dim */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             key="notif-backdrop"
-            className="fixed inset-0 z-40 bg-black/20"
+            className="fixed inset-0 z-40 bg-black/20 hidden lg:block"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -45,16 +46,22 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.aside
             key="notif-drawer"
-            className="fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[90vw]
-              bg-[var(--bg-surface)] border-l border-[var(--border-subtle)]
-              shadow-[var(--shadow-lg)] flex flex-col"
+            className="fixed z-50 flex flex-col
+              bg-[var(--bg-surface)]
+              /* Mobile: fullscreen */
+              inset-0
+              /* Desktop: right panel */
+              lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-80 lg:max-w-[90vw]
+              lg:border-l lg:border-[var(--border-subtle)] lg:shadow-2xl"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border-subtle)] shrink-0">
+            <div className="flex items-center justify-between px-4 shrink-0 border-b border-[var(--border-subtle)]"
+              style={{ height: 'var(--header-height)', minHeight: 'var(--header-height)' }}
+            >
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifiche</h3>
               <div className="flex items-center gap-1">
                 <Button

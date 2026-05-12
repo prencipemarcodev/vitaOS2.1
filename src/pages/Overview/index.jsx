@@ -13,7 +13,8 @@ import FinancePreview from './FinancePreview'
 import WorkWeekPreview from './WorkWeekPreview'
 import UpcomingEvents from './UpcomingEvents'
 import HealthPreview from './HealthPreview'
-import { startOfMonth, endOfMonth, format, isToday, isFuture, parseISO } from 'date-fns'
+import { format } from 'date-fns'
+import { formatCurrency } from '@/lib/formatters'
 
 function Overview() {
   const { userConfig, selectedMonth } = useAppStore()
@@ -23,15 +24,11 @@ function Overview() {
   const { plans } = useSavingsStore()
   const { workoutSessions } = useHealthStore()
 
-  const monthDate = new Date(selectedMonth)
-  const mStart = startOfMonth(monthDate)
-  const mEnd = endOfMonth(monthDate)
-
   // ── KPI derivati ──
   const kpis = useMemo(() => {
     // Saldo
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
+    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
     const bankBase = parseFloat(userConfig?.initial_bank_balance) || 0
     const cashBase = parseFloat(userConfig?.initial_cash_balance) || 0
     const saldo = bankBase + cashBase + income - expense
@@ -58,21 +55,25 @@ function Overview() {
     <>
       <Header title="Panoramica" showMonth showNotification />
       <PageWrapper>
-        <div className="flex flex-col gap-3 h-full overflow-y-auto lg:overflow-hidden">
+        <div className="space-y-3 lg:flex lg:flex-col lg:gap-3 lg:space-y-0 lg:h-full lg:overflow-hidden">
           {/* Riga 1: KPI cards */}
           <KpiRow kpis={kpis} userConfig={userConfig} />
 
           {/* Riga 2: Azioni rapide */}
           <QuickActions />
 
-          {/* Riga 3: Grafici e preview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-0">
-            <FinancePreview transactions={transactions} />
-            <WorkWeekPreview sessions={sessions} userConfig={userConfig} />
+          {/* Riga 3: Grafici — altezza fissa su mobile, flex su desktop */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:flex-1 lg:min-h-0">
+            <div className="h-[240px] lg:h-full">
+              <FinancePreview transactions={transactions} />
+            </div>
+            <div className="h-[180px] lg:h-full">
+              <WorkWeekPreview sessions={sessions} userConfig={userConfig} />
+            </div>
           </div>
 
-          {/* Riga 4: Eventi & Salute (mobile: stack) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 shrink-0">
+          {/* Riga 4: Eventi & Salute */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:shrink-0">
             <UpcomingEvents events={kpis.upcoming} />
             <HealthPreview workouts={workoutSessions} userConfig={userConfig} />
           </div>

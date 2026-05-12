@@ -69,7 +69,7 @@ function FinancePreview({ transactions }) {
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
 
   return (
-    <Card padding="md" className="flex flex-col min-h-0">
+    <Card padding="md" className="flex flex-col h-full min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-2 shrink-0">
         <div>
@@ -111,7 +111,7 @@ function FinancePreview({ transactions }) {
       </div>
 
       {/* Chart */}
-      <div className="flex-1 min-h-[120px]">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <BarChartWidget
           data={chartData}
           bars={[

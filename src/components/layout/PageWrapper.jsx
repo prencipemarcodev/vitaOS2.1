@@ -17,7 +17,7 @@ function PageWrapper({ children, className, noPadding = false }) {
         !noPadding && 'p-3 lg:p-4',
         'lg:h-[var(--content-height)]',
         // Mobile: allow scroll + bottom nav clearance
-        'max-lg:overflow-y-auto max-lg:h-auto max-lg:pb-[calc(60px+env(safe-area-inset-bottom)+16px)]',
+        'max-lg:overflow-y-auto max-lg:h-auto max-lg:pb-[calc(56px+env(safe-area-inset-bottom,0px)+12px)]',
         className
       )}
     >

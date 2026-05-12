@@ -53,7 +53,7 @@ function WorkWeekPreview({ sessions, userConfig }) {
   }, [userConfig])
 
   return (
-    <Card padding="md" className="flex flex-col min-h-0">
+    <Card padding="md" className="flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex items-center justify-between mb-3 shrink-0">
         <div>
           <p className="text-xs font-medium text-[var(--text-primary)]">Settimana lavorativa</p>
