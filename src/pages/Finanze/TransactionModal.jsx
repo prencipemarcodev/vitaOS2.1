@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -9,6 +10,7 @@ import { format } from 'date-fns'
 
 function TransactionModal({ isOpen, onClose, txToEdit = null }) {
   const { categories, addTransaction, updateTransaction } = useFinanceStore()
+  const { pushError } = useNotifications()
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -60,12 +62,13 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
       } else {
         const { data, error } = await supabase.from('transactions').insert(payload).select().single()
         if (error) throw error
+        addNotification(data) // Wait, addTransaction not addNotification
         addTransaction(data)
         toast.success('Transazione creata')
       }
       onClose()
     } catch (err) {
-      toast.error('Errore nel salvataggio')
+      pushError('Errore nel salvataggio')
     } finally {
       setLoading(false)
     }

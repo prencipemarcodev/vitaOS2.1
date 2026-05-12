@@ -2,13 +2,16 @@ import { Edit2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useSavingsStore } from '@/store/useSavingsStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import { toast } from 'sonner'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { motion } from 'framer-motion'
+import Button from '@/components/ui/Button'
 
 function PlanCard({ plan, onEdit }) {
   const { updatePlan, removePlan, addMovement } = useSavingsStore()
+  const { pushError } = useNotifications()
   const progress = Math.min(100, (plan.current_amount / plan.target_amount) * 100)
 
   const handleAdjust = async (amount) => {
@@ -39,7 +42,7 @@ function PlanCard({ plan, onEdit }) {
       
       toast.success(amount > 0 ? `Depositati €${amount}` : `Prelevati €${Math.abs(amount)}`)
     } catch (err) {
-      toast.error('Errore nell\'aggiornamento')
+      pushError('Errore nell\'aggiornamento')
     }
   }
 

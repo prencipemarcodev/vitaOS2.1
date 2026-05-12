@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useCalendarStore } from '@/store/useCalendarStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -11,6 +12,7 @@ const CATEGORIES = ['Generale', 'Lavoro', 'Personale', 'Salute', 'Altro']
 
 function EventModal({ isOpen, onClose, initialDate }) {
   const { addEvent } = useCalendarStore()
+  const { pushError } = useNotifications()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -37,7 +39,7 @@ function EventModal({ isOpen, onClose, initialDate }) {
       onClose()
       setFormData({ title: '', date: format(new Date(), 'yyyy-MM-dd'), start_time: '09:00', all_day: false, category: 'Generale', location: '' })
     } catch (err) {
-      toast.error('Errore nella creazione')
+      pushError('Errore nella creazione')
     } finally {
       setLoading(false)
     }

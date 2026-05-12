@@ -53,8 +53,8 @@ function ModalPortal({ isOpen, onClose, children, size = 'md' }) {
           <motion.div
             key="modal-content"
             className={`relative w-full ${sizeMap[size]} max-h-[90vh] overflow-y-auto
-              bg-[var(--bg-surface)] rounded-[var(--radius-xl)]
-              shadow-2xl border border-[var(--border-default)]`}
+              bg-white rounded-[var(--radius-xl)]
+              shadow-2xl border border-[var(--border-subtle)]`}
             initial={{ scale: 0.96, opacity: 0, y: 8 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}

@@ -23,6 +23,7 @@ function Calendario() {
   }
 
   const handleAddEvent = () => {
+    setDrawerOpen(false)
     setModalOpen(true)
   }
 

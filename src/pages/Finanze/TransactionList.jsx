@@ -2,19 +2,22 @@ import { Trash2, CreditCard, Wallet, Edit2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import { toast } from 'sonner'
 import { format, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
 import Card from '@/components/ui/Card'
+import clsx from 'clsx'
 
 function TransactionList({ transactions, categories, onEdit }) {
   const { removeTransaction } = useFinanceStore()
+  const { pushError } = useNotifications()
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa transazione?')) return
     const { error } = await supabase.from('transactions').delete().eq('id', id)
     if (error) {
-      toast.error('Errore nell\'eliminazione')
+      pushError('Errore nell\'eliminazione')
     } else {
       removeTransaction(id)
       toast.success('Transazione eliminata')
@@ -85,5 +88,4 @@ function TransactionList({ transactions, categories, onEdit }) {
   )
 }
 
-import clsx from 'clsx'
 export default TransactionList

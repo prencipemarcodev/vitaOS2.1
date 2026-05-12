@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useNoteStore } from '@/store/useNoteStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -17,6 +18,7 @@ const COLORS = [
 
 function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
   const { addNote, updateNote } = useNoteStore()
+  const { pushError } = useNotifications()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -60,7 +62,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
       }
       onClose()
     } catch (err) {
-      toast.error('Errore nel salvataggio')
+      pushError('Errore nel salvataggio')
     } finally {
       setLoading(false)
     }
@@ -77,7 +79,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
         />
         <textarea
           placeholder="Inizia a scrivere..."
-          className="w-full h-40 resize-none bg-transparent border-0 focus:ring-0 text-sm leading-relaxed p-0 scrollbar-hide"
+          className="w-full h-40 resize-none bg-transparent border-0 focus:ring-0 text-base lg:text-sm leading-relaxed p-0 scrollbar-hide"
           value={formData.content}
           onChange={e => setFormData({ ...formData, content: e.target.value })}
           required

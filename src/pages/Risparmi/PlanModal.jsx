@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useSavingsStore } from '@/store/useSavingsStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -10,6 +11,7 @@ const ICONS = ['🎯', '🏠', '🚗', '💻', '🌴', '💍', '🍼', '💰', '
 
 function PlanModal({ isOpen, onClose, planToEdit = null }) {
   const { addPlan, updatePlan } = useSavingsStore()
+  const { pushError } = useNotifications()
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -72,14 +74,14 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
       }
       onClose()
     } catch (err) {
-      toast.error('Errore nel salvataggio')
+      pushError('Errore nel salvataggio')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={planToEdit ? 'Modifica Piano' : 'Nuovo Piano Risparmio'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={planToEdit ? 'Modifica Piano' : 'Nuova Piano Risparmio'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center gap-1">

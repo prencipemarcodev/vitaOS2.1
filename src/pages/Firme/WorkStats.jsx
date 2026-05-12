@@ -19,19 +19,19 @@ function WorkStats({ sessions, userConfig }) {
       label: 'Totale Ore',
       value: formatDuration(totalMinutes),
       icon: Clock,
-      color: 'var(--color-primary)',
+      color: 'var(--text-primary)',
     },
     {
       label: 'Target Mensile',
       value: formatDuration(monthlyTargetMinutes),
       icon: TrendingUp,
-      color: 'var(--text-muted)',
+      color: 'var(--text-primary)',
     },
     {
       label: 'Progresso',
       value: `${progress.toFixed(0)}%`,
       icon: progress >= 100 ? CheckCircle2 : AlertCircle,
-      color: progress >= 100 ? '#3d9970' : '#4a90d9',
+      color: 'var(--text-primary)',
     },
   ]
 

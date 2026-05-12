@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useFirmeStore } from '@/store/useFirmeStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import { supabase } from '@/lib/supabase'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -9,6 +10,7 @@ import { format, parseISO } from 'date-fns'
 
 function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
   const { addSession, updateSession } = useFirmeStore()
+  const { pushError } = useNotifications()
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -45,7 +47,7 @@ function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
     const duration = (h2 * 60 + m2) - (h1 * 60 + m1)
 
     if (duration <= 0) {
-      toast.error('L\'uscita deve essere successiva all\'entrata')
+      pushError('L\'uscita deve essere successiva all\'entrata')
       setLoading(false)
       return
     }
@@ -82,7 +84,7 @@ function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
       }
       onClose()
     } catch (err) {
-      toast.error('Errore nel salvataggio')
+      pushError('Errore nel salvataggio')
       console.error(err)
     } finally {
       setLoading(false)
