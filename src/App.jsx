@@ -6,9 +6,10 @@ import { useSupabaseSync } from '@/hooks/useSupabaseSync'
 import Sidebar from '@/components/layout/Sidebar'
 import BottomNav from '@/components/layout/BottomNav'
 import AppRouter from '@/router'
+import Onboarding from '@/pages/Onboarding'
 
 function AppInner() {
-  const { theme } = useAppStore()
+  const { theme, onboardingCompleted, userConfig } = useAppStore()
 
   // Sync theme on mount
   useEffect(() => {
@@ -18,7 +19,27 @@ function AppInner() {
   // Load all data from Supabase into Zustand stores
   useSupabaseSync()
 
-  // TODO: se !onboardingCompleted → mostrare Onboarding wizard (Fase 5)
+  // Se il config non è ancora caricato, mostra uno spinner
+  if (!userConfig) {
+    return (
+      <div className="flex h-full items-center justify-center bg-[var(--bg-base)]">
+        <div className="flex flex-col items-center gap-3">
+          <span
+            className="text-2xl font-semibold text-[var(--text-primary)]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
+          </span>
+          <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  // Se onboarding non completato → mostra wizard fullscreen
+  if (!onboardingCompleted) {
+    return <Onboarding />
+  }
 
   return (
     <div className="flex h-full overflow-hidden bg-[var(--bg-base)]">
