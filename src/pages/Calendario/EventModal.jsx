@@ -91,7 +91,7 @@ function EventModal({ isOpen, onClose, initialDate }) {
                 onClick={() => setFormData({ ...formData, category: c })}
                 className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-colors ${
                   formData.category === c 
-                    ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-md' 
+                    ? 'bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--bg-surface)] shadow-md' 
                     : 'bg-white border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
                 }`}
               >

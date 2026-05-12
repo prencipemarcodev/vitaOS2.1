@@ -86,7 +86,7 @@ function FinancePreview({ transactions }) {
               className={clsx(
                 'px-2.5 py-1 text-[10px] font-medium rounded-full transition-all',
                 view === v
-                  ? 'bg-[var(--color-primary)] text-white'
+                  ? 'bg-[var(--text-primary)] text-[var(--bg-surface)] shadow-sm'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               )}
             >

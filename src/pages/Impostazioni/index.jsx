@@ -42,9 +42,11 @@ function Impostazioni() {
     <>
       <Header title="Impostazioni" showNotification={false} />
       <PageWrapper noPadding>
-        <div className="flex flex-1 overflow-hidden">
-          {/* ── Sidebar sezioni (desktop) ── */}
-          <nav className="hidden md:flex flex-col w-52 shrink-0 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-y-auto py-2">
+        {/* Container principale: colonna su mobile, riga su desktop */}
+        <div className="flex flex-col md:flex-row h-full overflow-hidden">
+          
+          {/* ── Sidebar (Desktop) ── */}
+          <nav className="hidden md:flex flex-col w-64 shrink-0 border-r border-[var(--border-subtle)] bg-white overflow-y-auto py-4">
             {SECTIONS.map((s) => {
               const isActive = s.id === activeSection
               return (
@@ -52,23 +54,22 @@ function Impostazioni() {
                   key={s.id}
                   onClick={() => setActiveSection(s.id)}
                   className={clsx(
-                    'flex items-center gap-2.5 mx-2 px-3 py-2 rounded-[var(--radius-md)]',
-                    'text-sm transition-all duration-[var(--transition-fast)] text-left',
+                    'flex items-center gap-3 mx-4 px-4 py-2.5 rounded-xl transition-all duration-200 text-left',
                     isActive
-                      ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)] font-medium'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]',
-                    s.id === 'reset' && !isActive && 'text-[var(--color-danger)] hover:text-[var(--color-danger)]'
+                      ? 'bg-[var(--text-primary)] text-white font-bold shadow-lg scale-[1.02]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-base)] hover:text-[var(--text-primary)]',
+                    s.id === 'reset' && !isActive && 'text-[var(--color-danger)]'
                   )}
                 >
-                  <s.icon size={16} />
-                  <span>{s.label}</span>
+                  <s.icon size={18} />
+                  <span className="text-sm">{s.label}</span>
                 </button>
               )
             })}
           </nav>
 
-          {/* ── Sezione mobile (tabs scroll orizzontale) ── */}
-          <div className="md:hidden flex items-center gap-1 px-3 py-2 border-b border-[var(--border-subtle)] overflow-x-auto shrink-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {/* ── Tabs (Mobile) ── */}
+          <div className="md:hidden flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)] bg-white overflow-x-auto shrink-0 scrollbar-hide">
             {SECTIONS.map((s) => {
               const isActive = s.id === activeSection
               return (
@@ -76,35 +77,42 @@ function Impostazioni() {
                   key={s.id}
                   onClick={() => setActiveSection(s.id)}
                   className={clsx(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium shrink-0',
-                    'transition-colors',
+                    'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all',
                     isActive
-                      ? 'bg-[var(--color-primary)] text-white'
+                      ? 'bg-[var(--text-primary)] text-[var(--bg-surface)] shadow-md'
                       : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
                   )}
                 >
-                  <s.icon size={12} />
+                  <s.icon size={14} />
                   {s.label}
                 </button>
               )
             })}
           </div>
 
-          {/* ── Contenuto sezione ── */}
-          <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-2xl"
-              >
-                <ActiveComponent />
-              </motion.div>
-            </AnimatePresence>
-          </div>
+          {/* ── Contenuto Sezione ── */}
+          <main className="flex-1 overflow-y-auto bg-[var(--bg-base)] p-5 lg:p-10">
+            <div className="max-w-3xl mx-auto">
+              <header className="mb-8">
+                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-1">
+                  {SECTIONS.find(s => s.id === activeSection)?.label}
+                </h2>
+                <p className="text-sm text-[var(--text-muted)]">Gestisci le tue preferenze e configurazioni.</p>
+              </header>
+              
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeSection}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ActiveComponent />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
         </div>
       </PageWrapper>
     </>
