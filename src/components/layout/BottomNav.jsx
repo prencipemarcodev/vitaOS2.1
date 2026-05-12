@@ -15,10 +15,10 @@ const MAIN_NAV = [
 ]
 
 const MORE_NAV = [
-  { to: '/risparmi',     icon: PiggyBank, label: 'Risparmi' },
-  { to: '/salute',       icon: Heart,     label: 'Salute' },
-  { to: '/note',         icon: StickyNote,label: 'Note' },
-  { to: '/impostazioni', icon: Settings,  label: 'Impostazioni' },
+  { to: '/risparmi',     icon: PiggyBank, label: 'Risparmi', color: '#3d9970' },
+  { to: '/salute',       icon: Heart,     label: 'Salute',   color: '#e05252' },
+  { to: '/note',         icon: StickyNote,label: 'Note',     color: '#4a90d9' },
+  { to: '/impostazioni', icon: Settings,  label: 'Impostazioni', color: '#9b59b6' },
 ]
 
 function BottomNav() {
@@ -31,44 +31,46 @@ function BottomNav() {
       <AnimatePresence>
         {moreOpen && (
           <>
+            {/* Backdrop with sync transition */}
             <motion.div
               key="more-backdrop"
-              className="fixed inset-0 z-40 bg-black/30"
+              className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
               key="more-drawer"
-              className="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-50
-                bg-white rounded-t-[var(--radius-xl)]
-                border-t border-[var(--border-subtle)] shadow-[var(--shadow-lg)] p-4"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              drag="y"
-              dragConstraints={{ top: 0 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 60) setMoreOpen(false) }}
+              className="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-4 right-4 z-[100]
+                bg-white rounded-[24px] border border-[var(--border-subtle)]
+                shadow-2xl overflow-hidden mb-2"
+              initial={{ y: '120%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '120%', opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
             >
-              <div className="w-8 h-1 bg-[var(--border-default)] rounded-full mx-auto mb-4" />
-              <div className="grid grid-cols-4 gap-3">
+              <div className="p-5 grid grid-cols-2 gap-3">
                 {MORE_NAV.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     onClick={() => setMoreOpen(false)}
                     className={clsx(
-                      'flex flex-col items-center gap-1 py-2 px-1 rounded-[var(--radius-md)]',
-                      'transition-colors',
+                      'flex items-center gap-3 p-3 rounded-[16px] transition-all',
                       location.pathname.startsWith(item.to)
-                        ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
-                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
+                        ? 'bg-[var(--bg-elevated)] border border-[var(--border-default)]'
+                        : 'bg-[var(--bg-base)] border border-transparent hover:bg-[var(--bg-elevated)]'
                     )}
                   >
-                    <item.icon size={22} />
-                    <span className="text-[10px] font-medium">{item.label}</span>
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                      style={{ backgroundColor: `${item.color}15`, color: item.color }}
+                    >
+                      <item.icon size={20} />
+                    </div>
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">{item.label}</span>
                   </NavLink>
                 ))}
               </div>
@@ -79,12 +81,12 @@ function BottomNav() {
 
       {/* Bottom bar */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[100]
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[110]
           bg-white border-t border-[var(--border-subtle)]
-          flex items-center justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
+          flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          height: 'calc(56px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2px)',
+          height: 'calc(62px + env(safe-area-inset-bottom, 0px))',
         }}
         aria-label="Navigazione mobile"
       >
@@ -95,23 +97,22 @@ function BottomNav() {
             <NavLink
               key={item.to}
               to={item.to}
-              className="flex flex-col items-center gap-0.5 px-3 py-1"
+              className="flex flex-col items-center gap-1 px-3 py-2"
             >
               <motion.div
-                animate={{ scale: isActive ? 1 : 1 }}
                 whileTap={{ scale: 0.9 }}
                 className={clsx(
-                  'flex flex-col items-center gap-0.5',
+                  'flex flex-col items-center gap-1',
                   isActive ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
                 )}
               >
-                <motion.div
-                  animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <div className={clsx(
+                  'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                  isActive ? 'bg-[var(--color-primary-ghost)]' : 'bg-transparent'
+                )}>
                   <item.icon size={20} />
-                </motion.div>
-                <span className="text-[10px] font-medium">{item.label}</span>
+                </div>
+                <span className="text-[9px] font-bold tracking-tight">{item.label}</span>
               </motion.div>
             </NavLink>
           )
@@ -121,12 +122,17 @@ function BottomNav() {
         <button
           onClick={() => setMoreOpen(!moreOpen)}
           className={clsx(
-            'flex flex-col items-center gap-0.5 px-3 py-1',
+            'flex flex-col items-center gap-1 px-3 py-2 transition-colors',
             moreOpen ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
           )}
         >
-          {moreOpen ? <X size={22} /> : <MoreHorizontal size={22} />}
-          <span className="text-[10px] font-medium">Altro</span>
+          <div className={clsx(
+            'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+            moreOpen ? 'bg-[var(--color-primary-ghost)]' : 'bg-transparent'
+          )}>
+            {moreOpen ? <X size={20} /> : <MoreHorizontal size={20} />}
+          </div>
+          <span className="text-[9px] font-bold tracking-tight">Altro</span>
         </button>
       </nav>
     </>
