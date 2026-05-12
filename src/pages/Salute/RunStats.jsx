@@ -12,6 +12,7 @@ function RunStats({ sessions }) {
       .map(s => ({
         date: format(new Date(s.date), 'dd/MM'),
         distance: s.distance_km || 0,
+        fullDate: format(new Date(s.date), 'dd MMMM yyyy')
       }))
   }, [sessions])
 
@@ -24,7 +25,19 @@ function RunStats({ sessions }) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-            <Tooltip />
+            <Tooltip 
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1 tracking-widest">{payload[0].payload.fullDate}</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)]">{payload[0].value} km</p>
+                    </div>
+                  )
+                }
+                return null
+              }}
+            />
             <Area type="monotone" dataKey="distance" stroke="#4a90d9" fill="#4a90d910" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>

@@ -27,39 +27,49 @@ function FinancePreview({ transactions }) {
         const expense = transactions
           .filter(t => t.date === key && t.type === 'expense')
           .reduce((s, t) => s + parseFloat(t.amount), 0)
-        return { date: format(d, 'EEE', { locale: it }), income, expense }
+        return { 
+          date: format(d, 'EEE', { locale: it }), 
+          income, 
+          expense,
+          fullDate: format(d, 'EEEE dd MMMM', { locale: it })
+        }
       })
     } else if (view === 'Mese') {
-      // Raggruppa per settimana
       const start = startOfMonth(monthDate)
       const end = endOfMonth(monthDate)
       const days = eachDayOfInterval({ start, end })
       const weeks = {}
       days.forEach((d) => {
-        const w = `S${getWeek(d, { weekStartsOn: 1 })}`
-        if (!weeks[w]) weeks[w] = { date: w, income: 0, expense: 0 }
+        const wNum = getWeek(d, { weekStartsOn: 1 })
+        const wKey = `S${wNum}`
+        if (!weeks[wKey]) weeks[wKey] = { date: wKey, income: 0, expense: 0, fullDate: `Settimana ${wNum}` }
         const key = format(d, 'yyyy-MM-dd')
         transactions.forEach((t) => {
           if (t.date === key) {
-            if (t.type === 'income') weeks[w].income += parseFloat(t.amount)
-            else if (t.type === 'expense') weeks[w].expense += parseFloat(t.amount)
+            if (t.type === 'income') weeks[wKey].income += parseFloat(t.amount)
+            else if (t.type === 'expense') weeks[wKey].expense += parseFloat(t.amount)
           }
         })
       })
       return Object.values(weeks)
     } else {
-      // Anno — per mese
       const months = []
       for (let m = 0; m < 12; m++) {
-        const key = format(new Date(monthDate.getFullYear(), m, 1), 'MMM', { locale: it })
-        const prefix = format(new Date(monthDate.getFullYear(), m, 1), 'yyyy-MM')
+        const d = new Date(monthDate.getFullYear(), m, 1)
+        const key = format(d, 'MMM', { locale: it })
+        const prefix = format(d, 'yyyy-MM')
         const income = transactions
           .filter(t => t.date.startsWith(prefix) && t.type === 'income')
           .reduce((s, t) => s + parseFloat(t.amount), 0)
         const expense = transactions
           .filter(t => t.date.startsWith(prefix) && t.type === 'expense')
           .reduce((s, t) => s + parseFloat(t.amount), 0)
-        months.push({ date: key, income, expense })
+        months.push({ 
+          date: key, 
+          income, 
+          expense,
+          fullDate: format(d, 'MMMM yyyy', { locale: it })
+        })
       }
       return months
     }
@@ -70,7 +80,6 @@ function FinancePreview({ transactions }) {
 
   return (
     <Card padding="md" className="flex flex-col h-full min-h-0 overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between mb-2 shrink-0">
         <div>
           <p className="text-xs font-medium text-[var(--text-primary)]">Flusso finanziario</p>
@@ -96,7 +105,6 @@ function FinancePreview({ transactions }) {
         </div>
       </div>
 
-      {/* KPI bar */}
       <div className="flex gap-3 mb-2 shrink-0">
         <div className="flex items-center gap-1.5 text-[10px]">
           <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
@@ -110,7 +118,6 @@ function FinancePreview({ transactions }) {
         </div>
       </div>
 
-      {/* Chart */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <BarChartWidget
           data={chartData}
@@ -119,6 +126,28 @@ function FinancePreview({ transactions }) {
             { key: 'expense', color: '#e05252', label: 'Uscite' },
           ]}
           formatY={(v) => `€${v}`}
+          customTooltip={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                  <p className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-widest">
+                    {payload[0].payload.fullDate}
+                  </p>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-[10px] font-bold text-[var(--color-success)] uppercase">Entrate</span>
+                      <span className="text-sm font-bold text-[var(--text-primary)]">€{payload[0].value.toLocaleString('it-IT')}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-[10px] font-bold text-[var(--color-danger)] uppercase">Uscite</span>
+                      <span className="text-sm font-bold text-[var(--text-primary)]">€{payload[1].value.toLocaleString('it-IT')}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            return null
+          }}
         />
       </div>
     </Card>

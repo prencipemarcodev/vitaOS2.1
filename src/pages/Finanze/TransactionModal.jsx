@@ -77,18 +77,26 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={txToEdit ? 'Modifica Transazione' : 'Nuova Transazione'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex bg-[var(--bg-base)] p-1 rounded-xl">
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'expense' })}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${formData.type === 'expense' ? 'bg-white shadow-sm text-[var(--color-danger)]' : 'text-[var(--text-muted)]'}`}
+            className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-all ${
+              formData.type === 'expense' 
+                ? 'bg-white border-[var(--text-primary)] shadow-sm text-[var(--color-danger)]' 
+                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+            }`}
           >
             Uscita
           </button>
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'income' })}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${formData.type === 'income' ? 'bg-white shadow-sm text-[var(--color-primary)]' : 'text-[var(--text-muted)]'}`}
+            className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-all ${
+              formData.type === 'income' 
+                ? 'bg-white border-[var(--text-primary)] shadow-sm text-[var(--color-primary)]' 
+                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+            }`}
           >
             Entrata
           </button>
@@ -116,7 +124,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-[var(--text-secondary)]">Categoria</label>
           <select 
-            className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+            className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
             value={formData.category_id}
             onChange={e => setFormData({ ...formData, category_id: e.target.value })}
             required
@@ -136,9 +144,9 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
                 key={m}
                 type="button"
                 onClick={() => setFormData({ ...formData, method: m })}
-                className={`flex-1 py-2 text-xs font-bold border rounded-xl transition-colors ${
+                className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-colors ${
                   formData.method === m 
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)]' 
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm' 
                     : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
                 }`}
               >

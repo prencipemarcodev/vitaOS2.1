@@ -7,7 +7,6 @@ import {
   Tooltip,
   ReferenceLine,
   ResponsiveContainer,
-  Cell,
 } from 'recharts'
 
 export function BarChartWidget({
@@ -19,6 +18,7 @@ export function BarChartWidget({
   formatX,
   formatY,
   formatTooltip,
+  customTooltip,
 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -38,6 +38,7 @@ export function BarChartWidget({
           tickFormatter={formatY}
         />
         <Tooltip
+          content={customTooltip}
           contentStyle={{
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-default)',

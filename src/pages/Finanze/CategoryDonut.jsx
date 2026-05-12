@@ -44,9 +44,9 @@ function CategoryDonut({ transactions, categories }) {
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-white border border-[var(--border-subtle)] p-2 shadow-xl rounded-lg">
-                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1">{payload[0].name}</p>
-                        <p className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(payload[0].value)}</p>
+                      <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1 tracking-widest">{payload[0].name}</p>
+                        <p className="text-lg font-bold text-[var(--text-primary)]">{formatCurrency(payload[0].value)}</p>
                       </div>
                     )
                   }

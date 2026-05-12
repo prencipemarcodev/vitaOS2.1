@@ -59,11 +59,11 @@ function WorkChart({ sessions, userConfig }) {
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-white border border-[var(--border-subtle)] p-2 shadow-xl rounded-lg">
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase">
+                    <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-widest">
                         {payload[0].payload.fullDate}
                       </p>
-                      <p className="text-sm font-bold text-[var(--text-primary)]">
+                      <p className="text-lg font-bold text-[var(--text-primary)]">
                         {payload[0].value} ore
                       </p>
                     </div>

@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import Card from '@/components/ui/Card'
 import { startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, isBefore, addDays } from 'date-fns'
+import { it } from 'date-fns/locale'
 
 function BalanceChart({ transactions, userConfig }) {
   const chartData = useMemo(() => {
@@ -16,14 +17,10 @@ function BalanceChart({ transactions, userConfig }) {
     const cashBase = parseFloat(userConfig?.initial_cash_balance || 0)
     let currentTotal = bankBase + cashBase
 
-    // Filter transactions before current month to get starting balance
-    // (Simplified: assuming initial balance is at start of month)
-
     return days.map(day => {
       const dayTxs = transactions.filter(t => isSameDay(new Date(t.date), day))
       const net = dayTxs.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
       
-      // Solo per i giorni passati o oggi calcoliamo il saldo cumulativo
       if (isBefore(day, addDays(today, 1))) {
         currentTotal += net
       }
@@ -31,7 +28,8 @@ function BalanceChart({ transactions, userConfig }) {
       return {
         date: format(day, 'dd/MM'),
         balance: currentTotal,
-        isFuture: isBefore(addDays(today, 0), day)
+        isFuture: isBefore(addDays(today, 0), day),
+        fullDate: format(day, 'EEEE dd MMMM', { locale: it })
       }
     }).filter(d => !d.isFuture)
   }, [transactions, userConfig])
@@ -66,8 +64,11 @@ function BalanceChart({ transactions, userConfig }) {
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-white border border-[var(--border-subtle)] p-2 shadow-xl rounded-lg">
-                      <p className="text-sm font-bold text-[var(--text-primary)]">
+                    <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-widest">
+                        {payload[0].payload.fullDate}
+                      </p>
+                      <p className="text-lg font-bold text-[var(--text-primary)]">
                         €{payload[0].value.toLocaleString('it-IT')}
                       </p>
                     </div>
