@@ -15,10 +15,10 @@ const MAIN_NAV = [
 ]
 
 const MORE_NAV = [
-  { to: '/risparmi',     icon: PiggyBank, label: 'Risparmi', color: '#3d9970' },
-  { to: '/salute',       icon: Heart,     label: 'Salute',   color: '#e05252' },
-  { to: '/note',         icon: StickyNote,label: 'Note',     color: '#4a90d9' },
-  { to: '/impostazioni', icon: Settings,  label: 'Impostazioni', color: '#9b59b6' },
+  { to: '/risparmi',     icon: PiggyBank, label: 'Risparmi' },
+  { to: '/salute',       icon: Heart,     label: 'Salute' },
+  { to: '/note',         icon: StickyNote,label: 'Note' },
+  { to: '/impostazioni', icon: Settings,  label: 'Impostazioni' },
 ]
 
 function BottomNav() {
@@ -31,46 +31,38 @@ function BottomNav() {
       <AnimatePresence>
         {moreOpen && (
           <>
-            {/* Backdrop with sync transition */}
             <motion.div
               key="more-backdrop"
-              className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px]"
+              className="fixed inset-0 z-[90] bg-black/30"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
               key="more-drawer"
-              className="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-4 right-4 z-[100]
-                bg-white rounded-[24px] border border-[var(--border-subtle)]
-                shadow-2xl overflow-hidden mb-2"
-              initial={{ y: '120%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '120%', opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="fixed bottom-[calc(62px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-[100]
+                bg-white border-t border-[var(--border-subtle)] shadow-[var(--shadow-lg)]"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <div className="p-5 grid grid-cols-2 gap-3">
+              <div className="p-4 grid grid-cols-4 gap-2">
                 {MORE_NAV.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     onClick={() => setMoreOpen(false)}
                     className={clsx(
-                      'flex items-center gap-3 p-3 rounded-[16px] transition-all',
+                      'flex flex-col items-center gap-1.5 py-3 px-1 transition-colors',
                       location.pathname.startsWith(item.to)
-                        ? 'bg-[var(--bg-elevated)] border border-[var(--border-default)]'
-                        : 'bg-[var(--bg-base)] border border-transparent hover:bg-[var(--bg-elevated)]'
+                        ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
                     )}
                   >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                      style={{ backgroundColor: `${item.color}15`, color: item.color }}
-                    >
-                      <item.icon size={20} />
-                    </div>
-                    <span className="text-xs font-semibold text-[var(--text-primary)]">{item.label}</span>
+                    <item.icon size={22} />
+                    <span className="text-[10px] font-medium">{item.label}</span>
                   </NavLink>
                 ))}
               </div>
