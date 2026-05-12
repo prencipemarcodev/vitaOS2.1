@@ -46,8 +46,8 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.aside
             key="notif-drawer"
-            className="fixed z-50 flex flex-col
-              bg-[var(--bg-surface)]
+            className="fixed z-[110] flex flex-col
+              bg-white
               /* Mobile: fullscreen */
               inset-0
               /* Desktop: right panel */

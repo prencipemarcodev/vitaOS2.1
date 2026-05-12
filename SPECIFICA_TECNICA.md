@@ -144,15 +144,20 @@ Conseguenze pratiche:
 ```
 VARIANTE A — con selettore mese (dati mensili):
 ┌──────────────────────────────────────────────────────────────┐
-│  [Titolo]               [◀ Mese Anno ▶]           [Azioni]  │  ← h-58px
+│  [Titolo]   [Mese Anno ◀ ▶]                       [Azioni]  │  ← h-48px
 └──────────────────────────────────────────────────────────────┘
 Pannelli: Calendario · Firme · Finanze · Salute
 
 VARIANTE B — senza selettore mese (dati overall / evergreen):
 ┌──────────────────────────────────────────────────────────────┐
-│  [Titolo + eventuale notifica 🔴]                  [Azioni]  │  ← h-58px
+│  [Titolo + eventuale notifica 🔴]                  [Azioni]  │  ← h-48px
 └──────────────────────────────────────────────────────────────┘
 Pannelli: Overview · Risparmi · Note · Impostazioni
+
+### 2.5 Trasparenza e Overlay
+- **Fixed Elements:** Header, BottomNav e Drawer (Notifiche/Altro) DEVONO avere uno sfondo solido bianco (`bg-white`) e non semitrasparente.
+- **Layering:** Gli elementi fissi devono coprire il contenuto sottostante durante lo scroll per garantire leggibilità massima.
+- **Z-Index:** BottomNav (z-100), NotificationDrawer (z-110).
 ```
 
 **Struttura contenuto (comune):**

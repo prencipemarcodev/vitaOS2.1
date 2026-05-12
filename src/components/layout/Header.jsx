@@ -5,9 +5,7 @@ import MonthSelector from './MonthSelector'
 import clsx from 'clsx'
 
 /**
- * Header — due varianti:
- * - Variante A (showMonth=true): [Titolo] [MonthSelector] [Azioni]
- * - Variante B (showMonth=false): [Titolo + notifica] [Azioni]
+ * Header — layout riorganizzato: [Titolo] [Mese Anno ◀ ▶] [Azioni]
  */
 function Header({ title, showMonth = false, showNotification = false, actions, className }) {
   const [notifOpen, setNotifOpen] = useState(false)
@@ -16,39 +14,38 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
     <>
       <header
         className={clsx(
-          'flex items-center justify-between px-4 lg:px-5 shrink-0 relative',
-          'bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]',
-          'z-20',
+          'flex items-center justify-between px-4 lg:px-5 shrink-0 z-20',
+          'bg-white border-b border-[var(--border-subtle)] shadow-sm',
           className
         )}
         style={{ height: 'var(--header-height)', minHeight: 'var(--header-height)' }}
       >
         {/* Left: Title */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           <h1
-            className="text-sm font-medium text-[var(--text-primary)] leading-none"
+            className="text-sm font-bold text-[var(--text-primary)] leading-none"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {title}
           </h1>
+
+          {/* Month selector (inline) */}
+          {showMonth && (
+            <div className="hidden sm:block">
+              <MonthSelector />
+            </div>
+          )}
         </div>
 
-        {/* Center: Month selector */}
+        {/* Center: Mobile Month selector */}
         {showMonth && (
-          <>
-            {/* Desktop: absolute center */}
-            <div className="hidden lg:block absolute left-1/2 -translate-x-1/2">
-              <MonthSelector />
-            </div>
-            {/* Mobile: inline flex */}
-            <div className="lg:hidden flex-1 flex justify-center">
-              <MonthSelector />
-            </div>
-          </>
+          <div className="sm:hidden flex-1 flex justify-center px-2 overflow-hidden">
+            <MonthSelector />
+          </div>
         )}
 
         {/* Right: Actions + Notification */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {actions}
           {showNotification && (
             <NotificationBell onClick={() => setNotifOpen(true)} />
