@@ -24,7 +24,7 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
         style={{ height: 'var(--header-height)', minHeight: 'var(--header-height)' }}
       >
         {/* Left: Title */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <h1
             className="text-sm font-medium text-[var(--text-primary)] leading-none"
             style={{ fontFamily: 'var(--font-display)' }}
@@ -33,15 +33,22 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
           </h1>
         </div>
 
-        {/* Center: Month selector (variante A) */}
+        {/* Center: Month selector */}
         {showMonth && (
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <MonthSelector />
-          </div>
+          <>
+            {/* Desktop: absolute center */}
+            <div className="hidden lg:block absolute left-1/2 -translate-x-1/2">
+              <MonthSelector />
+            </div>
+            {/* Mobile: inline flex */}
+            <div className="lg:hidden flex-1 flex justify-center">
+              <MonthSelector />
+            </div>
+          </>
         )}
 
         {/* Right: Actions + Notification */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {actions}
           {showNotification && (
             <NotificationBell onClick={() => setNotifOpen(true)} />

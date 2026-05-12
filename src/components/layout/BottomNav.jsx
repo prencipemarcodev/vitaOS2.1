@@ -9,7 +9,7 @@ import clsx from 'clsx'
 
 const MAIN_NAV = [
   { to: '/',           icon: LayoutDashboard, label: 'Home' },
-  { to: '/calendario', icon: Calendar,        label: 'Calendario' },
+  { to: '/calendario', icon: Calendar,        label: 'Agenda' },
   { to: '/firme',      icon: FileSignature,   label: 'Firme' },
   { to: '/finanze',    icon: Wallet,          label: 'Finanze' },
 ]
@@ -106,7 +106,7 @@ function BottomNav() {
                   animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <item.icon size={22} />
+                  <item.icon size={20} />
                 </motion.div>
                 <span className="text-[10px] font-medium">{item.label}</span>
               </motion.div>

@@ -115,8 +115,8 @@ function FinancePreview({ transactions }) {
         <BarChartWidget
           data={chartData}
           bars={[
-            { key: 'income',  color: 'var(--color-success)', label: 'Entrate' },
-            { key: 'expense', color: 'var(--color-danger)',  label: 'Uscite' },
+            { key: 'income',  color: '#3d9970', label: 'Entrate' },
+            { key: 'expense', color: '#e05252', label: 'Uscite' },
           ]}
           formatY={(v) => `€${v}`}
         />

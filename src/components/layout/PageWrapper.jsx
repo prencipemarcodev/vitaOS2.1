@@ -14,10 +14,10 @@ function PageWrapper({ children, className, noPadding = false }) {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className={clsx(
         'flex-1 overflow-hidden flex flex-col',
-        !noPadding && 'p-4 lg:p-4',
+        !noPadding && 'p-3 lg:p-4',
         'lg:h-[var(--content-height)]',
-        // Mobile: allow scroll
-        'max-lg:overflow-y-auto max-lg:h-auto',
+        // Mobile: allow scroll + bottom nav clearance
+        'max-lg:overflow-y-auto max-lg:h-auto max-lg:pb-[calc(60px+env(safe-area-inset-bottom)+16px)]',
         className
       )}
     >
