@@ -48,10 +48,10 @@
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.06);
 
   /* ── Raggi ── */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
   /* ── Transizioni ── */
@@ -65,19 +65,19 @@
   --font-body: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --text-xs:   0.75rem;
-  --text-sm:   0.875rem;
-  --text-base: 1rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.25rem;
-  --text-2xl:  1.5rem;
-  --text-3xl:  1.875rem;
-  --text-4xl:  2.25rem;
+  --text-xs:   0.6875rem;
+  --text-sm:   0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg:   1rem;
+  --text-xl:   1.125rem;
+  --text-2xl:  1.3125rem;
+  --text-3xl:  1.625rem;
+  --text-4xl:  2rem;
 
   /* ── Layout ── */
-  --sidebar-collapsed: 64px;
-  --sidebar-expanded: 240px;
-  --header-height: 58px;
+  --sidebar-collapsed: 60px;
+  --sidebar-expanded: 220px;
+  --header-height: 48px;
   --bottom-nav-height: 60px;
   --page-padding: 16px;
   --content-height: calc(100vh - var(--header-height) - var(--page-padding) * 2);

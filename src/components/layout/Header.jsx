@@ -16,17 +16,17 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
     <>
       <header
         className={clsx(
-          'flex items-center justify-between px-4 lg:px-6 shrink-0',
+          'flex items-center justify-between px-4 lg:px-5 shrink-0 relative',
           'bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]',
           'z-20',
           className
         )}
-        style={{ height: 'var(--header-height)' }}
+        style={{ height: 'var(--header-height)', minHeight: 'var(--header-height)' }}
       >
         {/* Left: Title */}
         <div className="flex items-center gap-2">
           <h1
-            className="text-lg font-medium text-[var(--text-primary)] leading-none"
+            className="text-sm font-medium text-[var(--text-primary)] leading-none"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {title}

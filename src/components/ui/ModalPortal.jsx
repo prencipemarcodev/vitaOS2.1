@@ -54,7 +54,7 @@ function ModalPortal({ isOpen, onClose, children, size = 'md' }) {
             key="modal-content"
             className={`relative w-full ${sizeMap[size]} max-h-[90vh] overflow-y-auto
               bg-[var(--bg-surface)] rounded-[var(--radius-xl)]
-              shadow-[var(--shadow-lg)] border border-[var(--border-subtle)]`}
+              shadow-2xl border border-[var(--border-default)]`}
             initial={{ scale: 0.96, opacity: 0, y: 8 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}

@@ -24,7 +24,7 @@ function Sidebar() {
 
   return (
     <motion.nav
-      animate={{ width: expanded ? 240 : 64 }}
+      animate={{ width: expanded ? 220 : 60 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="hidden lg:flex flex-col h-full bg-[var(--bg-surface)]
         border-r border-[var(--border-subtle)] shrink-0 overflow-hidden z-10"
@@ -39,7 +39,7 @@ function Sidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xl font-semibold text-[var(--text-primary)] whitespace-nowrap"
+              className="text-base font-semibold text-[var(--text-primary)] whitespace-nowrap"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
@@ -50,7 +50,7 @@ function Sidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-lg font-bold"
+              className="text-sm font-bold"
               style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-display)' }}
             >
               v
@@ -69,7 +69,7 @@ function Sidebar() {
               <NavLink
                 to={item.to}
                 className={clsx(
-                  'flex items-center gap-3 mx-2 px-3 py-2.5 rounded-[var(--radius-md)]',
+                  'flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-[var(--radius-md)]',
                   'transition-all duration-[var(--transition-fast)] relative group',
                   isActive
                     ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]'
@@ -84,7 +84,7 @@ function Sidebar() {
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
-                <item.icon size={18} className="shrink-0" />
+                <item.icon size={16} className="shrink-0" />
                 <AnimatePresence>
                   {expanded && (
                     <motion.span
@@ -93,7 +93,7 @@ function Sidebar() {
                       animate={{ opacity: 1, width: 'auto' }}
                       exit={{ opacity: 0, width: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      className="text-[13px] font-medium whitespace-nowrap overflow-hidden"
                     >
                       {item.label}
                     </motion.span>

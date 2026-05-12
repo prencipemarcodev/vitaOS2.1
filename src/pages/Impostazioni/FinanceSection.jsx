@@ -85,7 +85,7 @@ function FinanceSection() {
 
       {/* Categorie Entrate */}
       <Card padding="lg" className="space-y-3">
-        <p className="text-sm font-medium text-[var(--color-success)]">📥 Categorie Entrate</p>
+        <p className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">📥 Categorie Entrate</p>
         <div className="flex flex-wrap gap-1.5">
           {incomeCategories.map((cat) => (
             <CategoryPill key={cat.id} cat={cat} onDelete={!cat.is_default ? () => handleDelete(cat.id) : null} />
@@ -95,7 +95,7 @@ function FinanceSection() {
 
       {/* Categorie Uscite */}
       <Card padding="lg" className="space-y-3">
-        <p className="text-sm font-medium text-[var(--color-danger)]">📤 Categorie Uscite</p>
+        <p className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">📤 Categorie Uscite</p>
         <div className="flex flex-wrap gap-1.5">
           {expenseCategories.map((cat) => (
             <CategoryPill key={cat.id} cat={cat} onDelete={!cat.is_default ? () => handleDelete(cat.id) : null} />
@@ -151,15 +151,15 @@ function FinanceSection() {
 function CategoryPill({ cat, onDelete }) {
   return (
     <span
-      className="inline-flex items-center gap-1 pl-2 pr-1 h-7 rounded-full text-xs font-medium"
-      style={{ backgroundColor: `${cat.color}18`, color: cat.color }}
+      className="inline-flex items-center gap-1 pl-2 pr-1 h-7 rounded-full text-[11px] font-medium
+        bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
     >
       <span>{cat.icon}</span>
       <span>{cat.name}</span>
-      {cat.is_periodic && <RefreshCw size={10} className="ml-0.5 opacity-60" />}
+      {cat.is_periodic && <RefreshCw size={9} className="ml-0.5 opacity-40" />}
       {onDelete && (
         <button onClick={onDelete} className="ml-0.5 p-0.5 rounded-full hover:bg-black/10 transition-colors">
-          <X size={10} />
+          <X size={9} />
         </button>
       )}
     </span>
