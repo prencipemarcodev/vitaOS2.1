@@ -58,8 +58,8 @@ const Button = forwardRef(function Button(
       transition={{ duration: 0.1 }}
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center justify-center font-medium border rounded-[var(--radius-md)]',
-        'transition-all duration-[var(--transition-fast)] select-none',
+        'inline-flex items-center justify-center font-bold border rounded-[var(--radius-md)]',
+        'transition-all duration-[var(--transition-fast)] select-none min-w-[32px]',
         'focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-1',
         'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
         sizeMap[size],
