@@ -36,7 +36,7 @@ function Finanze() {
         showMonth 
         showNotification 
         actions={
-          <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditingTx(null); setModalOpen(true) }} hideTextMobile>
+          <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditingTx(null); setModalOpen(true) }}>
             Nuovo Movimento
           </Button>
         }

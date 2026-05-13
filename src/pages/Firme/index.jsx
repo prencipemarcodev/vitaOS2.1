@@ -38,7 +38,6 @@ function Firme() {
             size="sm" 
             icon={Plus} 
             onClick={handleNew}
-            hideTextMobile
           >
             Nuova Sessione
           </Button>
