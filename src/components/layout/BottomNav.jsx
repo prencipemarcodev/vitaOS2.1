@@ -89,17 +89,18 @@ function BottomNav() {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
+          paddingTop: '6px'
         }}
       >
-        <div className="flex h-[var(--bottom-nav-height)] items-center justify-around px-2">
+        <div className="flex items-center justify-around px-2">
           {MAIN_NAV.map((item) => {
             const isActive = location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 group"
               >
                 <div className={clsx(
                   'w-10 h-7 rounded-full flex items-center justify-center transition-all duration-300',
