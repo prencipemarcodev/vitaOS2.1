@@ -49,7 +49,7 @@ function AppInner() {
       {/* Main content area */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Aggiunge spazio sotto per la navbar mobile */}
-        <div className="flex-1 overflow-hidden pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0">
+        <div className="flex flex-col flex-1 overflow-hidden pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0">
           <AppRouter />
         </div>
       </div>

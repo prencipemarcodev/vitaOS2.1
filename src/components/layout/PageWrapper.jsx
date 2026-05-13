@@ -13,11 +13,9 @@ function PageWrapper({ children, className, noPadding = false }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className={clsx(
-        'flex-1 overflow-hidden flex flex-col',
+        'flex-1 flex flex-col min-h-0',
         !noPadding && 'p-3 lg:p-4',
-        'lg:h-[var(--content-height)]',
-        // Mobile: allow scroll + bottom nav clearance
-        'max-lg:overflow-y-auto max-lg:h-auto max-lg:pb-[calc(62px+env(safe-area-inset-bottom,0px)+12px)]',
+        'h-full overflow-y-auto',
         className
       )}
     >
