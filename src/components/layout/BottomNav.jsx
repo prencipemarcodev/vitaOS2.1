@@ -54,7 +54,7 @@ function BottomNav() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <div className="p-6 grid grid-cols-4 gap-4">
+              <div className="p-4 grid grid-cols-4 gap-4">
                 {MORE_NAV.map((item) => {
                   const isActive = location.pathname.startsWith(item.to)
                   return (
@@ -62,16 +62,16 @@ function BottomNav() {
                       key={item.to}
                       to={item.to}
                       onClick={() => setMoreOpen(false)}
-                      className="flex flex-col items-center gap-2 group"
+                      className="flex flex-col items-center gap-1.5 py-2 group"
                     >
                       <div className={clsx(
-                        'w-12 h-12 rounded-2xl flex items-center justify-center transition-all',
-                        isActive ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] group-hover:bg-[var(--bg-hover)]'
+                        'transition-all duration-300',
+                        isActive ? 'text-[var(--color-primary)] scale-110' : 'text-[var(--text-muted)] group-active:scale-90'
                       )}>
-                        <item.icon size={24} />
+                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
                       <span className={clsx(
-                        'text-[10px] font-bold uppercase tracking-wider',
+                        'text-[10px] font-bold tracking-tight uppercase transition-colors',
                         isActive ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
                       )}>
                         {item.label}
@@ -90,7 +90,7 @@ function BottomNav() {
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         style={{
           paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
-          paddingTop: '6px'
+          paddingTop: '4px'
         }}
       >
         <div className="flex items-center justify-around px-2">
@@ -100,11 +100,11 @@ function BottomNav() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 group"
+                className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
               >
                 <div className={clsx(
-                  'w-10 h-7 rounded-full flex items-center justify-center transition-all duration-300',
-                  isActive ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]' : 'text-[var(--text-muted)] group-active:scale-90'
+                  'transition-all duration-300',
+                  isActive ? 'text-[var(--color-primary)] scale-110' : 'text-[var(--text-muted)] group-active:scale-90'
                 )}>
                   <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
@@ -124,8 +124,8 @@ function BottomNav() {
             className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
           >
             <div className={clsx(
-              'w-10 h-7 rounded-full flex items-center justify-center transition-all duration-300',
-              moreOpen ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]' : 'text-[var(--text-muted)] group-active:scale-90'
+              'transition-all duration-300',
+              moreOpen ? 'text-[var(--color-primary)] scale-110' : 'text-[var(--text-muted)] group-active:scale-90'
             )}>
               {moreOpen ? <X size={22} strokeWidth={2.5} /> : <MoreHorizontal size={22} />}
             </div>
