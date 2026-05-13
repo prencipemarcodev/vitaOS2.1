@@ -6,13 +6,32 @@ import {
 import { it } from 'date-fns/locale'
 import { isHoliday } from '@/lib/italianCalendar'
 import clsx from 'clsx'
+import { useAppStore } from '@/store/useAppStore'
 
 function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
+  const { userConfig } = useAppStore()
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(new Date(selectedMonth)), { weekStartsOn: 1 })
     const end = endOfWeek(endOfMonth(new Date(selectedMonth)), { weekStartsOn: 1 })
     return eachDayOfInterval({ start, end })
   }, [selectedMonth])
+
+  const getProgram = (day) => {
+    if (!userConfig) return []
+    const dayIdx = day.getDay().toString()
+    const p = []
+    
+    const work = userConfig.work_schedule?.[dayIdx]
+    if (work?.enabled) p.push({ label: 'Lavoro', time: work.from, color: 'var(--color-primary)' })
+    
+    const study = userConfig.study_schedule?.[dayIdx]
+    if (study?.enabled) p.push({ label: 'Studio', time: study.from, color: '#4a90d9' })
+    
+    const gym = userConfig.gym_schedule?.[dayIdx]
+    if (gym?.enabled) p.push({ label: 'Palestra', time: gym.from, color: '#3d9970' })
+    
+    return p
+  }
 
   const weekDays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
@@ -60,6 +79,18 @@ function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
                     {holiday}
                   </span>
                 )}
+              </div>
+
+              {/* Programma giornaliero (Work/Study/Gym) */}
+              <div className="hidden sm:flex flex-col gap-0.5 mb-1.5 min-h-[14px]">
+                {getProgram(day).map((p, i) => (
+                  <div key={i} className="flex items-center gap-1 leading-none">
+                    <span className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+                    <span className="text-[7px] font-bold uppercase truncate" style={{ color: p.color }}>
+                      {p.label} {p.time}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               {/* Day markers (events, absences) */}
