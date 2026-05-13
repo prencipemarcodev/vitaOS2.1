@@ -51,10 +51,34 @@ export const ICON_MAP = {
 
 export const ICON_OPTIONS = Object.keys(ICON_MAP)
 
+const EMOJI_TO_NAME = {
+  '💰': 'Banknote',
+  '💻': 'Laptop',
+  '🎁': 'Gift',
+  '🔄': 'RefreshCcw',
+  '🎄': 'TreePine',
+  '☀️': 'Sun',
+  '📋': 'Clipboard',
+  '🏠': 'Home',
+  '🍔': 'Utensils',
+  '🚗': 'Car',
+  '❤️': 'Heart',
+  '🏋️': 'Dumbbell',
+  '👕': 'Shirt',
+  '🎬': 'Film',
+  '⚡': 'Zap',
+  '📺': 'Tv',
+  '🐷': 'PiggyBank',
+  '🎯': 'Target',
+  '✈️': 'Plane',
+  '🛡️': 'ShieldCheck'
+}
+
 /**
  * Ritorna il componente icona o un fallback (HelpCircle)
  */
-export function getIcon(name) {
+export function getIcon(nameOrEmoji) {
+  const name = EMOJI_TO_NAME[nameOrEmoji] || nameOrEmoji
   const Icon = ICON_MAP[name] || HelpCircle
   return Icon
 }
