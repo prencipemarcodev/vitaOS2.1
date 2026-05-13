@@ -21,19 +21,23 @@ const MORE_NAV = [
   { to: '/impostazioni', icon: Settings,  label: 'Impostazioni' },
 ]
 
+/**
+ * BottomNav 2.1 — Ridisegnato per robustezza mobile totale.
+ * Gestisce Safe Area iOS, Blur, e allineamento perfetto delle icone.
+ */
 function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false)
   const location = useLocation()
 
   return (
     <>
-      {/* More drawer */}
+      {/* Drawer "Altro" */}
       <AnimatePresence>
         {moreOpen && (
           <>
             <motion.div
               key="more-backdrop"
-              className="fixed inset-0 z-[90] bg-black/40"
+              className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-[2px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -41,9 +45,7 @@ function BottomNav() {
             />
             <motion.div
               key="more-drawer"
-              className="fixed left-0 right-0 z-[100]
-                bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-2xl
-                shadow-[var(--shadow-lg)]"
+              className="fixed left-0 right-0 z-[130] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-[24px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]"
               style={{
                 bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
               }}
@@ -52,84 +54,89 @@ function BottomNav() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <div className="p-4 grid grid-cols-4 gap-2">
-                {MORE_NAV.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setMoreOpen(false)}
-                    className={clsx(
-                      'flex flex-col items-center gap-1.5 py-3 px-1 transition-colors',
-                      location.pathname.startsWith(item.to)
-                        ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
-                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
-                    )}
-                  >
-                    <item.icon size={22} />
-                    <span className="text-[10px] font-medium">{item.label}</span>
-                  </NavLink>
-                ))}
+              <div className="p-6 grid grid-cols-4 gap-4">
+                {MORE_NAV.map((item) => {
+                  const isActive = location.pathname.startsWith(item.to)
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMoreOpen(false)}
+                      className="flex flex-col items-center gap-2 group"
+                    >
+                      <div className={clsx(
+                        'w-12 h-12 rounded-2xl flex items-center justify-center transition-all',
+                        isActive ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] group-hover:bg-[var(--bg-hover)]'
+                      )}>
+                        <item.icon size={24} />
+                      </div>
+                      <span className={clsx(
+                        'text-[10px] font-bold uppercase tracking-wider',
+                        isActive ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
+                      )}>
+                        {item.label}
+                      </span>
+                    </NavLink>
+                  )
+                })}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Bottom bar */}
+      {/* Navbar Principale */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[110]
-          bg-[var(--bg-surface)]/80 backdrop-blur-lg border-t border-[var(--border-subtle)]
-          flex items-end justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)]/90 backdrop-blur-xl border-t border-[var(--border-subtle)]"
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           height: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
-        aria-label="Navigazione mobile"
       >
-        {MAIN_NAV.map((item) => {
-          const isActive = location.pathname === item.to ||
-            (item.to !== '/' && location.pathname.startsWith(item.to))
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className="flex-1 flex flex-col items-center"
-            >
-              <motion.div
-                whileTap={{ scale: 0.9 }}
-                className={clsx(
-                  'flex flex-col items-center gap-1',
-                  isActive ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
-                )}
+        <div className="flex h-full items-center justify-around px-2">
+          {MAIN_NAV.map((item) => {
+            const isActive = location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
               >
                 <div className={clsx(
-                  'w-9 h-9 rounded-full flex items-center justify-center transition-colors',
-                  isActive ? 'bg-[var(--color-primary-ghost)]' : 'bg-transparent'
+                  'w-10 h-7 rounded-full flex items-center justify-center transition-all duration-300',
+                  isActive ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]' : 'text-[var(--text-muted)] group-active:scale-90'
                 )}>
-                  <item.icon size={22} />
+                  <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
-                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
-              </motion.div>
-            </NavLink>
-          )
-        })}
+                <span className={clsx(
+                  'text-[9px] font-bold tracking-tight transition-colors',
+                  isActive ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
+                )}>
+                  {item.label}
+                </span>
+              </NavLink>
+            )
+          })}
 
-        {/* More button */}
-        <button
-          onClick={() => setMoreOpen(!moreOpen)}
-          className={clsx(
-            'flex-1 flex flex-col items-center transition-colors',
-            moreOpen ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
-          )}
-        >
-          <div className={clsx(
-            'w-9 h-9 rounded-full flex items-center justify-center transition-colors',
-            moreOpen ? 'bg-[var(--color-primary-ghost)]' : 'bg-transparent'
-          )}>
-            {moreOpen ? <X size={22} /> : <MoreHorizontal size={22} />}
-          </div>
-          <span className="text-[10px] font-bold tracking-tight">Altro</span>
-        </button>
+          {/* Pulsante Altro */}
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
+          >
+            <div className={clsx(
+              'w-10 h-7 rounded-full flex items-center justify-center transition-all duration-300',
+              moreOpen ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]' : 'text-[var(--text-muted)] group-active:scale-90'
+            )}>
+              {moreOpen ? <X size={22} strokeWidth={2.5} /> : <MoreHorizontal size={22} />}
+            </div>
+            <span className={clsx(
+              'text-[9px] font-bold tracking-tight transition-colors',
+              moreOpen ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
+            )}>
+              Altro
+            </span>
+          </button>
+        </div>
       </nav>
     </>
   )
