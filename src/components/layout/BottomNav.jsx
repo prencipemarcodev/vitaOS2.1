@@ -75,10 +75,10 @@ function BottomNav() {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[110]
           bg-white border-t border-[var(--border-subtle)]
-          flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
+          flex items-center justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
         style={{
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2px)',
-          height: 'calc(62px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
+          paddingTop: '8px',
         }}
         aria-label="Navigazione mobile"
       >
@@ -89,7 +89,7 @@ function BottomNav() {
             <NavLink
               key={item.to}
               to={item.to}
-              className="flex flex-col items-center gap-1 px-3 py-2"
+              className="flex-1 flex flex-col items-center"
             >
               <motion.div
                 whileTap={{ scale: 0.9 }}
@@ -99,12 +99,12 @@ function BottomNav() {
                 )}
               >
                 <div className={clsx(
-                  'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+                  'w-9 h-9 rounded-full flex items-center justify-center transition-colors',
                   isActive ? 'bg-[var(--color-primary-ghost)]' : 'bg-transparent'
                 )}>
-                  <item.icon size={20} />
+                  <item.icon size={22} />
                 </div>
-                <span className="text-[9px] font-bold tracking-tight">{item.label}</span>
+                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
               </motion.div>
             </NavLink>
           )
@@ -114,17 +114,17 @@ function BottomNav() {
         <button
           onClick={() => setMoreOpen(!moreOpen)}
           className={clsx(
-            'flex flex-col items-center gap-1 px-3 py-2 transition-colors',
+            'flex-1 flex flex-col items-center transition-colors',
             moreOpen ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
           )}
         >
           <div className={clsx(
-            'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
+            'w-9 h-9 rounded-full flex items-center justify-center transition-colors',
             moreOpen ? 'bg-[var(--color-primary-ghost)]' : 'bg-transparent'
           )}>
-            {moreOpen ? <X size={20} /> : <MoreHorizontal size={20} />}
+            {moreOpen ? <X size={22} /> : <MoreHorizontal size={22} />}
           </div>
-          <span className="text-[9px] font-bold tracking-tight">Altro</span>
+          <span className="text-[10px] font-bold tracking-tight">Altro</span>
         </button>
       </nav>
     </>
