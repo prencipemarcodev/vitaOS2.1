@@ -75,10 +75,10 @@ function BottomNav() {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[110]
           bg-white/80 backdrop-blur-lg border-t border-[var(--border-subtle)]
-          flex items-center justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
+          flex items-end justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          height: 'calc(58px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
+          height: 'calc(54px + env(safe-area-inset-bottom, 0px))',
         }}
         aria-label="Navigazione mobile"
       >
