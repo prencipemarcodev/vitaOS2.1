@@ -5,10 +5,8 @@ import MonthSelector from './MonthSelector'
 import clsx from 'clsx'
 
 /**
- * Header 2.1 — Layout ultra-robusto per iOS.
- * Utilizza una struttura a due livelli: 
- * 1. Padding per la Safe Area (Notch)
- * 2. Contenitore Flex per allineamento perfetto degli elementi.
+ * Header 2.1 — Ridisegnato da zero per robustezza massima.
+ * Supporta: Safe Area iOS, Tematizzazione Dark/Light, Blur, Allineamento Perfetto.
  */
 function Header({ title, showMonth = false, showNotification = false, actions, className }) {
   const [notifOpen, setNotifOpen] = useState(false)
@@ -18,42 +16,40 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
       <header
         className={clsx(
           'sticky top-0 left-0 right-0 z-[100] shrink-0',
-          'bg-white border-b border-[var(--border-subtle)] shadow-sm',
-          'pt-[env(safe-area-inset-top)]', // Notch
+          'bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]',
+          'pt-[env(safe-area-inset-top,0px)]',
           className
         )}
       >
-        <div className="h-[var(--header-height)] px-4 flex items-center justify-between relative">
-          {/* Sinistra: Titolo (1/3 dello spazio) */}
-          <div className="flex-1 flex items-center min-w-0">
+        <div className="h-[var(--header-height)] px-4 flex items-center justify-between relative max-w-full">
+          {/* SInistra: Titolo */}
+          <div className="flex-[1] min-w-0 flex items-center pr-2">
             <h1
-              className="text-sm font-bold text-[var(--text-primary)] leading-none truncate"
+              className="text-sm font-bold text-[var(--text-primary)] leading-none truncate tracking-tight"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {title}
             </h1>
           </div>
 
-          {/* Centro: Month Selector (Centrato assolutamente rispetto al viewport) */}
+          {/* Centro: Selettore Mese (Assoluto per centraggio perfetto) */}
           {showMonth && (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <div className="scale-90 sm:scale-100">
                 <MonthSelector />
               </div>
             </div>
           )}
 
-          {/* Destra: Azioni (1/3 dello spazio) */}
-          <div className="flex-1 flex items-center justify-end gap-2">
+          {/* Destra: Azioni e Notifiche */}
+          <div className="flex-[1] flex items-center justify-end gap-1.5 pl-2">
             {actions && (
-              <div className="flex items-center shrink-0">
+              <div className="flex items-center">
                 {actions}
               </div>
             )}
             {showNotification && (
-              <div className="shrink-0">
-                <NotificationBell onClick={() => setNotifOpen(true)} />
-              </div>
+              <NotificationBell onClick={() => setNotifOpen(true)} />
             )}
           </div>
         </div>
