@@ -86,6 +86,7 @@ function BottomNav() {
       </AnimatePresence>
 
       {/* Navbar Principale */}
+      <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         style={{
           paddingBottom: 'var(--safe-area-bottom)',
