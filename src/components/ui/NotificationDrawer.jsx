@@ -53,7 +53,7 @@ function NotificationDrawer({ isOpen, onClose }) {
           <motion.aside
             key="notif-drawer"
             className="fixed z-[110] flex flex-col
-              bg-white
+              bg-[var(--bg-surface)]
               /* Mobile: fullscreen */
               inset-0
               /* Desktop: right panel */
@@ -139,7 +139,7 @@ function NotifItem({ notification: n, onRead, onDismiss }) {
     >
       <div className={clsx(
         'w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-        n.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'
+        n.type === 'error' ? 'bg-[var(--color-danger-ghost)] text-[var(--color-danger)]' : 'bg-[var(--color-info-ghost)] text-[var(--color-info)]'
       )}>
         <Icon size={14} />
       </div>

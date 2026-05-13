@@ -42,7 +42,7 @@ function BottomNav() {
             <motion.div
               key="more-drawer"
               className="fixed left-0 right-0 z-[100]
-                bg-white border-t border-[var(--border-subtle)] rounded-t-2xl
+                bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-2xl
                 shadow-[var(--shadow-lg)]"
               style={{
                 bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
@@ -78,7 +78,7 @@ function BottomNav() {
       {/* Bottom bar */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[110]
-          bg-white/80 backdrop-blur-lg border-t border-[var(--border-subtle)]
+          bg-[var(--bg-surface)]/80 backdrop-blur-lg border-t border-[var(--border-subtle)]
           flex items-end justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
