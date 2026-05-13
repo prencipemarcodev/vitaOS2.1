@@ -129,9 +129,21 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
             required
           >
             <option value="" disabled>Seleziona categoria</option>
-            {categories.filter(c => c.type === formData.type).map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            {(() => {
+              // De-duplicate categories by name+type to be safe
+              const seen = new Set();
+              return categories
+                .filter(c => c.type === formData.type)
+                .filter(c => {
+                  const key = `${c.name}-${c.type}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                })
+                .map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ));
+            })()}
           </select>
         </div>
 
