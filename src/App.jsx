@@ -48,7 +48,10 @@ function AppInner() {
 
       {/* Main content area */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <AppRouter />
+        {/* Aggiunge spazio sotto per la navbar mobile */}
+        <div className="flex-1 overflow-hidden pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0">
+          <AppRouter />
+        </div>
       </div>
 
       {/* Mobile Bottom Nav */}
@@ -67,6 +70,7 @@ function App() {
         position="bottom-right"
         toastOptions={{
           style: {
+            bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',

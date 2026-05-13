@@ -45,7 +45,7 @@ function BottomNav() {
                 bg-white border-t border-[var(--border-subtle)] rounded-t-2xl
                 shadow-[var(--shadow-lg)]"
               style={{
-                bottom: 'calc(62px + env(safe-area-inset-bottom, 0px))',
+                bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
               }}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -82,7 +82,7 @@ function BottomNav() {
           flex items-end justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          height: 'calc(62px + env(safe-area-inset-bottom, 0px))',
+          height: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
         }}
         aria-label="Navigazione mobile"
       >
