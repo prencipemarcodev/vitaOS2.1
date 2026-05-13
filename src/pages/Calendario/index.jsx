@@ -34,7 +34,15 @@ function Calendario() {
         showMonth 
         showNotification 
         actions={
-          <Button variant="primary" size="sm" icon={Plus} onClick={() => setModalOpen(true)}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            icon={Plus} 
+            onClick={() => setModalOpen(true)}
+            className="font-bold !text-sm"
+            style={{ fontFamily: 'var(--font-display)' }}
+            hideTextMobile
+          >
             Nuovo Evento
           </Button>
         }

@@ -34,10 +34,13 @@ function Firme() {
         showNotification 
         actions={
           <Button 
-            variant="primary" 
+            variant="ghost" 
             size="sm" 
             icon={Plus} 
             onClick={handleNew}
+            className="font-bold !text-sm"
+            style={{ fontFamily: 'var(--font-display)' }}
+            hideTextMobile
           >
             Nuova Sessione
           </Button>

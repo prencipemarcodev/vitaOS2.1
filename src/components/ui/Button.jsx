@@ -16,7 +16,7 @@ const variantMap = {
     'active:scale-[0.97]',
   ],
   ghost: [
-    'bg-transparent text-[var(--text-primary)] border-[var(--border-default)]',
+    'bg-transparent text-[var(--text-primary)] border-transparent',
     'hover:bg-[var(--bg-elevated)]',
     'active:scale-[0.97]',
   ],
