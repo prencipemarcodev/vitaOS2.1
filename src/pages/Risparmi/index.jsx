@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card'
 import { Plus, PiggyBank, Sparkles } from 'lucide-react'
 import PlanCard from './PlanCard'
 import PlanModal from './PlanModal'
+import SmartAdvicePanel from './SmartAdvicePanel'
 import { formatCurrency } from '@/lib/formatters'
 
 function Risparmi() {
@@ -60,19 +61,8 @@ function Risparmi() {
           </Card>
 
           <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 space-y-6">
-            {/* Left Column: Smart Advice (Placeholder/Logic) */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
-                <Sparkles size={16} className="text-[#ff851b]" />
-                Smart Advice
-              </h3>
-              <Card padding="md" className="border-dashed border-2 border-[var(--border-subtle)] bg-[var(--bg-base)]">
-                <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">
-                  "Sulla base del tuo surplus mensile, potresti raggiungere l'obiettivo '{plans[0]?.name || 'Casa'}' con 2 mesi di anticipo aumentando il contributo di 50€."
-                </p>
-                <Button variant="ghost" size="xs" className="mt-3 text-[var(--color-primary)] font-bold">Applica suggerimento</Button>
-              </Card>
-            </div>
+            {/* Left Column: Smart Advice */}
+            <SmartAdvicePanel />
 
             {/* Right Column: Plans List */}
             <div className="lg:col-span-2 flex flex-col h-full min-h-0">

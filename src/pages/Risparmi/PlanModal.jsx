@@ -55,9 +55,10 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
       const payload = {
         ...formData,
         target_amount: parseFloat(formData.target_amount),
-        current_amount: parseFloat(formData.current_amount),
+        current_amount: parseFloat(formData.current_amount || 0),
         monthly_contribution: parseFloat(formData.monthly_contribution || 0),
         priority: parseInt(formData.priority),
+        target_date: formData.target_date || null, // Fix for 400 error
       }
       
       if (planToEdit) {
@@ -73,6 +74,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
       }
       onClose()
     } catch (err) {
+      console.error(err)
       pushError('Errore nel salvataggio')
     } finally {
       setLoading(false)
