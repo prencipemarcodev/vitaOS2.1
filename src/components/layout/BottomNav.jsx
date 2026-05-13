@@ -74,11 +74,11 @@ function BottomNav() {
       {/* Bottom bar */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[110]
-          bg-white border-t border-[var(--border-subtle)]
-          flex items-center justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+          bg-white/80 backdrop-blur-lg border-t border-[var(--border-subtle)]
+          flex items-center justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
-          paddingTop: '8px',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          height: 'calc(58px + env(safe-area-inset-bottom, 0px))',
         }}
         aria-label="Navigazione mobile"
       >
