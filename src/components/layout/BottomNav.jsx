@@ -46,7 +46,9 @@ function BottomNav() {
             <motion.div
               key="more-drawer"
               className="fixed left-0 right-0 z-[130] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-[24px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]"
-              
+              style={{
+                bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
+              }}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -85,13 +87,9 @@ function BottomNav() {
 
       {/* Navbar Principale */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)]/90 backdrop-blur-xl border-t border-[var(--border-subtle)]"
-        style={{
-          height: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)]/95 backdrop-blur-xl border-t border-[var(--border-subtle)] pb-[env(safe-area-inset-bottom,0px)]"
       >
-        <div className="flex h-full items-center justify-around px-2">
+        <div className="flex h-[var(--bottom-nav-height)] items-center justify-around px-2">
           {MAIN_NAV.map((item) => {
             const isActive = location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))
             return (
