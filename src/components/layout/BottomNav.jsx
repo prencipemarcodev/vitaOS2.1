@@ -89,18 +89,18 @@ function BottomNav() {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: '0px',
-          paddingTop: '14px'
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          height: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom))'
         }}
       >
-        <div className="flex items-center justify-around px-2">
+        <div className="h-[var(--bottom-nav-height)] flex items-center justify-around px-2">
           {MAIN_NAV.map((item) => {
             const isActive = location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
+                className="flex-1 flex flex-col items-center justify-center gap-1 group h-full"
               >
                 <div className={clsx(
                   'transition-all duration-300',
@@ -121,7 +121,7 @@ function BottomNav() {
           {/* Pulsante Altro */}
           <button
             onClick={() => setMoreOpen(!moreOpen)}
-            className="flex-1 flex flex-col items-center justify-center gap-1 group py-1"
+            className="flex-1 flex flex-col items-center justify-center gap-1 group h-full"
           >
             <div className={clsx(
               'transition-all duration-300',
