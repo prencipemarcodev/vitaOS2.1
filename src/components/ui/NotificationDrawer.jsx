@@ -69,7 +69,7 @@ function NotificationDrawer({ isOpen, onClose }) {
               className="flex items-center justify-between px-4 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top, 0px)]"
               style={{ height: 'calc(var(--header-height) + env(safe-area-inset-top, 0px))' }}
             >
-              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifiche</h3>
+              <h3 className="text-sm font-bold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>Notifiche</h3>
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
