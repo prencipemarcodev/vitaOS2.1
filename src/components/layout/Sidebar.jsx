@@ -38,32 +38,66 @@ function Sidebar() {
       </div>
 
       {/* Nav links */}
-      <ul className="flex-1 py-4 space-y-0.5 overflow-hidden" role="list">
-        {NAV_ITEMS.map((item) => {
-          const isActive = location.pathname === item.to ||
-            (item.to !== '/' && location.pathname.startsWith(item.to))
-          return (
+      <div className="flex-1 flex flex-col py-4 overflow-hidden" role="list">
+        {/* TOP: Overview */}
+        <div className="px-2 mb-2">
+          <NavItem 
+            item={NAV_ITEMS.find(i => i.to === '/')} 
+            isActive={location.pathname === '/'} 
+          />
+        </div>
+
+        {/* SEPARATOR */}
+        <div className="mx-5 my-2 h-[1px] bg-[var(--border-subtle)]" />
+
+        {/* MIDDLE: Sections */}
+        <ul className="flex-1 px-2 space-y-0.5 overflow-y-auto custom-scrollbar">
+          {NAV_ITEMS.filter(i => i.to !== '/' && i.to !== '/impostazioni').map((item) => (
             <li key={item.to}>
-              <NavLink
-                to={item.to}
-                className={clsx(
-                  'flex items-center gap-3 mx-2 px-3 py-2 rounded-[var(--radius-md)]',
-                  'transition-all duration-[var(--transition-fast)] relative group',
-                  isActive
-                    ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
-                )}
-              >
-                <item.icon size={16} className="shrink-0" />
-                <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden">
-                  {item.label}
-                </span>
-              </NavLink>
+              <NavItem 
+                item={item} 
+                isActive={location.pathname.startsWith(item.to)} 
+              />
             </li>
-          )
-        })}
-      </ul>
+          ))}
+        </ul>
+
+        {/* BOTTOM: Settings */}
+        <div className="px-2 mt-auto pt-4 border-t border-[var(--border-subtle)]">
+          <NavItem 
+            item={NAV_ITEMS.find(i => i.to === '/impostazioni')} 
+            isActive={location.pathname.startsWith('/impostazioni')} 
+          />
+        </div>
+      </div>
     </nav>
+  )
+}
+
+function NavItem({ item, isActive }) {
+  if (!item) return null
+  return (
+    <NavLink
+      to={item.to}
+      className={clsx(
+        'flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)]',
+        'transition-all duration-[var(--transition-fast)] relative group',
+        isActive
+          ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)] font-bold'
+          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+      )}
+    >
+      <item.icon size={18} className={clsx('shrink-0 transition-transform', isActive && 'scale-110')} />
+      <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden">
+        {item.label}
+      </span>
+      {isActive && (
+        <motion.div 
+          layoutId="active-pill"
+          className="absolute left-0 w-1 h-4 bg-[var(--color-primary)] rounded-full"
+        />
+      )}
+    </NavLink>
   )
 }
 

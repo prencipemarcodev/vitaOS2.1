@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
  * Garantisce che il blur sia globale (sidebar inclusa) indipendentemente
  * da dove viene triggerato nel component tree.
  */
-function ModalPortal({ isOpen, onClose, children, size = 'md' }) {
+function ModalPortal({ isOpen, onClose, children, size = 'md', className }) {
   // Blocca scroll body quando aperto
   useEffect(() => {
     if (isOpen) {
@@ -53,8 +53,8 @@ function ModalPortal({ isOpen, onClose, children, size = 'md' }) {
           <motion.div
             key="modal-content"
             className={`relative w-full ${sizeMap[size]} max-h-[90vh] overflow-y-auto
-              bg-white rounded-[var(--radius-xl)]
-              shadow-2xl border border-[var(--border-subtle)]`}
+              bg-[var(--bg-surface)] rounded-[var(--radius-xl)]
+              shadow-2xl border border-[var(--border-subtle)] ${className || ''}`}
             initial={{ scale: 0.96, opacity: 0, y: 8 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 8 }}

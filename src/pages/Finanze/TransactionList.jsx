@@ -12,7 +12,7 @@ import clsx from 'clsx'
 
 function TransactionList({ transactions, categories, onEdit }) {
   const { removeTransaction } = useFinanceStore()
-  const { pushError } = useNotifications()
+  const { pushError, pushSuccess } = useNotifications()
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa transazione?')) return
@@ -22,6 +22,7 @@ function TransactionList({ transactions, categories, onEdit }) {
     } else {
       removeTransaction(id)
       toast.success('Transazione eliminata')
+      pushSuccess('Transazione eliminata', 'trash')
     }
   }
 
@@ -37,7 +38,7 @@ function TransactionList({ transactions, categories, onEdit }) {
   return (
     <div className="space-y-2">
       {transactions.map((tx) => {
-        const category = categories.find(c => c.id === tx.category_id)
+        const category = categories.find(c => c.id === tx.category)
         const CategoryIcon = category ? getIcon(category.icon) : Wallet
         return (
           <Card key={tx.id} padding="sm" className="group hover:bg-[var(--bg-elevated)] transition-colors">

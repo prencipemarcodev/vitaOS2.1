@@ -103,3 +103,26 @@ a {
 /* ── Safe Area for Mobile ── */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top    { padding-top: env(safe-area-inset-top); }
+
+/* ── Custom Shimmer Borders ── */
+@keyframes shimmer-border {
+  0% { border-color: var(--shimmer-color); box-shadow: 0 0 0 0px var(--shimmer-color-ghost); }
+  50% { border-color: var(--shimmer-color-bright); box-shadow: 0 0 8px 1px var(--shimmer-color-ghost); }
+  100% { border-color: var(--shimmer-color); box-shadow: 0 0 0 0px var(--shimmer-color-ghost); }
+}
+
+.shimmer-expense {
+  --shimmer-color: rgba(224, 82, 82, 0.15);
+  --shimmer-color-bright: rgba(224, 82, 82, 0.35);
+  --shimmer-color-ghost: rgba(224, 82, 82, 0.1);
+  animation: shimmer-border 3s infinite ease-in-out;
+  border-width: 1.5px !important;
+}
+
+.shimmer-income {
+  --shimmer-color: rgba(61, 153, 112, 0.15);
+  --shimmer-color-bright: rgba(61, 153, 112, 0.35);
+  --shimmer-color-ghost: rgba(61, 153, 112, 0.1);
+  animation: shimmer-border 3s infinite ease-in-out;
+  border-width: 1.5px !important;
+}

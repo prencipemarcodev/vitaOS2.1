@@ -34,6 +34,15 @@ export function useNotifications() {
     })
   }, [addNotification])
 
+  const pushSuccess = useCallback((message, icon = 'check-circle') => {
+    addNotification({
+      type: 'success',
+      message,
+      icon,
+      category: 'Successo'
+    })
+  }, [addNotification])
+
   return { 
     notifications, 
     unreadCount, 
@@ -41,6 +50,7 @@ export function useNotifications() {
     markAllAsRead, 
     dismiss,
     pushError,
-    pushInfo
+    pushInfo,
+    pushSuccess
   }
 }

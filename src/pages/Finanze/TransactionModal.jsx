@@ -10,7 +10,7 @@ import { format } from 'date-fns'
 
 function TransactionModal({ isOpen, onClose, txToEdit = null }) {
   const { categories, addTransaction, updateTransaction } = useFinanceStore()
-  const { pushError } = useNotifications()
+  const { pushError, pushSuccess } = useNotifications()
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -59,11 +59,13 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         if (error) throw error
         updateTransaction(txToEdit.id, data)
         toast.success('Transazione aggiornata')
+        pushSuccess('Transazione aggiornata', 'edit')
       } else {
         const { data, error } = await supabase.from('transactions').insert(payload).select().single()
         if (error) throw error
         addTransaction(data)
         toast.success('Transazione creata')
+        pushSuccess('Transazione creata', 'plus')
       }
       onClose()
     } catch (err) {
@@ -74,17 +76,24 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
     }
   }
 
+  const isExpense = formData.type === 'expense'
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={txToEdit ? 'Modifica Transazione' : 'Nuova Transazione'}>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={txToEdit ? 'Modifica Transazione' : 'Nuova Transazione'}
+      className={isExpense ? 'shimmer-expense' : 'shimmer-income'}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'expense' })}
-            className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-all ${
-              formData.type === 'expense' 
-                ? 'bg-white border-[var(--text-primary)] shadow-sm text-[var(--color-danger)]' 
-                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+            className={`flex-1 py-2.5 text-xs font-bold border rounded-[var(--radius-md)] transition-all ${
+              isExpense 
+                ? 'bg-[var(--color-danger-ghost)] border-[var(--color-danger)] text-[var(--color-danger)] shadow-sm' 
+                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-secondary)]'
             }`}
           >
             Uscita
@@ -92,10 +101,10 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'income' })}
-            className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-all ${
-              formData.type === 'income' 
-                ? 'bg-white border-[var(--text-primary)] shadow-sm text-[var(--color-primary)]' 
-                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+            className={`flex-1 py-2.5 text-xs font-bold border rounded-[var(--radius-md)] transition-all ${
+              !isExpense 
+                ? 'bg-[var(--color-success-ghost)] border-[var(--color-success)] text-[var(--color-success)] shadow-sm' 
+                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-secondary)]'
             }`}
           >
             Entrata
@@ -124,14 +133,13 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-[var(--text-secondary)]">Categoria</label>
           <select 
-            className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+            className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
             value={formData.category}
             onChange={e => setFormData({ ...formData, category: e.target.value })}
             required
           >
             <option value="" disabled>Seleziona categoria</option>
             {(() => {
-              // De-duplicate categories by name+type to be safe
               const seen = new Set();
               return categories
                 .filter(c => c.type === formData.type)
@@ -156,7 +164,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
                 key={m}
                 type="button"
                 onClick={() => setFormData({ ...formData, payment_method: m })}
-                className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-colors ${
+                className={`flex-1 py-2 text-xs font-bold border rounded-[var(--radius-md)] transition-colors ${
                   formData.payment_method === m 
                     ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm' 
                     : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
@@ -177,7 +185,17 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>Annulla</Button>
-          <Button variant="primary" type="submit" loading={loading}>{txToEdit ? 'Aggiorna' : 'Crea Transazione'}</Button>
+          <Button 
+            type="submit" 
+            loading={loading}
+            className={`px-8 transition-all ${
+              isExpense 
+                ? 'bg-[var(--color-danger)] hover:bg-[#c0392b] text-white' 
+                : 'bg-[var(--color-success)] hover:bg-[#27ae60] text-white'
+            }`}
+          >
+            {txToEdit ? 'Aggiorna' : 'Crea Transazione'}
+          </Button>
         </div>
       </form>
     </Modal>
