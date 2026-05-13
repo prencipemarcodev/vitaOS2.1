@@ -66,8 +66,8 @@ function NotificationDrawer({ isOpen, onClose }) {
           >
             {/* Header */}
             <div 
-              className="flex items-center justify-between px-4 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top, 20px)]"
-              style={{ height: 'calc(var(--header-height) + env(safe-area-inset-top, 20px) + 8px)' }}
+              className="flex items-center justify-between px-4 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top,40px)]"
+              style={{ height: 'calc(var(--header-height) + env(safe-area-inset-top,40px))' }}
             >
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifiche</h3>
               <div className="flex items-center gap-1">
