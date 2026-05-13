@@ -11,8 +11,8 @@ const sizeMap = {
 
 const variantMap = {
   primary: [
-    'bg-[var(--color-primary)] text-white border-transparent',
-    'hover:bg-[var(--color-primary-dark)]',
+    'bg-[#B46243] text-white border-transparent',
+    'hover:bg-[#964f34]',
     'active:scale-[0.97]',
   ],
   ghost: [
@@ -32,7 +32,7 @@ const variantMap = {
   ],
   primary_ghost: [
     'bg-[var(--color-primary-ghost)] text-[var(--color-primary)] border-transparent',
-    'hover:bg-[rgba(180,98,67,0.2)]',
+    'hover:bg-[var(--color-primary-light)]',
     'active:scale-[0.97]',
   ],
 }

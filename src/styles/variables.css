@@ -4,9 +4,9 @@
 
 :root {
   /* ── Brand ── */
-  --color-primary: rgb(180, 98, 67);
-  --color-primary-light: rgb(210, 140, 110);
-  --color-primary-dark: rgb(140, 65, 40);
+  --color-primary: #B46243;
+  --color-primary-light: #d28c6e;
+  --color-primary-dark: #8c4128;
   --color-primary-ghost: rgba(180, 98, 67, 0.12);
 
   /* ── Superfici — Light Mode ── */
