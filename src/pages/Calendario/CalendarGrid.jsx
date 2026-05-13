@@ -56,7 +56,7 @@ function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
                   {format(day, 'd')}
                 </span>
                 {holiday && (
-                  <span className="text-[8px] font-bold text-[var(--color-danger)] uppercase truncate max-w-[40px] hidden sm:block">
+                  <span className="text-[9px] font-bold text-[var(--color-danger)] uppercase truncate ml-1 flex-1 text-right hidden sm:block">
                     {holiday}
                   </span>
                 )}
