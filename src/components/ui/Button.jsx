@@ -11,8 +11,8 @@ const sizeMap = {
 
 const variantMap = {
   primary: [
-    'bg-[#B46243] text-white border-transparent',
-    'hover:bg-[#964f34]',
+    'bg-[#1a1714] text-white border-transparent',
+    'hover:bg-black',
     'active:scale-[0.97]',
   ],
   ghost: [

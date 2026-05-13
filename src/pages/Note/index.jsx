@@ -48,7 +48,15 @@ function Note() {
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="primary" size="sm" icon={Plus} onClick={handleNew} hideTextMobile>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              icon={Plus} 
+              onClick={handleNew}
+              className="font-bold !text-sm"
+              style={{ fontFamily: 'var(--font-display)' }}
+              hideTextMobile
+            >
               Nuova Nota
             </Button>
           </div>
