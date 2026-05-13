@@ -17,7 +17,7 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
         className={clsx(
           'sticky top-0 left-0 right-0 z-[100] shrink-0',
           'bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]',
-          'pt-[var(--safe-area-top)]',
+          'pt-[env(safe-area-inset-top,0px)]',
           className
         )}
       >
