@@ -17,8 +17,8 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
     date: format(new Date(), 'yyyy-MM-dd'),
     amount: '',
     type: 'expense',
-    category_id: '',
-    method: 'bank',
+    category: '',
+    payment_method: 'bank',
     description: '',
   })
 
@@ -28,8 +28,8 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         date: txToEdit.date,
         amount: txToEdit.amount.toString(),
         type: txToEdit.type,
-        category_id: txToEdit.category_id || '',
-        method: txToEdit.method,
+        category: txToEdit.category || '',
+        payment_method: txToEdit.payment_method || 'bank',
         description: txToEdit.description || '',
       })
     } else {
@@ -37,8 +37,8 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         date: format(new Date(), 'yyyy-MM-dd'),
         amount: '',
         type: 'expense',
-        category_id: categories.find(c => c.type === 'expense')?.id || '',
-        method: 'bank',
+        category: categories.find(c => c.type === 'expense')?.id || '',
+        payment_method: 'bank',
         description: '',
       })
     }
@@ -67,6 +67,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
       }
       onClose()
     } catch (err) {
+      console.error(err)
       pushError('Errore nel salvataggio')
     } finally {
       setLoading(false)
@@ -124,8 +125,8 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           <label className="text-xs font-bold text-[var(--text-secondary)]">Categoria</label>
           <select 
             className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
-            value={formData.category_id}
-            onChange={e => setFormData({ ...formData, category_id: e.target.value })}
+            value={formData.category}
+            onChange={e => setFormData({ ...formData, category: e.target.value })}
             required
           >
             <option value="" disabled>Seleziona categoria</option>
@@ -154,9 +155,9 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
               <button
                 key={m}
                 type="button"
-                onClick={() => setFormData({ ...formData, method: m })}
+                onClick={() => setFormData({ ...formData, payment_method: m })}
                 className={`flex-1 py-2 text-xs font-bold border rounded-sm transition-colors ${
-                  formData.method === m 
+                  formData.payment_method === m 
                     ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm' 
                     : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
                 }`}
