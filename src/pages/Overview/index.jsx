@@ -73,7 +73,7 @@ function Overview() {
           </div>
 
           {/* Riga 4: Eventi & Salute */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:shrink-0 pb-[.5rem]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:shrink-0">
             <UpcomingEvents events={kpis.upcoming} />
             <HealthPreview workouts={workoutSessions} userConfig={userConfig} />
           </div>
