@@ -12,7 +12,7 @@ function MonthSelector() {
 
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-sm font-semibold text-[var(--text-primary)] capitalize">
+      <span className="text-sm font-bold text-[var(--text-primary)] capitalize whitespace-nowrap">
         {format(date, 'MMMM yyyy', { locale: it })}
       </span>
 
