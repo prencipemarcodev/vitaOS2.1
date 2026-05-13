@@ -51,10 +51,11 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
         </span>
       </div>
 
-      {/* Grid desktop: 7 colonne; Mobile: scroll orizzontale snap */}
-      <div className="grid grid-cols-7 gap-1.5 md:gap-2 overflow-x-auto md:overflow-visible pb-1 md:pb-0
+      {/* Mobile: scroll orizzontale; Desktop: grid 7 colonne */}
+      <div className="flex gap-2 overflow-x-auto pb-2
         [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
-        snap-x snap-mandatory md:snap-none">
+        snap-x snap-mandatory
+        md:grid md:grid-cols-7 md:overflow-visible md:pb-0 md:snap-none">
         {DAYS.map((d) => {
           const day = value[d.key] || { enabled: false }
           return (
@@ -78,7 +79,7 @@ function DayCard({ dayKey, label, day, accent, mode, onUpdate }) {
   return (
     <div
       className={clsx(
-        'snap-start shrink-0 w-[calc(100vw/5)] md:w-auto',
+        'snap-start shrink-0 w-[calc((100vw-var(--page-padding)*2-32px)/4.5)] md:w-auto md:shrink',
         'rounded-[var(--radius-md)] border p-2 transition-all duration-200 text-center',
         'flex flex-col gap-1.5 min-h-[100px]',
         day.enabled

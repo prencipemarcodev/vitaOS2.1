@@ -13,33 +13,28 @@
 /* ── Base Reset ── */
 *, *::before, *::after { box-sizing: border-box; }
 
-html {
+html, body, #root {
   height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+  background-color: var(--bg-base);
+}
+
+html {
   overflow: hidden; /* Desktop: no page scroll */
 }
 
 body {
-  height: 100%;
-  margin: 0;
   font-family: var(--font-body);
   font-size: var(--text-base);
   color: var(--text-primary);
-  background-color: var(--bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-base), color var(--transition-base);
-  /* Allow scroll on mobile */
   overflow-y: auto;
 }
 
-/* Mobile: scroll is allowed */
-@media (max-width: 1279px) {
-  html { overflow: auto; }
-  body { overflow-y: auto; }
-}
-
 #root {
-  height: 100%;
   display: flex;
   flex-direction: column;
 }

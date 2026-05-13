@@ -42,7 +42,7 @@ function AppInner() {
   }
 
   return (
-    <div className="h-[100dvh] flex overflow-hidden bg-[var(--bg-base)]">
+    <div className="h-[100svh] flex overflow-hidden bg-[var(--bg-base)]">
       {/* Desktop Sidebar */}
       <Sidebar />
 
