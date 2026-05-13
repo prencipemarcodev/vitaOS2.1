@@ -77,8 +77,8 @@ function BottomNav() {
           bg-white/80 backdrop-blur-lg border-t border-[var(--border-subtle)]
           flex items-end justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
-          height: 'calc(54px + env(safe-area-inset-bottom, 0px))',
+          //paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
+          //height: 'calc(54px + env(safe-area-inset-bottom, 0px))',
         }}
         aria-label="Navigazione mobile"
       >

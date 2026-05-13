@@ -24,8 +24,8 @@ function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
     if (sessionToEdit) {
       setFormData({
         date: sessionToEdit.date,
-        start_time: sessionToEdit.start_time.substring(0, 5),
-        end_time: sessionToEdit.end_time.substring(0, 5),
+        start_time: sessionToEdit.check_in.substring(0, 5),
+        end_time: sessionToEdit.check_out ? sessionToEdit.check_out.substring(0, 5) : '',
         notes: sessionToEdit.notes || '',
       })
     } else {
@@ -54,8 +54,8 @@ function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
 
     const payload = {
       date: formData.date,
-      start_time: formData.start_time,
-      end_time: formData.end_time,
+      check_in: formData.start_time,
+      check_out: formData.end_time,
       duration_minutes: duration,
       notes: formData.notes,
       is_manual: true,

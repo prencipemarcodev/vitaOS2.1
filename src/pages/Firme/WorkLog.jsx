@@ -53,7 +53,7 @@ function WorkLog({ sessions, onEdit }) {
                   {session.manual_entry && <Badge variant="subtle" className="text-[7px] px-1 py-0 uppercase">Manuale</Badge>}
                 </div>
                 <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                  {session.start_time} - {session.end_time}
+                  {session.check_in ? session.check_in.substring(0, 5) : '--:--'} - {session.check_out ? session.check_out.substring(0, 5) : '--:--'}
                 </p>
               </div>
             </div>
