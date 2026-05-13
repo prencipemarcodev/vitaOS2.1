@@ -89,8 +89,8 @@ function BottomNav() {
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
-          paddingTop: '4px'
+          paddingBottom: '0px',
+          paddingTop: '14px'
         }}
       >
         <div className="flex items-center justify-around px-2">
