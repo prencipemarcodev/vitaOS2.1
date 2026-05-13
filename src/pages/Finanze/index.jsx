@@ -54,8 +54,8 @@ function Finanze() {
         <div className="space-y-4 h-full flex flex-col overflow-hidden">
           {/* Top Row: KPIs - Optimized for mobile space */}
           <div className="grid grid-cols-3 gap-1.5 sm:gap-3 shrink-0">
-            <Card padding="xs" className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+            <Card padding="sm" className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)] ml-1">
                 <ArrowUpRight size={18} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">
@@ -63,8 +63,8 @@ function Finanze() {
                 <p className="text-xs sm:text-sm font-bold text-[#3d9970] truncate">{formatCurrency(kpis.income)}</p>
               </div>
             </Card>
-            <Card padding="xs" className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+            <Card padding="sm" className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)] ml-1">
                 <ArrowDownLeft size={18} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">
@@ -72,8 +72,8 @@ function Finanze() {
                 <p className="text-xs sm:text-sm font-bold text-[var(--text-primary)] truncate">{formatCurrency(kpis.expense)}</p>
               </div>
             </Card>
-            <Card padding="xs" className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+            <Card padding="sm" className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)] ml-1">
                 <Wallet size={18} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">

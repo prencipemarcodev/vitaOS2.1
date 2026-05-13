@@ -19,48 +19,26 @@ const NAV_ITEMS = [
 ]
 
 function Sidebar() {
-  const [expanded, setExpanded] = useState(true)
   const location = useLocation()
 
   return (
-    <motion.nav
-      animate={{ width: expanded ? 220 : 60 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="hidden lg:flex flex-col h-full bg-[var(--bg-surface)]
+    <nav
+      className="hidden lg:flex flex-col h-full bg-[var(--bg-surface)] w-[220px]
         border-r border-[var(--border-subtle)] shrink-0 overflow-hidden z-10"
       aria-label="Navigazione principale"
     >
       {/* Logo */}
-      <div className="flex items-center h-[var(--header-height)] px-4 shrink-0 border-b border-[var(--border-subtle)]">
-        <AnimatePresence mode="wait">
-          {expanded ? (
-            <motion.span
-              key="logo-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-base font-semibold text-[var(--text-primary)] whitespace-nowrap"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
-            </motion.span>
-          ) : (
-            <motion.span
-              key="logo-mini"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-sm font-bold"
-              style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-display)' }}
-            >
-              v
-            </motion.span>
-          )}
-        </AnimatePresence>
+      <div className="flex items-center h-[var(--header-height)] px-6 shrink-0 border-b border-[var(--border-subtle)]">
+        <span
+          className="text-base font-semibold text-[var(--text-primary)] whitespace-nowrap"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
+        </span>
       </div>
 
       {/* Nav links */}
-      <ul className="flex-1 py-3 space-y-0.5 overflow-hidden" role="list">
+      <ul className="flex-1 py-4 space-y-0.5 overflow-hidden" role="list">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.to ||
             (item.to !== '/' && location.pathname.startsWith(item.to))
@@ -69,55 +47,23 @@ function Sidebar() {
               <NavLink
                 to={item.to}
                 className={clsx(
-                  'flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-[var(--radius-md)]',
+                  'flex items-center gap-3 mx-2 px-3 py-2 rounded-[var(--radius-md)]',
                   'transition-all duration-[var(--transition-fast)] relative group',
                   isActive
                     ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
                 )}
-                title={!expanded ? item.label : undefined}
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="active-pill"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--color-primary)]"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
                 <item.icon size={16} className="shrink-0" />
-                <AnimatePresence>
-                  {expanded && (
-                    <motion.span
-                      key={`label-${item.to}`}
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="text-[13px] font-medium whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden">
+                  {item.label}
+                </span>
               </NavLink>
             </li>
           )
         })}
       </ul>
-
-      {/* Collapse toggle */}
-      <div className="p-3 border-t border-[var(--border-subtle)] shrink-0">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-center p-2 rounded-[var(--radius-md)]
-            text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]
-            transition-colors duration-[var(--transition-fast)]"
-          aria-label={expanded ? 'Comprimi sidebar' : 'Espandi sidebar'}
-        >
-          {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </button>
-      </div>
-    </motion.nav>
+    </nav>
   )
 }
 
