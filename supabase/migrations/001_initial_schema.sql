@@ -166,6 +166,7 @@ CREATE TABLE IF NOT EXISTS finance_categories (
   created_at TIMESTAMPTZ DEFAULT now(),
   name TEXT NOT NULL,
   type TEXT NOT NULL,
+  UNIQUE(name, type),
   icon TEXT,
   color TEXT,
   is_default BOOLEAN DEFAULT false,
@@ -309,6 +310,12 @@ BEGIN
     'saving_plans', 'saving_movements',
     'workout_sessions', 'weight_log', 'gym_schedules', 'notes'
   ]) LOOP
+    -- Drop existing if any to allow re-running
+    EXECUTE format('DROP POLICY IF EXISTS "allow_all_select_%s" ON %I', t, t);
+    EXECUTE format('DROP POLICY IF EXISTS "allow_all_insert_%s" ON %I', t, t);
+    EXECUTE format('DROP POLICY IF EXISTS "allow_all_update_%s" ON %I', t, t);
+    EXECUTE format('DROP POLICY IF EXISTS "allow_all_delete_%s" ON %I', t, t);
+
     EXECUTE format('CREATE POLICY "allow_all_select_%s" ON %I FOR SELECT USING (true)', t, t);
     EXECUTE format('CREATE POLICY "allow_all_insert_%s" ON %I FOR INSERT WITH CHECK (true)', t, t);
     EXECUTE format('CREATE POLICY "allow_all_update_%s" ON %I FOR UPDATE USING (true) WITH CHECK (true)', t, t);
@@ -329,7 +336,8 @@ INSERT INTO finance_categories (name, type, icon, color, is_default) VALUES
   ('Rimborso',        'income',  'RefreshCcw', '#d4a017', true),
   ('13ª Mensilità',   'income',  'TreePine', '#3d9970', true),
   ('14ª Mensilità',   'income',  'Sun', '#3d9970', true),
-  ('Altro',           'income',  'Clipboard', '#95a5a6', true);
+  ('Altro',           'income',  'Clipboard', '#95a5a6', true)
+ON CONFLICT DO NOTHING;
 
 -- Uscite
 INSERT INTO finance_categories (name, type, icon, color, is_default) VALUES
@@ -343,11 +351,15 @@ INSERT INTO finance_categories (name, type, icon, color, is_default) VALUES
   ('Utility',         'expense', 'Zap', '#7f8c8d', true),
   ('Abbonamenti',     'expense', 'Tv', '#4a90d9', true),
   ('Risparmio',       'expense', 'PiggyBank', '#3d9970', true),
-  ('Altro',           'expense', 'Clipboard', '#95a5a6', true);
+  ('Altro',           'expense', 'Clipboard', '#95a5a6', true)
+ON CONFLICT DO NOTHING;
 
 
 -- =====================================================
 -- SEED — Riga user_config iniziale
 -- =====================================================
 
-INSERT INTO user_config (id) VALUES (gen_random_uuid());
+-- Inserisce una riga solo se la tabella è vuota
+INSERT INTO user_config (id)
+SELECT gen_random_uuid()
+WHERE NOT EXISTS (SELECT 1 FROM user_config);
