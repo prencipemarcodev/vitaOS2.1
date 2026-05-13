@@ -46,9 +46,7 @@ function BottomNav() {
             <motion.div
               key="more-drawer"
               className="fixed left-0 right-0 z-[130] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-[24px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]"
-              style={{
-                bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
-              }}
+              
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
