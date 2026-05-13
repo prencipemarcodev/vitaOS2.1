@@ -87,7 +87,10 @@ function BottomNav() {
 
       {/* Navbar Principale */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)]/95 backdrop-blur-xl border-t border-[var(--border-subtle)] pb-[env(safe-area-inset-bottom,0px)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
       >
         <div className="flex h-[var(--bottom-nav-height)] items-center justify-around px-2">
           {MAIN_NAV.map((item) => {
