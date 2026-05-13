@@ -100,9 +100,9 @@ a {
   letter-spacing: -0.01em;
 }
 
-/* ── Safe Area for Mobile ── */
-.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-.safe-top    { padding-top: env(safe-area-inset-top); }
+/* ── Safe Area for Mobile (Static) ── */
+.safe-bottom { padding-bottom: var(--safe-area-bottom); }
+.safe-top    { padding-top: var(--safe-area-top); }
 
 /* ── Custom Shimmer Borders ── */
 @keyframes shimmer-border {

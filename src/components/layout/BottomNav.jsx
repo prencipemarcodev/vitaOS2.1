@@ -47,7 +47,7 @@ function BottomNav() {
               key="more-drawer"
               className="fixed left-0 right-0 z-[130] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-[24px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]"
               style={{
-                bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
+                bottom: 'calc(var(--bottom-nav-height) + var(--safe-area-bottom))',
               }}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -86,11 +86,10 @@ function BottomNav() {
       </AnimatePresence>
 
       {/* Navbar Principale */}
-      <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[140] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
         style={{
-          paddingBottom: '0px',
-          paddingTop: '14px'
+          paddingBottom: 'var(--safe-area-bottom)',
+          paddingTop: '4px'
         }}
       >
         <div className="flex items-center justify-around px-2">
