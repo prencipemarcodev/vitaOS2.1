@@ -80,7 +80,7 @@ function Sidebar() {
                 {isActive && (
                   <motion.span
                     layoutId="active-pill"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-[var(--color-primary)]"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-[var(--color-primary)]"
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}

@@ -1,10 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Check, CheckCheck } from 'lucide-react'
+import { X, Check, CheckCheck, AlertCircle, Info, Bell } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import Button from './Button'
 import clsx from 'clsx'
 import { formatDistanceToNow } from 'date-fns'
 import { it } from 'date-fns/locale'
+
+const ICON_MAP = {
+  'alert-circle': AlertCircle,
+  'info': Info,
+  'bell': Bell,
+}
 
 /**
  * NotificationDrawer — pannello laterale destra (non modal, no blur).
@@ -115,6 +121,8 @@ function NotifGroup({ title, items, onRead, onDismiss }) {
 }
 
 function NotifItem({ notification: n, onRead, onDismiss }) {
+  const Icon = ICON_MAP[n.icon] || Bell
+
   return (
     <motion.div
       layout
@@ -128,7 +136,12 @@ function NotifItem({ notification: n, onRead, onDismiss }) {
       )}
       onClick={() => onRead(n.id)}
     >
-      <span className="text-lg shrink-0 mt-0.5">{n.icon}</span>
+      <div className={clsx(
+        'w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5',
+        n.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'
+      )}>
+        <Icon size={14} />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-[var(--text-primary)] leading-snug">{n.message}</p>
         <p className="text-[10px] text-[var(--text-muted)] mt-0.5">

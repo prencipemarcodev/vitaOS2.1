@@ -20,12 +20,12 @@ export function useNotifications() {
     addNotification({
       type: 'error',
       message,
-      icon: '⚠️',
+      icon: 'alert-circle',
       category: 'Errore'
     })
   }, [addNotification])
 
-  const pushInfo = useCallback((message, icon = 'ℹ️') => {
+  const pushInfo = useCallback((message, icon = 'info') => {
     addNotification({
       type: 'info',
       message,

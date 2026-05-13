@@ -55,8 +55,8 @@ function Finanze() {
           {/* Top Row: KPIs - Optimized for mobile space */}
           <div className="grid grid-cols-3 gap-1.5 sm:gap-3 shrink-0">
             <Card padding="xs" className="flex items-center gap-2 sm:gap-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[var(--bg-elevated)] text-[var(--text-primary)] flex items-center justify-center shrink-0">
-                <ArrowUpRight size={16} />
+              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+                <ArrowUpRight size={18} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">
                 <p className="text-[8px] sm:text-[10px] font-bold text-[var(--text-muted)] uppercase truncate">Entrate</p>
@@ -64,8 +64,8 @@ function Finanze() {
               </div>
             </Card>
             <Card padding="xs" className="flex items-center gap-2 sm:gap-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[var(--bg-elevated)] text-[var(--text-primary)] flex items-center justify-center shrink-0">
-                <ArrowDownLeft size={16} />
+              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+                <ArrowDownLeft size={18} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">
                 <p className="text-[8px] sm:text-[10px] font-bold text-[var(--text-muted)] uppercase truncate">Uscite</p>
@@ -73,8 +73,8 @@ function Finanze() {
               </div>
             </Card>
             <Card padding="xs" className="flex items-center gap-2 sm:gap-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[var(--bg-elevated)] text-[var(--text-primary)] flex items-center justify-center shrink-0">
-                <Wallet size={16} />
+              <div className="flex items-center justify-center shrink-0 text-[var(--text-muted)]">
+                <Wallet size={18} strokeWidth={2.5} />
               </div>
               <div className="min-w-0">
                 <p className="text-[8px] sm:text-[10px] font-bold text-[var(--text-muted)] uppercase truncate">Mensile</p>

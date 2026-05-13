@@ -23,7 +23,7 @@ function HealthPreview({ workouts = [], userConfig }) {
 
       <div className="grid grid-cols-2 gap-3 flex-1">
         {/* Workout count */}
-        <div className="flex flex-col items-center justify-center p-3 rounded-[var(--radius-md)] bg-[var(--bg-elevated)]">
+        <div className="flex flex-col items-center justify-center p-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)]">
           <Dumbbell size={18} className="text-[var(--color-primary)] mb-1" />
           <p className="text-lg font-semibold font-num text-[var(--text-primary)]">
             {thisWeekWorkouts.length}<span className="text-xs text-[var(--text-muted)] font-normal">/{weeklyGoal}</span>
@@ -32,7 +32,7 @@ function HealthPreview({ workouts = [], userConfig }) {
         </div>
 
         {/* Run km */}
-        <div className="flex flex-col items-center justify-center p-3 rounded-[var(--radius-md)] bg-[var(--bg-elevated)]">
+        <div className="flex flex-col items-center justify-center p-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)]">
           <TrendingUp size={18} className="text-[var(--color-success)] mb-1" />
           <p className="text-lg font-semibold font-num text-[var(--text-primary)]">
             {totalKm.toFixed(1)}<span className="text-xs text-[var(--text-muted)] font-normal">km</span>
