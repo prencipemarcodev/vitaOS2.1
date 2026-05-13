@@ -3,13 +3,12 @@
    ===================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&display=swap');
+@import './variables.css';
+@import './animations.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import './variables.css';
-@import './animations.css';
 
 /* ── Base Reset ── */
 *, *::before, *::after { box-sizing: border-box; }
