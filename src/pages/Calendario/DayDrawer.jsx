@@ -7,13 +7,36 @@ import Badge from '@/components/ui/Badge'
 import { supabase } from '@/lib/supabase'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useAppStore } from '@/store/useAppStore'
+import { Briefcase, GraduationCap, Dumbbell } from 'lucide-react'
 
 function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
   const { removeEvent, removeAbsence } = useCalendarStore()
   const { pushError } = useNotifications()
+  const { userConfig } = useAppStore()
 
   const dayEvents = events.filter(e => isSameDay(new Date(e.date), date))
-  const dayAbsences = absences.filter(a => isSameDay(new Date(a.date), date))
+  const dayAbsences = absences.filter(a => {
+    const d = new Date(a.start_date)
+    const e = new Date(a.end_date)
+    return date >= d && date <= e
+  })
+
+  // Programma del giorno (Work, Study, Gym)
+  const getSchedule = (type) => {
+    if (!userConfig) return null
+    const schedules = userConfig[`${type}_schedule`]
+    if (!schedules) return null
+    const dayIndex = date.getDay().toString()
+    const sched = schedules[dayIndex]
+    if (sched?.enabled) return sched
+    return null
+  }
+
+  const workSched = getSchedule('work')
+  const studySched = getSchedule('study')
+  const gymSched = getSchedule('gym')
+  const hasProgram = workSched || studySched || gymSched
 
   const handleDeleteEvent = async (id) => {
     const { error } = await supabase.from('calendar_events').delete().eq('id', id)
@@ -66,6 +89,47 @@ function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Programma del giorno */}
+              {hasProgram && (
+                <section>
+                  <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-4">Programma</h3>
+                  <div className="grid gap-2">
+                    {workSched && (
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-[rgba(180,98,67,0.08)] border border-[rgba(180,98,67,0.1)]">
+                        <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-ghost)] flex items-center justify-center text-[var(--color-primary)]">
+                          <Briefcase size={16} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-[var(--color-primary)] uppercase">Lavoro</p>
+                          <p className="text-xs font-semibold">{workSched.from} — {workSched.to}</p>
+                        </div>
+                      </div>
+                    )}
+                    {studySched && (
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-[rgba(74,144,217,0.08)] border border-[rgba(74,144,217,0.1)]">
+                        <div className="w-8 h-8 rounded-xl bg-[rgba(74,144,217,0.12)] flex items-center justify-center text-[#4a90d9]">
+                          <GraduationCap size={16} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-[#4a90d9] uppercase">Studio</p>
+                          <p className="text-xs font-semibold">{studySched.from} — {studySched.to}</p>
+                        </div>
+                      </div>
+                    )}
+                    {gymSched && (
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-[rgba(61,153,112,0.08)] border border-[rgba(61,153,112,0.1)]">
+                        <div className="w-8 h-8 rounded-xl bg-[rgba(61,153,112,0.12)] flex items-center justify-center text-[#3d9970]">
+                          <Dumbbell size={16} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-[#3d9970] uppercase">Palestra</p>
+                          <p className="text-xs font-semibold">{gymSched.from} — {gymSched.to}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
               {/* Eventi section */}
               <section>
                 <div className="flex items-center justify-between mb-4">
