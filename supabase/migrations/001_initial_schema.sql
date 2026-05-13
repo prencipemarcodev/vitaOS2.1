@@ -323,27 +323,27 @@ END $$;
 
 -- Entrate
 INSERT INTO finance_categories (name, type, icon, color, is_default) VALUES
-  ('Stipendio',       'income',  '💰', '#3d9970', true),
-  ('Freelance',       'income',  '💻', '#4a90d9', true),
-  ('Regalo',          'income',  '🎁', '#9b59b6', true),
-  ('Rimborso',        'income',  '🔄', '#d4a017', true),
-  ('13ª Mensilità',   'income',  '🎄', '#3d9970', true),
-  ('14ª Mensilità',   'income',  '☀️', '#3d9970', true),
-  ('Altro',           'income',  '📋', '#95a5a6', true);
+  ('Stipendio',       'income',  'Banknote', '#3d9970', true),
+  ('Freelance',       'income',  'Laptop', '#4a90d9', true),
+  ('Regalo',          'income',  'Gift', '#9b59b6', true),
+  ('Rimborso',        'income',  'RefreshCcw', '#d4a017', true),
+  ('13ª Mensilità',   'income',  'TreePine', '#3d9970', true),
+  ('14ª Mensilità',   'income',  'Sun', '#3d9970', true),
+  ('Altro',           'income',  'Clipboard', '#95a5a6', true);
 
 -- Uscite
 INSERT INTO finance_categories (name, type, icon, color, is_default) VALUES
-  ('Casa/Affitto',    'expense', '🏠', '#e05252', true),
-  ('Cibo',            'expense', '🍔', '#d4a017', true),
-  ('Trasporti',       'expense', '🚗', '#4a90d9', true),
-  ('Salute',          'expense', '❤️', '#e05252', true),
-  ('Sport',           'expense', '🏋️', '#3d9970', true),
-  ('Abbigliamento',   'expense', '👕', '#9b59b6', true),
-  ('Intrattenimento', 'expense', '🎬', '#d4a017', true),
-  ('Utility',         'expense', '⚡', '#7f8c8d', true),
-  ('Abbonamenti',     'expense', '📺', '#4a90d9', true),
-  ('Risparmio',       'expense', '🐷', '#3d9970', true),
-  ('Altro',           'expense', '📋', '#95a5a6', true);
+  ('Casa/Affitto',    'expense', 'Home', '#e05252', true),
+  ('Cibo',            'expense', 'Utensils', '#d4a017', true),
+  ('Trasporti',       'expense', 'Car', '#4a90d9', true),
+  ('Salute',          'expense', 'Heart', '#e05252', true),
+  ('Sport',           'expense', 'Dumbbell', '#3d9970', true),
+  ('Abbigliamento',   'expense', 'Shirt', '#9b59b6', true),
+  ('Intrattenimento', 'expense', 'Film', '#d4a017', true),
+  ('Utility',         'expense', 'Zap', '#7f8c8d', true),
+  ('Abbonamenti',     'expense', 'Tv', '#4a90d9', true),
+  ('Risparmio',       'expense', 'PiggyBank', '#3d9970', true),
+  ('Altro',           'expense', 'Clipboard', '#95a5a6', true);
 
 
 -- =====================================================

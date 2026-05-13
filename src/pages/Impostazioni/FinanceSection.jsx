@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Plus, X, RefreshCw } from 'lucide-react'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
@@ -7,15 +7,15 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Toggle from '@/components/ui/Toggle'
-import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
 import clsx from 'clsx'
+import { ICON_OPTIONS, getIcon } from '@/lib/icons'
 
 function FinanceSection() {
   const { categories, addCategory, removeCategory } = useFinanceStore()
   const { userConfig, setUserConfig } = useAppStore()
   const [showAdd, setShowAdd] = useState(false)
-  const [newCat, setNewCat] = useState({ name: '', type: 'expense', icon: '📋', color: '#95a5a6', is_periodic: false, periodic_amount: '', periodic_day: 1 })
+  const [newCat, setNewCat] = useState({ name: '', type: 'expense', icon: 'Clipboard', color: '#95a5a6', is_periodic: false, periodic_amount: '', periodic_day: 1 })
 
   const incomeCategories = categories.filter((c) => c.type === 'income')
   const expenseCategories = categories.filter((c) => c.type === 'expense')
@@ -126,7 +126,18 @@ function FinanceSection() {
                 <option value="expense">Uscita</option>
               </select>
             </div>
-            <Input label="Icona" value={newCat.icon} onChange={(e) => setNewCat({ ...newCat, icon: e.target.value })} containerClassName="w-20" />
+            <div className="flex-1">
+              <label className="text-sm font-medium text-[var(--text-secondary)] mb-1 block">Icona</label>
+              <select 
+                value={newCat.icon} 
+                onChange={(e) => setNewCat({ ...newCat, icon: e.target.value })}
+                className="w-full h-9 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] text-sm px-3"
+              >
+                {ICON_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
             <div className="w-20">
               <label className="text-sm font-medium text-[var(--text-secondary)] mb-1 block">Colore</label>
               <input type="color" value={newCat.color} onChange={(e) => setNewCat({ ...newCat, color: e.target.value })}
@@ -149,16 +160,17 @@ function FinanceSection() {
 }
 
 function CategoryPill({ cat, onDelete }) {
+  const Icon = getIcon(cat.icon)
   return (
     <span
-      className="inline-flex items-center gap-1 pl-2 pr-1 h-7 rounded-full text-[11px] font-medium
+      className="inline-flex items-center gap-1.5 pl-2 pr-1.5 h-7 rounded-full text-[11px] font-medium
         bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
     >
-      <span>{cat.icon}</span>
+      <Icon size={12} style={{ color: cat.color }} />
       <span>{cat.name}</span>
       {cat.is_periodic && <RefreshCw size={9} className="ml-0.5 opacity-40" />}
       {onDelete && (
-        <button onClick={onDelete} className="ml-0.5 p-0.5 rounded-full hover:bg-black/10 transition-colors">
+        <button onClick={onDelete} className="ml-1 p-0.5 rounded-full hover:bg-black/10 transition-colors">
           <X size={9} />
         </button>
       )}

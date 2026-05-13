@@ -1,4 +1,5 @@
-import { Trash2, CreditCard, Wallet, Edit2 } from 'lucide-react'
+import { Trash2, Edit2, Wallet } from 'lucide-react'
+import { getIcon } from '@/lib/icons'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
@@ -37,15 +38,16 @@ function TransactionList({ transactions, categories, onEdit }) {
     <div className="space-y-2">
       {transactions.map((tx) => {
         const category = categories.find(c => c.id === tx.category_id)
+        const CategoryIcon = category ? getIcon(category.icon) : Wallet
         return (
           <Card key={tx.id} padding="sm" className="group hover:bg-[var(--bg-elevated)] transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={clsx(
-                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[var(--border-subtle)]',
-                  tx.type === 'income' ? 'bg-[#3d997008] text-[#3d9970]' : 'bg-[#e0525208] text-[#e05252]'
+                   'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[var(--border-subtle)]',
+                   tx.type === 'income' ? 'bg-[#3d997008] text-[#3d9970]' : 'bg-[#e0525208] text-[#e05252]'
                 )}>
-                  {tx.method === 'bank' ? <CreditCard size={18} /> : <Wallet size={18} />}
+                  <CategoryIcon size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

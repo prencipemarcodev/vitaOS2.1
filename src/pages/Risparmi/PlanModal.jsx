@@ -6,8 +6,7 @@ import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { toast } from 'sonner'
-
-const ICONS = ['🎯', '🏠', '🚗', '💻', '🌴', '💍', '🍼', '💰', '☂️', '🍔']
+import { ICON_OPTIONS, getIcon } from '@/lib/icons'
 
 function PlanModal({ isOpen, onClose, planToEdit = null }) {
   const { addPlan, updatePlan } = useSavingsStore()
@@ -21,7 +20,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
     monthly_contribution: '',
     target_date: '',
     priority: '2',
-    icon: '🎯',
+    icon: 'Target',
   })
 
   useEffect(() => {
@@ -33,7 +32,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
         monthly_contribution: (planToEdit.monthly_contribution || 0).toString(),
         target_date: planToEdit.target_date || '',
         priority: planToEdit.priority?.toString() || '2',
-        icon: planToEdit.icon || '🎯',
+        icon: planToEdit.icon || 'Target',
       })
     } else {
       setFormData({
@@ -43,7 +42,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
         monthly_contribution: '',
         target_date: '',
         priority: '2',
-        icon: '🎯',
+        icon: 'Target',
       })
     }
   }, [planToEdit, isOpen])
@@ -87,11 +86,11 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
           <div className="flex flex-col items-center gap-1">
             <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Icona</label>
             <select 
-              className="bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-2 py-1.5 text-lg"
+              className="bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-2 py-1.5 text-sm"
               value={formData.icon}
               onChange={e => setFormData({ ...formData, icon: e.target.value })}
             >
-              {ICONS.map(i => <option key={i} value={i}>{i}</option>)}
+              {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
             </select>
           </div>
           <div className="flex-1">

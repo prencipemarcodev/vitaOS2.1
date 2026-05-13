@@ -8,11 +8,13 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { motion } from 'framer-motion'
 import Button from '@/components/ui/Button'
+import { getIcon } from '@/lib/icons'
 
 function PlanCard({ plan, onEdit }) {
   const { updatePlan, removePlan, addMovement } = useSavingsStore()
   const { pushError } = useNotifications()
   const progress = Math.min(100, (plan.current_amount / plan.target_amount) * 100)
+  const Icon = getIcon(plan.icon)
 
   const handleAdjust = async (amount) => {
     const newAmount = Math.max(0, parseFloat(plan.current_amount || 0) + amount)
@@ -59,8 +61,8 @@ function PlanCard({ plan, onEdit }) {
     <Card padding="md" className="group relative overflow-hidden">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="text-3xl bg-[var(--bg-base)] w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border border-[var(--border-subtle)]">
-            {plan.icon || '🎯'}
+          <div className="bg-[var(--bg-base)] w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border border-[var(--border-subtle)]">
+            <Icon size={24} className="text-[var(--color-primary)]" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">

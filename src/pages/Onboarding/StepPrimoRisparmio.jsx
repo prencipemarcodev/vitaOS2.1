@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { PiggyBank, Target, Calendar } from 'lucide-react'
+import { PiggyBank, Target, Calendar, Laptop, Plane, ShieldCheck } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
 import Toggle from '@/components/ui/Toggle'
@@ -136,9 +136,9 @@ function StepPrimoRisparmio({ formData, updateFormData }) {
       {!wantsPlan && (
         <div className="grid grid-cols-3 gap-2">
           {[
-            { icon: '💻', label: 'Gadget' },
-            { icon: '✈️', label: 'Viaggio' },
-            { icon: '🛡️', label: 'Emergenza' },
+            { icon: Laptop, label: 'Gadget' },
+            { icon: Plane, label: 'Viaggio' },
+            { icon: ShieldCheck, label: 'Emergenza' },
           ].map((ex) => (
             <button
               key={ex.label}
@@ -151,7 +151,7 @@ function StepPrimoRisparmio({ formData, updateFormData }) {
                 text-[var(--text-secondary)] hover:text-[var(--text-primary)]
                 transition-colors border border-transparent hover:border-[var(--border-default)]"
             >
-              <span className="text-xl">{ex.icon}</span>
+              <ex.icon size={24} />
               <span className="text-xs font-medium">{ex.label}</span>
             </button>
           ))}
