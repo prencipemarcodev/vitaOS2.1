@@ -62,7 +62,6 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
       } else {
         const { data, error } = await supabase.from('transactions').insert(payload).select().single()
         if (error) throw error
-        addNotification(data) // Wait, addTransaction not addNotification
         addTransaction(data)
         toast.success('Transazione creata')
       }
