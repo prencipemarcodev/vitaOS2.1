@@ -65,9 +65,8 @@ function FloatingPillNav() {
           animate={{ 
             y: 0, 
             opacity: 1,
-            // 195px è la misura per 4 icone + sep + dots
-            // 245px è la misura per 5 icone + sep + X
-            width: moreOpen ? '245px' : '195px'
+            // Dimensioni aumentate per evitare ritagli laterali
+            width: moreOpen ? '265px' : '210px'
           }}
           transition={{ 
             type: 'spring', 
@@ -76,7 +75,7 @@ function FloatingPillNav() {
             layout: { duration: 0.3 }
           }}
           className={clsx(
-            "flex items-center gap-0.5 px-1.5 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-full shadow-[var(--shadow-lg)] overflow-hidden",
+            "flex items-center gap-1 px-3 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-full shadow-[var(--shadow-lg)] overflow-hidden",
           )}
           style={{ height: PILL_HEIGHT }}
         >
@@ -84,11 +83,11 @@ function FloatingPillNav() {
           <div 
             ref={scrollRef}
             className={clsx(
-              "flex items-center gap-0.5 h-full transition-all duration-300",
+              "flex items-center gap-1 h-full transition-all duration-300",
               moreOpen ? "overflow-x-auto scrollbar-hide flex-1 scroll-smooth" : "overflow-hidden shrink-0"
             )}
             style={{ 
-              width: moreOpen ? 'auto' : '150px' // 4 icone da ~38px
+              width: moreOpen ? 'auto' : '160px'
             }}
           >
             <AnimatePresence mode="popLayout" initial={false}>
