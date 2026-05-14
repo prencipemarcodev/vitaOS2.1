@@ -134,17 +134,48 @@ export function useRunTracker() {
 
   // Public Actions
   const requestPermission = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setError('Geolocalizzazione non supportata dal browser')
+      return false
+    }
+
+    // Prova a usare Permissions API se disponibile (Chrome/Android)
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' })
+        if (result.state === 'denied') {
+          setPermissionStatus('denied')
+          setError('Permesso GPS negato nelle impostazioni del browser')
+          return false
+        }
+      } catch (e) { /* Fallback a getCurrentPosition */ }
+    }
+
     return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        setError('Il sistema GPS non risponde. Riprova o controlla le impostazioni.')
+        resolve(false)
+      }, 8000)
+
       navigator.geolocation.getCurrentPosition(
-        () => {
+        (pos) => {
+          clearTimeout(timeout)
           setPermissionStatus('granted')
+          setAccuracy(pos.coords.accuracy)
           resolve(true)
         },
         (err) => {
-          if (err.code === 1) setPermissionStatus('denied')
+          clearTimeout(timeout)
+          console.error('Permission Error:', err)
+          if (err.code === 1) {
+            setPermissionStatus('denied')
+            setError('Permesso GPS negato')
+          } else {
+            setError(`Errore GPS (${err.code}): ${err.message}`)
+          }
           resolve(false)
         },
-        { timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 7000 }
       )
     })
   }, [])

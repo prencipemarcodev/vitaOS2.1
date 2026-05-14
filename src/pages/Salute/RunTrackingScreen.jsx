@@ -48,14 +48,14 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   // --- SCHERMATA 1: RICHIESTA PERMESSO ---
   if (status === 'idle' && countdown === null) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col">
-        <header className="p-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white">
-          <button onClick={onCancel} className="flex items-center gap-1 text-sm font-bold text-[var(--color-primary)]">
-            <ChevronLeft size={18} />
-            Salute
+      <div className="fixed inset-0 z-[200] bg-[var(--bg-base)] flex flex-col">
+        <header className="h-[var(--header-height)] px-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0">
+          <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] hover:opacity-70 transition-opacity">
+            <ChevronLeft size={16} />
+            Torna a Salute
           </button>
-          <h1 className="text-base font-black">Nuova corsa</h1>
-          <div className="w-16" />
+          <h1 className="text-sm font-bold tracking-tight">Nuova corsa</h1>
+          <div className="w-24" />
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -69,11 +69,24 @@ function RunTrackingScreen({ onFinish, onCancel }) {
           </p>
 
           <div className="w-full space-y-3 max-w-xs">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-700 text-[10px] font-bold mb-2">
+                <AlertCircle size={14} className="shrink-0" />
+                {error}
+              </div>
+            )}
+            
             <button 
               onClick={handleStartRequest}
-              className="w-full py-4 bg-[var(--color-primary)] text-white rounded-2xl font-black shadow-lg shadow-[var(--color-primary-ghost)] active:scale-95 transition-all"
+              className={clsx(
+                "w-full py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all",
+                permissionStatus === 'denied' 
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
+                  : "bg-[var(--color-primary)] text-white shadow-[var(--color-primary-ghost)]"
+              )}
+              disabled={permissionStatus === 'denied'}
             >
-              Consenti accesso GPS
+              {permissionStatus === 'denied' ? 'GPS Disabilitato' : 'Consenti accesso GPS'}
             </button>
             <button 
               onClick={onCancel}
