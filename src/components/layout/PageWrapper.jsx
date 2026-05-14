@@ -14,7 +14,7 @@ function PageWrapper({ children, className, noPadding = false }) {
       transition={{ duration: 0.3, ease: 'easeOut' }}
       className={clsx(
         'flex-1 flex flex-col min-h-0',
-        !noPadding && 'p-3 pb-[calc(var(--pill-nav-clearance,76px)+env(safe-area-inset-bottom,0px))] lg:p-4',
+        !noPadding && 'p-3 pb-[calc(var(--pill-nav-clearance,46px)+env(safe-area-inset-bottom,0px))] lg:p-4',
         'h-full overflow-y-auto',
         className
       )}
