@@ -42,7 +42,7 @@ function Risparmi() {
       />
 
       <PageWrapper>
-        <div className="space-y-6 h-full flex flex-col overflow-hidden">
+        <div className="space-y-4 lg:h-full flex flex-col lg:overflow-hidden">
           {/* Summary Hero */}
           <Card padding="lg" className="bg-gradient-to-br from-[var(--color-primary)] to-[#3d9970] text-white border-0 shadow-lg shrink-0">
             <div className="flex items-center justify-between">
@@ -65,9 +65,9 @@ function Risparmi() {
             <SmartAdvicePanel />
 
             {/* Right Column: Plans List */}
-            <div className="lg:col-span-2 flex flex-col h-full min-h-0">
+            <div className="lg:col-span-2 flex flex-col lg:h-full min-h-0">
               <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">I tuoi Obiettivi</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto pr-1 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:overflow-y-auto pr-1 pb-4">
                 {plans.map(plan => (
                   <PlanCard 
                     key={plan.id} 

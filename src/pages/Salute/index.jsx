@@ -22,7 +22,7 @@ function Salute() {
     <>
       <Header title="Salute" showNotification />
       <PageWrapper>
-        <div className="space-y-4 h-full flex flex-col overflow-hidden">
+        <div className="space-y-4 lg:h-full flex flex-col lg:overflow-hidden">
           {/* Top KPI Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
             <StatCard label="Peso Attuale" value={`${stats.lastWeight} kg`} icon={Ruler} color="#4a90d9" />
@@ -38,7 +38,7 @@ function Salute() {
             </div>
 
             {/* Right: Charts & Heatmap */}
-            <div className="lg:col-span-2 space-y-4 overflow-y-auto pr-1 pb-4">
+            <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
               <WorkoutHeatmap sessions={workoutSessions} />
               <RunStats sessions={workoutSessions} />
               

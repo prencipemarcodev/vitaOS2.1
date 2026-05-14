@@ -48,9 +48,9 @@ function Firme() {
       />
       
       <PageWrapper>
-        <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 h-full overflow-hidden">
+        <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 lg:h-full lg:overflow-hidden">
           {/* Colonna Sinistra: KPI + Chart */}
-          <div className="lg:col-span-2 space-y-4 flex flex-col h-full overflow-hidden">
+          <div className="lg:col-span-2 space-y-4 flex flex-col lg:h-full lg:overflow-hidden">
             <WorkStats sessions={sessions} userConfig={userConfig} />
             <div className="flex-1 min-h-0">
               <WorkChart sessions={sessions} userConfig={userConfig} />
@@ -58,7 +58,7 @@ function Firme() {
           </div>
 
           {/* Colonna Destra: Log */}
-          <div className="h-full overflow-y-auto pr-1">
+          <div className="lg:h-full lg:overflow-y-auto pr-1">
             <WorkLog sessions={sessions} onEdit={handleEdit} />
           </div>
         </div>
