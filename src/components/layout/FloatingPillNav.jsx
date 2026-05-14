@@ -44,7 +44,7 @@ function FloatingPillNav() {
       <nav
         className="lg:hidden fixed z-[110]"
         style={{
-          bottom: `calc(12px + env(safe-area-inset-bottom, 0px))`,
+          bottom: '16px',
           left: '50%',
           transform: 'translateX(-50%)',
         }}
@@ -133,7 +133,7 @@ function MoreDrawer({ onClose }) {
         key="more-drawer"
         className="fixed left-0 right-0 z-[130] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-[24px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]"
         style={{
-          bottom: `calc(${PILL_HEIGHT}px + 20px)`,
+          bottom: `calc(${PILL_HEIGHT}px + 24px)`,
         }}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
