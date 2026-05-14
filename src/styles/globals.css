@@ -14,7 +14,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, #root {
-  height: 100%;
+  min-height: 100dvh;
   margin: 0;
   overscroll-behavior: none;
   background-color: var(--bg-base);
