@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import clsx from 'clsx'
 import { Edit2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
