@@ -18,7 +18,7 @@ function HealthPreview({ workouts = [], userConfig }) {
   const kmPct = runGoal > 0 ? Math.min((totalKm / runGoal) * 100, 100) : 0
 
   return (
-    <Card padding="md" className="min-h-0 flex flex-col">
+    <Card padding="sm" className="min-h-0 flex flex-col">
       <p className="text-xs font-medium text-[var(--text-primary)] mb-2 shrink-0">Salute</p>
 
       <div className="grid grid-cols-2 gap-3 flex-1">

@@ -65,13 +65,13 @@ function FloatingPillNav() {
           animate={{ 
             y: 0, 
             opacity: 1,
-            width: moreOpen ? '320px' : 'auto'
+            width: moreOpen ? '280px' : '230px'
           }}
           transition={{ 
             type: 'spring', 
-            stiffness: 400, 
-            damping: 30,
-            layout: { duration: 0.3 }
+            stiffness: 350, 
+            damping: 35,
+            layout: { duration: 0.35 }
           }}
           className={clsx(
             "flex items-center gap-1 px-2 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-full shadow-[var(--shadow-lg)] overflow-hidden",
@@ -134,9 +134,9 @@ function PillButton({ icon: Icon, isActive, onClick, label }) {
       whileHover={{ scale: 1.05 }}
       onClick={onClick}
       className={clsx(
-        'w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200',
+        'w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300',
         isActive
-          ? 'bg-[var(--text-primary)] text-white shadow-md'
+          ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
           : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]'
       )}
     >
