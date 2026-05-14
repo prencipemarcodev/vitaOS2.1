@@ -91,7 +91,7 @@ function Impostazioni() {
           </div>
 
           {/* ── Contenuto Sezione ── */}
-          <main className="flex-1 overflow-y-auto bg-[var(--bg-base)] p-5 lg:p-10">
+          <main className="flex-1 overflow-y-auto bg-[var(--bg-base)] p-5 pb-[calc(var(--pill-nav-clearance)+env(safe-area-inset-bottom,0px))] lg:p-10 lg:pb-10">
             <div className="max-w-3xl mx-auto">
               <header className="mb-8">
                 <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-1">
