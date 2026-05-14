@@ -11,7 +11,7 @@ function RunStats({ sessions }) {
       .reverse()
       .map(s => ({
         date: format(new Date(s.date), 'dd/MM'),
-        distance: s.distance_km || 0,
+        distance: s.run_distance_km || s.distance_km || 0,
         fullDate: format(new Date(s.date), 'dd MMMM yyyy')
       }))
   }, [sessions])

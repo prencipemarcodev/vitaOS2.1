@@ -1,26 +1,55 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useHealthStore } from '@/store/useHealthStore'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 import GlobeProgress from './GlobeProgress'
 import WorkoutHeatmap from './WorkoutHeatmap'
 import RunStats from './RunStats'
-import { Activity, Dumbbell, Ruler, Flame } from 'lucide-react'
+import { Activity, Dumbbell, Ruler, Flame, Play } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
+import RunTrackingScreen from './RunTrackingScreen'
+import RunSummaryModal from './RunSummaryModal'
 
 function Salute() {
   const { workoutSessions, weightLog, gymSchedules, loading } = useHealthStore()
+  const [isTracking, setIsTracking] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
+  const [lastTracker, setLastTracker] = useState(null)
 
   const stats = useMemo(() => {
-    const totalKm = workoutSessions.filter(s => s.type === 'corsa').reduce((s, sess) => s + (sess.distance_km || 0), 0)
+    const totalKm = workoutSessions.filter(s => s.type === 'corsa').reduce((s, sess) => s + (sess.run_distance_km || 0), 0)
     const lastWeight = weightLog[0]?.weight || '--'
     const totalWorkouts = workoutSessions.length
     return { totalKm, lastWeight, totalWorkouts }
   }, [workoutSessions, weightLog])
 
+  const handleFinishRun = (tracker) => {
+    setLastTracker(tracker)
+    setIsTracking(false)
+    setShowSummary(true)
+  }
+
   return (
     <>
-      <Header title="Salute" showNotification />
+      <Header 
+        title="Salute" 
+        showNotification 
+        actions={
+          <Button 
+            variant="primary" 
+            size="sm" 
+            icon={Play} 
+            onClick={() => setIsTracking(true)}
+            className="!rounded-full font-bold shadow-lg"
+          >
+            Inizia Corsa
+          </Button>
+        }
+      />
+      
       <PageWrapper>
         <div className="space-y-4 lg:h-full flex flex-col lg:overflow-hidden">
           {/* Top KPI Row */}
@@ -59,6 +88,23 @@ function Salute() {
           </div>
         </div>
       </PageWrapper>
+
+      {/* Fullscreen Tracking */}
+      <AnimatePresence>
+        {isTracking && (
+          <RunTrackingScreen 
+            onFinish={handleFinishRun} 
+            onCancel={() => setIsTracking(false)} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Summary Modal */}
+      <RunSummaryModal 
+        isOpen={showSummary} 
+        onClose={() => setShowSummary(false)} 
+        tracker={lastTracker} 
+      />
     </>
   )
 }
@@ -77,5 +123,4 @@ function StatCard({ label, value, icon: Icon, color }) {
   )
 }
 
-import Badge from '@/components/ui/Badge'
 export default Salute
