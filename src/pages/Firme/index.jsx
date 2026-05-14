@@ -59,7 +59,7 @@ function Firme() {
 
           {/* Colonna Destra: Log */}
           <div className="lg:h-full lg:overflow-y-auto pr-1">
-            <WorkLog sessions={sessions} onEdit={handleEdit} />
+            <WorkLog sessions={sessions} onEdit={handleEdit} userConfig={userConfig} />
           </div>
         </div>
       </PageWrapper>

@@ -7,9 +7,23 @@ import { toast } from 'sonner'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 
-function WorkLog({ sessions, onEdit }) {
+import { calculateOvertime } from '@/lib/workCalculations'
+
+function WorkLog({ sessions, onEdit, userConfig }) {
   const { removeSession } = useFirmeStore()
   const { pushError } = useNotifications()
+
+  // Programma di default
+  const defaultSchedule = {
+    monday: { start: '09:00', end: '18:00', active: true },
+    tuesday: { start: '09:00', end: '18:00', active: true },
+    wednesday: { start: '09:00', end: '18:00', active: true },
+    thursday: { start: '09:00', end: '18:00', active: true },
+    friday: { start: '09:00', end: '18:00', active: true },
+    saturday: { start: '09:00', end: '13:00', active: false },
+    sunday: { start: '09:00', end: '13:00', active: false },
+  }
+  const schedule = userConfig?.work_schedule || defaultSchedule
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa sessione?')) return
@@ -34,25 +48,29 @@ function WorkLog({ sessions, onEdit }) {
   return (
     <div className="space-y-2">
       <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest px-1 mb-2">Storico Registrazioni</h3>
-      {sessions.map((session) => (
-        <Card key={session.id} padding="sm" className="group hover:bg-[var(--bg-elevated)] transition-colors border border-transparent hover:border-[var(--border-subtle)]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--bg-base)] flex flex-col items-center justify-center border border-[var(--border-subtle)] shrink-0 shadow-sm">
-                <span className="text-[11px] font-bold text-[var(--text-primary)] leading-none">
-                  {new Date(session.date).toLocaleDateString('it-IT', { day: '2-digit' })}
-                </span>
-                <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase">
-                  {new Date(session.date).toLocaleDateString('it-IT', { month: 'short' })}
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-[var(--text-primary)]">
-                    {formatDuration(session.duration_minutes)}
-                  </p>
-                  {session.manual_entry && <Badge variant="subtle" className="text-[7px] px-1 py-0 uppercase bg-[var(--bg-base)]">Manuale</Badge>}
+      {sessions.map((session) => {
+        const { overtime } = calculateOvertime(session.date, session.check_in, session.check_out, schedule)
+        
+        return (
+          <Card key={session.id} padding="sm" className="group hover:bg-[var(--bg-elevated)] transition-colors border border-transparent hover:border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[var(--bg-base)] flex flex-col items-center justify-center border border-[var(--border-subtle)] shrink-0 shadow-sm">
+                  <span className="text-[11px] font-bold text-[var(--text-primary)] leading-none">
+                    {new Date(session.date).toLocaleDateString('it-IT', { day: '2-digit' })}
+                  </span>
+                  <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase">
+                    {new Date(session.date).toLocaleDateString('it-IT', { month: 'short' })}
+                  </span>
                 </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-[var(--text-primary)]">
+                      {formatDuration(session.duration_minutes)}
+                    </p>
+                    {overtime > 0 && <Badge variant="warning" className="text-[7px] px-1 py-0 uppercase">+{formatDuration(overtime)} Extra</Badge>}
+                    {session.manual_entry && <Badge variant="subtle" className="text-[7px] px-1 py-0 uppercase bg-[var(--bg-base)]">Manuale</Badge>}
+                  </div>
                 <div className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-tight">
                   <span>{session.check_in ? session.check_in.substring(0, 5) : '--:--'}</span>
                   <span className="opacity-30">→</span>
@@ -78,9 +96,9 @@ function WorkLog({ sessions, onEdit }) {
                 <Trash2 size={15} />
               </button>
             </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        )
+      })}
     </div>
   )
 }
