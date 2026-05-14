@@ -126,3 +126,12 @@ a {
   animation: shimmer-border 3s infinite ease-in-out;
   border-width: 1.5px !important;
 }
+
+/* ── Hide Scrollbar ── */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
