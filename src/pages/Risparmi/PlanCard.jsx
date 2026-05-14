@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Edit2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
@@ -10,11 +11,30 @@ import { motion } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import { getIcon } from '@/lib/icons'
 
+import { useFinanceStore } from '@/store/useFinanceStore'
+import { useAppStore } from '@/store/useAppStore'
+import { useNotificationStore } from '@/store/useNotificationStore'
+
 function PlanCard({ plan, onEdit }) {
   const { updatePlan, removePlan, addMovement } = useSavingsStore()
+  const { transactions } = useFinanceStore()
+  const { userConfig } = useAppStore()
+  const { addNotification } = useNotificationStore()
   const { pushError } = useNotifications()
+  
   const progress = Math.min(100, (plan.current_amount / plan.target_amount) * 100)
   const Icon = getIcon(plan.icon)
+
+  // Calcolo saldo totale disponibile
+  const saldo = useMemo(() => {
+    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+    const bankBase = parseFloat(userConfig?.initial_bank_balance) || 0
+    const cashBase = parseFloat(userConfig?.initial_cash_balance) || 0
+    return bankBase + cashBase + income - expense
+  }, [transactions, userConfig])
+
+  const canDeposit = saldo >= 50
 
   const handleAdjust = async (amount) => {
     const newAmount = Math.max(0, parseFloat(plan.current_amount || 0) + amount)
@@ -43,6 +63,16 @@ function PlanCard({ plan, onEdit }) {
       if (movement) addMovement(movement)
       
       toast.success(amount > 0 ? `Depositati €${amount}` : `Prelevati €${Math.abs(amount)}`)
+
+      // Aggiunge notifica persistente nel pannello
+      addNotification({
+        title: amount > 0 ? 'Deposito Risparmi' : 'Prelievo Risparmi',
+        message: amount > 0 
+          ? `Hai aggiunto ${formatCurrency(amount)} a "${plan.name}"`
+          : `Hai prelevato ${formatCurrency(Math.abs(amount))} da "${plan.name}"`,
+        type: amount > 0 ? 'success' : 'info',
+        icon: 'PiggyBank'
+      })
     } catch (err) {
       pushError('Errore nell\'aggiornamento')
     }
@@ -116,6 +146,8 @@ function PlanCard({ plan, onEdit }) {
           className="flex-1 text-[10px] font-bold h-8"
           onClick={() => handleAdjust(50)}
           icon={Plus}
+          disabled={!canDeposit}
+          title={!canDeposit ? 'Saldo insufficiente' : ''}
         >
           50€
         </Button>
