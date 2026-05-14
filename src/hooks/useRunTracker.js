@@ -45,6 +45,24 @@ export function useRunTracker() {
     }
   }, [])
 
+  // Screen Wake Lock
+  const acquireWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen')
+      }
+    } catch (e) {
+      console.warn('WakeLock non supportato')
+    }
+  }, [])
+
+  const releaseWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release()
+      wakeLockRef.current = null
+    }
+  }, [])
+
   // Geolocation Callback
   const onPosition = useCallback((position) => {
     const { latitude, longitude, altitude, speed, accuracy: acc } = position.coords
@@ -190,8 +208,8 @@ export function useRunTracker() {
 
   return {
     status, error, elapsed, distanceKm,
-    currentPace, currentSpeed, avgPace, calories, elevationGain,
-    polyline, splits,
-    start, pause, resume, finish, reset
+    currentPace, currentSpeed, maxSpeed, avgPace, calories, elevationGain,
+    polyline, splits, permissionStatus, accuracy,
+    start, pause, resume, finish, reset, requestPermission
   }
 }
