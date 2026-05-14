@@ -71,7 +71,10 @@ function SmartAdvicePanel() {
               <div className="space-y-2">
                 {advice.allocations.map((alloc, idx) => {
                   const plan = plans.find(p => p.id === alloc.plan_id)
-                  const progress = plan ? (parseFloat(plan.current_amount || 0) / parseFloat(plan.target_amount)) * 100 : 0
+                  const isGoal = plan?.type !== 'piggy_bank'
+                  const progress = (isGoal && plan?.target_amount) 
+                    ? (parseFloat(plan.current_amount || 0) / parseFloat(plan.target_amount)) * 100 
+                    : 0
                   
                   return (
                     <motion.div 
@@ -109,7 +112,6 @@ function SmartAdvicePanel() {
               Applica distribuzione
             </Button>
           </div>
-        )}
       </Card>
     </div>
   )
