@@ -1,127 +1,293 @@
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, Square, AlertCircle, MapPin } from 'lucide-react'
+import { 
+  Play, Pause, Square, AlertCircle, MapPin, 
+  ChevronLeft, Navigation, Info, Zap
+} from 'lucide-react'
 import { useRunTracker } from '@/hooks/useRunTracker'
-import { formatPace, formatDuration } from '@/lib/runCalculations'
+import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
 import RunMap from './RunMap'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import clsx from 'clsx'
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 
 function RunTrackingScreen({ onFinish, onCancel }) {
   const tracker = useRunTracker()
   const { 
     status, error, elapsed, distanceKm, 
-    currentPace, calories, polyline,
-    start, pause, resume, finish 
+    currentPace, currentSpeed, calories, elevationGain,
+    polyline, splits, permissionStatus, accuracy,
+    start, pause, resume, finish, requestPermission
   } = tracker
 
-  // Avvio automatico al mount se in attesa
-  if (status === 'idle') {
-    start()
+  const [countdown, setCountdown] = useState(null)
+
+  // Countdown logic
+  useEffect(() => {
+    if (countdown === null) return
+    if (countdown > 0) {
+      const t = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(t)
+    } else {
+      start()
+      setCountdown(null)
+    }
+  }, [countdown])
+
+  const handleStartRequest = async () => {
+    const ok = await requestPermission()
+    if (ok) {
+      setCountdown(3)
+    }
   }
 
-  const handleFinish = () => {
-    finish()
-    onFinish(tracker)
-  }
+  // --- SCHERMATA 1: RICHIESTA PERMESSO ---
+  if (status === 'idle' && countdown === null) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col">
+        <header className="p-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white">
+          <button onClick={onCancel} className="flex items-center gap-1 text-sm font-bold text-[var(--color-primary)]">
+            <ChevronLeft size={18} />
+            Salute
+          </button>
+          <h1 className="text-base font-black">Nuova corsa</h1>
+          <div className="w-16" />
+        </header>
 
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col p-4 md:p-6"
-    >
-      {/* Header Statistiche */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="flex flex-col items-center justify-center p-6 bg-[var(--bg-elevated)] rounded-3xl border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Distanza (KM)</p>
-          <p className="text-4xl font-black text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-            {distanceKm.toFixed(2)}
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-24 h-24 rounded-full bg-[var(--color-primary-ghost)] flex items-center justify-center text-[var(--color-primary)] mb-8">
+            <Navigation size={40} className="rotate-45" />
+          </div>
+          
+          <h2 className="text-2xl font-black mb-4">Accesso posizione</h2>
+          <p className="text-sm text-[var(--text-muted)] max-w-xs mb-10 leading-relaxed">
+            VitaOS ha bisogno del GPS per registrare il percorso e i dati della corsa.
           </p>
-        </div>
-        <div className="flex flex-col items-center justify-center p-6 bg-[var(--bg-elevated)] rounded-3xl border border-[var(--border-subtle)]">
-          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Passo Ist.</p>
-          <p className="text-4xl font-black text-[var(--color-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-            {formatPace(currentPace)}
+
+          <div className="w-full space-y-3 max-w-xs">
+            <button 
+              onClick={handleStartRequest}
+              className="w-full py-4 bg-[var(--color-primary)] text-white rounded-2xl font-black shadow-lg shadow-[var(--color-primary-ghost)] active:scale-95 transition-all"
+            >
+              Consenti accesso GPS
+            </button>
+            <button 
+              onClick={onCancel}
+              className="w-full py-4 bg-[var(--bg-elevated)] text-[var(--text-muted)] rounded-2xl font-bold active:scale-95 transition-all"
+            >
+              Non adesso
+            </button>
+          </div>
+
+          <p className="mt-12 text-[10px] text-[var(--text-muted)] max-w-[200px]">
+            La posizione viene usata solo durante la corsa e non viene condivisa.
           </p>
         </div>
       </div>
+    )
+  }
 
-      {/* Main Counter */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-        <div className="relative">
-          <motion.p 
-            animate={{ scale: status === 'running' ? [1, 1.02, 1] : 1 }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="text-7xl font-black text-[var(--text-primary)] leading-none mb-2"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            {formatDuration(elapsed)}
-          </motion.p>
-          {status === 'waiting_gps' && (
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 bg-[var(--color-warning-ghost)] text-[var(--color-warning)] rounded-full border border-[var(--color-warning)] animate-pulse">
-              <MapPin size={12} />
-              <span className="text-[10px] font-bold uppercase">Acquisizione GPS...</span>
+  // --- COUNTDOWN ---
+  if (countdown !== null) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[var(--color-primary)] flex items-center justify-center">
+        <motion.span 
+          key={countdown}
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1.5, opacity: 1 }}
+          exit={{ scale: 2, opacity: 0 }}
+          className="text-9xl font-black text-white"
+        >
+          {countdown === 0 ? 'GO!' : countdown}
+        </motion.span>
+      </div>
+    )
+  }
+
+  // --- SCHERMATA 2: ATTESA SEGNALE ---
+  if (status === 'waiting_gps') {
+    return (
+      <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col">
+        <header className="p-4 text-center border-b border-[var(--border-subtle)] bg-white">
+          <h1 className="text-sm font-bold uppercase tracking-widest text-[var(--text-muted)]">In attesa GPS</h1>
+        </header>
+
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="relative w-32 h-32 mb-8">
+            <div className="absolute inset-0 border-4 border-[var(--border-subtle)] rounded-full" />
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+              className="absolute inset-0 border-4 border-t-[var(--color-primary)] rounded-full"
+            />
+          </div>
+
+          <h2 className="text-xl font-black mb-2">Acquisendo segnale...</h2>
+          <p className="text-xs text-[var(--text-muted)] mb-10">Vai all'aperto per una migliore ricezione GPS</p>
+
+          <Card padding="md" className="w-full max-w-xs grid grid-cols-3 gap-2">
+            <div className="text-center border-r border-[var(--border-subtle)]">
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Precisione</p>
+              <p className="text-xs font-black">±{Math.round(accuracy || 0)}m</p>
+            </div>
+            <div className="text-center border-r border-[var(--border-subtle)]">
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Satelliti</p>
+              <p className="text-xs font-black text-green-500">{accuracy < 20 ? 'Ottimo' : 'Fixing...'}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Stato</p>
+              <div className="flex items-center justify-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                <span className="text-[10px] font-bold uppercase">Fix...</span>
+              </div>
+            </div>
+          </Card>
+
+          {isIOS && (
+            <div className="mt-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex gap-3 text-left max-w-xs">
+              <Info size={18} className="text-orange-500 shrink-0" />
+              <p className="text-[10px] text-orange-800 leading-normal">
+                Su iOS tieni lo schermo acceso durante tutta la corsa per non interrompere il tracking.
+              </p>
             </div>
           )}
         </div>
-        
-        <div className="flex gap-8 mt-4 text-[var(--text-muted)]">
-          <div className="text-center">
-            <p className="text-[10px] font-bold uppercase mb-0.5">Calorie</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">{calories} <span className="text-xs font-medium">kcal</span></p>
-          </div>
+      </div>
+    )
+  }
+
+  // --- SCHERMATA 3 & 4: RUNNING & PAUSED ---
+  return (
+    <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col">
+      {/* Header Status */}
+      <header className="px-6 py-4 flex items-center justify-between bg-white border-b border-[var(--border-subtle)]">
+        <div className="flex items-center gap-2">
+          <div className={clsx("w-2 h-2 rounded-full", status === 'running' ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+            {status === 'running' ? 'GPS Attivo' : 'In pausa'}
+          </span>
         </div>
+        <div className="text-xl font-black tabular-nums">
+          {formatDuration(elapsed)}
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+        <AnimatePresence mode="wait">
+          {status === 'running' ? (
+            <motion.div 
+              key="running"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-4"
+            >
+              <Card padding="lg" className="text-center">
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">Distanza</p>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-black tabular-nums">{distanceKm.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-[var(--text-muted)]">km</span>
+                </div>
+              </Card>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card padding="md">
+                  <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Passo</p>
+                  <p className="text-xl font-black tabular-nums">{formatPace(currentPace)} <span className="text-xs font-bold text-[var(--text-muted)]">/km</span></p>
+                </Card>
+                <Card padding="md">
+                  <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Velocità</p>
+                  <p className="text-xl font-black tabular-nums">{calcAvgSpeed(distanceKm, elapsed)} <span className="text-xs font-bold text-[var(--text-muted)]">km/h</span></p>
+                </Card>
+                <Card padding="md">
+                  <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Calorie</p>
+                  <p className="text-xl font-black tabular-nums text-orange-500">{calories} <span className="text-xs font-bold text-[var(--text-muted)]">kcal</span></p>
+                </Card>
+                <Card padding="md">
+                  <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Dislivello</p>
+                  <p className="text-xl font-black tabular-nums text-green-600">+{elevationGain} <span className="text-xs font-bold text-[var(--text-muted)]">m</span></p>
+                </Card>
+              </div>
+
+              <div className="h-64 rounded-3xl overflow-hidden border border-[var(--border-subtle)] shadow-sm">
+                <RunMap polyline={polyline} isLive={true} height={256} />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="paused"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="flex flex-col items-center py-12"
+            >
+              <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">Corsa in pausa</h2>
+              <p className="text-6xl font-black mb-12">{distanceKm.toFixed(2)} <span className="text-2xl">km</span></p>
+
+              {/* Splits List with visual bars */}
+              <div className="w-full max-w-xs space-y-4">
+                <div className="flex items-center justify-between px-2 text-[10px] font-bold text-[var(--text-muted)] uppercase">
+                  <span>Km</span>
+                  <span>Pace</span>
+                </div>
+                {splits.slice(-3).map((s, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <span className="text-xs font-bold w-8 text-[var(--text-muted)]">{s.km} km</span>
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, (300/s.pace_sec) * 100)}%` }}
+                        className="h-full bg-orange-400"
+                      />
+                    </div>
+                    <span className="text-xs font-black tabular-nums">{formatPace(s.pace_sec)}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Mappa Mini */}
-      <div className="h-48 mb-6 relative group">
-        <RunMap polyline={polyline} isLive={true} height={192} />
-        <div className="absolute top-3 left-3 bg-[var(--bg-base)]/80 backdrop-blur-sm px-2 py-1 rounded-md border border-[var(--border-subtle)] text-[8px] font-bold uppercase pointer-events-none">
-          Live Track
-        </div>
-      </div>
-
-      {/* Alert Errori */}
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 text-xs">
-          <AlertCircle size={14} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Controlli */}
-      <div className="flex items-center justify-center gap-6 pb-4">
-        {status === 'paused' && (
-          <Button 
-            variant="danger" 
-            size="lg" 
-            icon={Square} 
-            className="w-16 h-16 !rounded-full !p-0 shadow-lg" 
-            onClick={handleFinish}
-          />
-        )}
-        
-        <Button 
-          variant={status === 'paused' ? 'primary' : 'secondary'}
-          size="lg"
-          icon={status === 'paused' ? Play : Pause}
-          className="w-20 h-20 !rounded-full !p-0 shadow-xl border-4 border-white"
-          onClick={status === 'paused' ? resume : pause}
-        />
-
-        {status === 'paused' ? (
-          <button 
-            onClick={onCancel}
-            className="text-[11px] font-bold text-[var(--text-muted)] uppercase hover:text-[var(--text-primary)] transition-colors"
-          >
-            Annulla
-          </button>
+      {/* Controls Footer */}
+      <footer className="p-8 bg-white border-t border-[var(--border-subtle)] flex items-center justify-center gap-6">
+        {status === 'running' ? (
+          <>
+            <button 
+              onClick={pause}
+              className="w-16 h-16 rounded-full border-2 border-orange-500 flex items-center justify-center text-orange-500 active:scale-90 transition-transform"
+            >
+              <Pause size={24} />
+            </button>
+            <button 
+              onClick={() => { pause(); }} // Stop logic triggers confirmation if needed, here we go direct for now
+              className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-100 active:scale-90 transition-transform"
+            >
+              <Square size={24} />
+            </button>
+          </>
         ) : (
-          <div className="w-16" /> // spacer per centrare il play/pause
+          <>
+            <button 
+              onClick={resume}
+              className="px-8 py-4 bg-orange-500 text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-orange-100 active:scale-95 transition-transform"
+            >
+              <Play size={20} fill="currentColor" />
+              Riprendi
+            </button>
+            <button 
+              onClick={() => onFinish(tracker)}
+              className="px-8 py-4 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black flex items-center gap-2 active:scale-95 transition-transform"
+            >
+              <Zap size={20} />
+              Termina
+            </button>
+          </>
         )}
-      </div>
-    </motion.div>
+      </footer>
+    </div>
   )
 }
 
