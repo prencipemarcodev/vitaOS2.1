@@ -36,11 +36,24 @@ function Overview() {
     // Ore lavorate
     const totalMinutes = sessions.reduce((s, sess) => s + (sess.duration_minutes || 0), 0)
 
-    // Prossimo evento
-    const today = format(new Date(), 'yyyy-MM-dd')
+    // Prossimo evento (Smart)
+    const now = new Date()
+    const todayStr = format(now, 'yyyy-MM-dd')
+    const currentTimeStr = format(now, 'HH:mm')
+    
     const upcoming = events
-      .filter(e => e.date >= today)
-      .sort((a, b) => a.date.localeCompare(b.date))
+      .filter(e => {
+        if (e.date > todayStr) return true
+        if (e.date === todayStr) {
+          if (e.all_day) return true
+          return (e.start_time || '00:00') >= currentTimeStr
+        }
+        return false
+      })
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date)
+        return (a.start_time || '00:00').localeCompare(b.start_time || '00:00')
+      })
 
     // Risparmio attivo
     const activePlan = plans.find(p => p.is_active) || null
