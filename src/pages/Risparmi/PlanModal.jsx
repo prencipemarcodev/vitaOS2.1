@@ -15,6 +15,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
   
   const [formData, setFormData] = useState({
     name: '',
+    type: 'goal', // 'goal' o 'piggy_bank'
     target_amount: '',
     current_amount: '0',
     monthly_contribution: '',
@@ -27,7 +28,8 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
     if (planToEdit) {
       setFormData({
         name: planToEdit.name,
-        target_amount: planToEdit.target_amount.toString(),
+        type: planToEdit.type || 'goal',
+        target_amount: (planToEdit.target_amount || '').toString(),
         current_amount: (planToEdit.current_amount || 0).toString(),
         monthly_contribution: (planToEdit.monthly_contribution || 0).toString(),
         target_date: planToEdit.target_date || '',
@@ -37,6 +39,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
     } else {
       setFormData({
         name: '',
+        type: 'goal',
         target_amount: '',
         current_amount: '0',
         monthly_contribution: '',
@@ -54,11 +57,11 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
     try {
       const payload = {
         ...formData,
-        target_amount: parseFloat(formData.target_amount),
+        target_amount: formData.type === 'piggy_bank' ? null : parseFloat(formData.target_amount),
         current_amount: parseFloat(formData.current_amount || 0),
-        monthly_contribution: parseFloat(formData.monthly_contribution || 0),
+        monthly_contribution: formData.type === 'piggy_bank' ? 0 : parseFloat(formData.monthly_contribution || 0),
         priority: parseInt(formData.priority),
-        target_date: formData.target_date || null, // Fix for 400 error
+        target_date: formData.type === 'piggy_bank' ? null : (formData.target_date || null),
       }
       
       if (planToEdit) {
@@ -83,7 +86,31 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={planToEdit ? 'Modifica Piano' : 'Nuova Piano Risparmio'}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        {/* Tipo di Piano */}
+        <div className="flex bg-[var(--bg-base)] p-1 rounded-xl border border-[var(--border-subtle)]">
+          <button
+            type="button"
+            className={clsx(
+              "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+              formData.type === 'goal' ? "bg-white shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)]"
+            )}
+            onClick={() => setFormData({ ...formData, type: 'goal' })}
+          >
+            Obiettivo
+          </button>
+          <button
+            type="button"
+            className={clsx(
+              "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
+              formData.type === 'piggy_bank' ? "bg-white shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)]"
+            )}
+            onClick={() => setFormData({ ...formData, type: 'piggy_bank', icon: 'PiggyBank' })}
+          >
+            Salvadanaio
+          </button>
+        </div>
+
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center gap-1">
             <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Icona</label>
@@ -97,8 +124,8 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
           </div>
           <div className="flex-1">
             <Input 
-              label="Nome Obiettivo" 
-              placeholder="Es: Casa nuova" 
+              label="Nome" 
+              placeholder={formData.type === 'piggy_bank' ? "Es: Spiccioli" : "Es: Casa nuova"} 
               required 
               value={formData.name} 
               onChange={e => setFormData({ ...formData, name: e.target.value })} 
@@ -106,31 +133,35 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input 
-            label="Target (€)" 
-            type="number" 
-            required 
-            placeholder="5000"
-            value={formData.target_amount} 
-            onChange={e => setFormData({ ...formData, target_amount: e.target.value })} 
-          />
-          <Input 
-            label="Contributo Mensile (€)" 
-            type="number" 
-            placeholder="100"
-            value={formData.monthly_contribution} 
-            onChange={e => setFormData({ ...formData, monthly_contribution: e.target.value })} 
-          />
-        </div>
+        {formData.type === 'goal' && (
+          <div className="grid grid-cols-2 gap-4">
+            <Input 
+              label="Target (€)" 
+              type="number" 
+              required 
+              placeholder="5000"
+              value={formData.target_amount} 
+              onChange={e => setFormData({ ...formData, target_amount: e.target.value })} 
+            />
+            <Input 
+              label="Contributo Mensile (€)" 
+              type="number" 
+              placeholder="100"
+              value={formData.monthly_contribution} 
+              onChange={e => setFormData({ ...formData, monthly_contribution: e.target.value })} 
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
-          <Input 
-            label="Data Scadenza" 
-            type="date" 
-            value={formData.target_date} 
-            onChange={e => setFormData({ ...formData, target_date: e.target.value })} 
-          />
+          {formData.type === 'goal' && (
+            <Input 
+              label="Data Scadenza" 
+              type="date" 
+              value={formData.target_date} 
+              onChange={e => setFormData({ ...formData, target_date: e.target.value })} 
+            />
+          )}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[var(--text-secondary)]">Priorità</label>
             <select 

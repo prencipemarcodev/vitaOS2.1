@@ -8,121 +8,113 @@ export function calculateSmartAdvice({
   userConfig, 
   transactions, 
   plans, 
-  selectedMonth 
+  selectedMonth,
+  totalBalance = 0 // Nuovo parametro: saldo reale totale
 }) {
   if (!userConfig || !plans || plans.length === 0) return null
 
   const monthStart = startOfMonth(parseISO(selectedMonth))
   const monthEnd = endOfMonth(monthStart)
 
-  // 1. CALCOLO SURPLUS
-  // Entrate effettive registrate nel mese
+  // 1. CALCOLO SURPLUS E STATO LIQUIDITÀ
   const actualIncome = transactions
     .filter(t => t.type === 'income' && isWithinInterval(parseISO(t.date), { start: monthStart, end: monthEnd }))
     .reduce((sum, t) => sum + parseFloat(t.amount), 0)
 
-  // Uscite effettive registrate nel mese
   const actualExpenses = transactions
     .filter(t => t.type === 'expense' && isWithinInterval(parseISO(t.date), { start: monthStart, end: monthEnd }))
     .reduce((sum, t) => sum + parseFloat(t.amount), 0)
 
-  // Reddito netto mensile configurato (fallback se non ci sono transazioni income ancora)
   const baseIncome = parseFloat(userConfig.monthly_net_income || 0)
+  const surplus = Math.max(actualIncome, baseIncome) - actualExpenses
   
-  // Mensilità aggiuntive (13a a Dicembre, 14a a Giugno per default)
-  let extraIncome = 0
-  const monthIdx = monthStart.getMonth() + 1 // 1-12
-  if (userConfig.has_thirteenth && monthIdx === (userConfig.thirteenth_month || 12)) extraIncome += baseIncome
-  if (userConfig.has_fourteenth && monthIdx === (userConfig.fourteenth_month || 6)) extraIncome += baseIncome
+  // SOGLIA DI SICUREZZA (Commercialista Mode)
+  // Se il saldo totale è < 500€ o < spese mensili, siamo in zona rischio
+  const safetyThreshold = Math.max(500, actualExpenses * 1.2)
+  const isLiquidityLow = totalBalance < safetyThreshold
 
-  const estimatedTotalIncome = Math.max(actualIncome, baseIncome + extraIncome)
-  
-  // Surplus stimato
-  const surplus = estimatedTotalIncome - actualExpenses
-  
   if (surplus <= 0) {
     return {
-      surplus: surplus,
+      surplus,
       suggestedBudget: 0,
       allocations: [],
-      warning: "Surplus negativo o nullo: le uscite superano le entrate. Valuta di ridurre le spese."
+      warning: "Surplus negativo: le uscite superano le entrate.",
+      coachAdvice: isLiquidityLow 
+        ? "Situazione critica: non hai liquidità sufficiente e sei in deficit. Stop a ogni risparmio, taglia le spese subito."
+        : "Sei in leggero deficit questo mese, ma la tua liquidità ti protegge. Evita nuovi depositi per ora."
     }
   }
 
-  // Budget risparmio: min(surplus * target%, surplus * 50%)
-  const targetPct = parseFloat(userConfig.savings_target_pct || 20) / 100
-  const suggestedBudget = Math.min(surplus * targetPct, surplus * 0.50)
+  // Budget risparmio: se liquidità bassa, riduciamo il budget per proteggere il cash
+  const baseTargetPct = parseFloat(userConfig.savings_target_pct || 20) / 100
+  const adjustedTargetPct = isLiquidityLow ? Math.min(baseTargetPct, 0.05) : baseTargetPct
+  const suggestedBudget = surplus * adjustedTargetPct
 
   // 2. PRIORITIZZAZIONE PIANI
   const activePlans = plans.filter(p => p.is_active !== false)
   const plansWithUrgency = activePlans.map(plan => {
-    const targetAmount = parseFloat(plan.target_amount)
+    const targetAmount = parseFloat(plan.target_amount) || 0
     const currentAmount = parseFloat(plan.current_amount || 0)
     const missing = Math.max(0, targetAmount - currentAmount)
     
     let urgency = 0
     let minMonthly = 0
 
-    if (plan.target_date) {
+    if (plan.type === 'piggy_bank') {
+      urgency = isLiquidityLow ? 100 : 5 // Se liquidità bassa, il salvadanaio (fondo emergenza) diventa priorità max
+    } else if (plan.target_date) {
       const monthsLeft = Math.max(1, differenceInMonths(parseISO(plan.target_date), new Date()))
       minMonthly = missing / monthsLeft
       urgency = missing / monthsLeft
     } else {
-      urgency = (plan.priority || 2) * 10 // Urgenza basata su priorità se non c'è data
+      urgency = (plan.priority || 2) * 5
     }
 
     return { ...plan, missing, urgency, minMonthly }
   })
 
-  // Ordina per urgenza decrescente
   plansWithUrgency.sort((a, b) => b.urgency - a.urgency)
 
   // 3. DISTRIBUZIONE BUDGET
   let remainingBudget = suggestedBudget
   const allocations = []
 
-  // Prima fase: garantiamo il contributo minimo ai piani con scadenza (se possibile)
   plansWithUrgency.forEach(plan => {
-    if (plan.minMonthly > 0 && remainingBudget > 0) {
-      const amount = Math.min(remainingBudget, plan.minMonthly)
+    if (remainingBudget <= 0) return
+    let amount = 0
+    
+    if (plan.type === 'piggy_bank' && isLiquidityLow) {
+      amount = remainingBudget // Tutto nel salvadanaio se siamo a corto di cash
+    } else if (plan.minMonthly > 0) {
+      amount = Math.min(remainingBudget, plan.minMonthly)
+    } else {
+      amount = Math.min(remainingBudget, remainingBudget * 0.3)
+    }
+
+    if (amount > 0) {
       allocations.push({
         plan_id: plan.id,
         plan_name: plan.name,
         amount: amount,
-        reason: plan.missing <= amount ? 'Completamento obiettivo' : 'Contributo minimo richiesto'
+        reason: plan.type === 'piggy_bank' ? 'Fondo emergenza' : 'Accumulo programmato'
       })
       remainingBudget -= amount
     }
   })
 
-  // Seconda fase: distribuiamo il rimanente proporzionalmente alla priorità/urgenza
-  if (remainingBudget > 0 && plansWithUrgency.length > 0) {
-    const totalUrgency = plansWithUrgency.reduce((s, p) => s + p.urgency, 0)
-    plansWithUrgency.forEach(plan => {
-      if (remainingBudget <= 0) return
-      
-      const share = plan.urgency / totalUrgency
-      const extra = remainingBudget * share
-      
-      // Cerca se c'è già un'allocazione per questo piano
-      const existing = allocations.find(a => a.plan_id === plan.id)
-      if (existing) {
-        existing.amount += extra
-      } else {
-        allocations.push({
-          plan_id: plan.id,
-          plan_name: plan.name,
-          amount: extra,
-          reason: 'Distribuzione surplus'
-        })
-      }
-    })
+  // Coach Advice finale
+  let coachAdvice = "Ottimo lavoro! Stai seguendo il tuo piano di accumulo correttamente."
+  if (isLiquidityLow) {
+    coachAdvice = `La tua liquidità (${totalBalance.toFixed(2)}€) è sotto la soglia di sicurezza (${safetyThreshold.toFixed(2)}€). Ho ridotto il budget di risparmio per proteggere il tuo contante.`
+  } else if (surplus > baseIncome * 0.3) {
+    coachAdvice = "Hai un surplus eccezionale questo mese! Considera di aumentare i depositi sui piani a priorità alta."
   }
 
   return {
     surplus,
     suggestedBudget,
     allocations: allocations.filter(a => a.amount > 0),
-    warning: null
+    warning: isLiquidityLow ? "Liquidità limitata" : null,
+    coachAdvice
   }
 }

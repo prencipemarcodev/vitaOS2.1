@@ -14,14 +14,24 @@ function SmartAdvicePanel() {
   const { transactions } = useFinanceStore()
   const { userConfig, selectedMonth } = useAppStore()
 
+  const totalBalance = useMemo(() => {
+    const bank = parseFloat(userConfig?.initial_bank_balance || 0)
+    const cash = parseFloat(userConfig?.initial_cash_balance || 0)
+    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
+    const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
+    // Sottraiamo anche i risparmi già effettuati (transazioni verso saving_plans)
+    return bank + cash + income - expenses
+  }, [userConfig, transactions])
+
   const advice = useMemo(() => {
     return calculateSmartAdvice({ 
       userConfig, 
       transactions, 
       plans, 
-      selectedMonth 
+      selectedMonth,
+      totalBalance
     })
-  }, [userConfig, transactions, plans, selectedMonth])
+  }, [userConfig, transactions, plans, selectedMonth, totalBalance])
 
   if (!advice || plans.length === 0) return null
 
@@ -36,24 +46,25 @@ function SmartAdvicePanel() {
         {/* Shine effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
 
-        {advice.warning ? (
-          <div className="flex gap-3">
-            <AlertCircle className="text-[var(--color-danger)] shrink-0" size={18} />
+        <div className="space-y-4">
+          <div className="p-3 rounded-xl bg-[var(--color-primary-ghost)] border border-[var(--color-primary)]/10">
+            <p className="text-[11px] font-bold text-[var(--color-primary)] uppercase tracking-wider mb-1 flex items-center gap-1.5">
+              <TrendingUp size={12} />
+              Il consiglio del tuo commercialista
+            </p>
             <p className="text-xs text-[var(--text-secondary)] italic leading-relaxed">
-              {advice.warning}
+              "{advice.coachAdvice}"
             </p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <TrendingUp className="text-[var(--color-success)] shrink-0" size={18} />
-              <div className="space-y-1">
-                <p className="text-xs text-[var(--text-primary)] font-medium leading-relaxed">
-                  "Sulla base del tuo surplus stimato di <span className="font-bold">{formatCurrency(advice.surplus)}</span>, 
-                  ti consigliamo di accantonare <span className="text-[var(--color-success)] font-bold">{formatCurrency(advice.suggestedBudget)}</span> questo mese."
-                </p>
-              </div>
+
+          <div className="flex gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                Sulla base del tuo surplus di <span className="font-bold">{formatCurrency(advice.surplus)}</span>, 
+                ti consigliamo di accantonare <span className="text-[var(--color-success)] font-bold">{formatCurrency(advice.suggestedBudget)}</span> questo mese.
+              </p>
             </div>
+          </div>
 
             <div className="space-y-3">
               <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Distribuzione consigliata:</p>

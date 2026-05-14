@@ -14,16 +14,43 @@ import { getIcon } from '@/lib/icons'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
+import { differenceInMonths, parseISO, startOfMonth } from 'date-fns'
+import PACChart from './PACChart'
 
 function PlanCard({ plan, onEdit }) {
-  const { updatePlan, removePlan, addMovement } = useSavingsStore()
+  const { updatePlan, removePlan, addMovement, movements } = useSavingsStore()
   const { transactions } = useFinanceStore()
   const { userConfig } = useAppStore()
   const { addNotification } = useNotificationStore()
   const { pushError } = useNotifications()
+
+  // Filtra movimenti per questo piano
+  const planMovements = useMemo(() => 
+    movements.filter(m => m.plan_id === plan.id),
+  [movements, plan.id])
   
-  const progress = Math.min(100, (plan.current_amount / plan.target_amount) * 100)
+  const isGoal = plan.type !== 'piggy_bank'
+  const progress = isGoal ? Math.min(100, (plan.current_amount / plan.target_amount) * 100) : 0
   const Icon = getIcon(plan.icon)
+
+  // Calcolo Performance PAC
+  const performance = useMemo(() => {
+    if (!isGoal || !plan.target_date || !plan.created_at) return null
+    
+    const start = parseISO(plan.created_at)
+    const end = parseISO(plan.target_date)
+    const today = new Date()
+    
+    const totalMonths = Math.max(1, differenceInMonths(end, start))
+    const monthsPassed = Math.max(0, differenceInMonths(today, start))
+    
+    const idealCurrent = (plan.target_amount / totalMonths) * monthsPassed
+    const diff = plan.current_amount - idealCurrent
+    
+    if (diff < -50) return { label: 'Sotto Target', color: 'danger', icon: 'AlertCircle' }
+    if (diff > 50) return { label: 'Eccellente', color: 'success', icon: 'TrendingUp' }
+    return { label: 'In Linea', color: 'primary', icon: 'Check' }
+  }, [plan, isGoal])
 
   // Calcolo saldo totale disponibile
   const saldo = useMemo(() => {
@@ -89,18 +116,27 @@ function PlanCard({ plan, onEdit }) {
 
   return (
     <Card padding="md" className="group relative overflow-hidden">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-3">
-          <div className="bg-[var(--bg-base)] w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border border-[var(--border-subtle)]">
-            <Icon size={24} className="text-[var(--color-primary)]" />
+          <div className={clsx(
+            "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border",
+            plan.type === 'piggy_bank' ? "bg-[rgba(155,89,182,0.1)] border-[rgba(155,89,182,0.2)]" : "bg-[var(--bg-base)] border-[var(--border-subtle)]"
+          )}>
+            <Icon size={24} className={plan.type === 'piggy_bank' ? "text-[#9b59b6]" : "text-[var(--color-primary)]"} />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <h3 className="font-bold text-[var(--text-primary)]">{plan.name}</h3>
-              {plan.priority === 3 && <Badge variant="danger" className="text-[7px] px-1 py-0 uppercase">Priorità Alta</Badge>}
+              {performance && (
+                <Badge variant={performance.color} className="text-[7px] px-1 py-0 uppercase">
+                  {performance.label}
+                </Badge>
+              )}
+              {plan.priority === 3 && plan.type !== 'piggy_bank' && <Badge variant="danger" className="text-[7px] px-1 py-0 uppercase">Priorità Alta</Badge>}
             </div>
             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-              {formatCurrency(plan.current_amount)} / {formatCurrency(plan.target_amount)}
+              {formatCurrency(plan.current_amount)}
+              {isGoal && ` / ${formatCurrency(plan.target_amount)}`}
             </p>
           </div>
         </div>
@@ -115,20 +151,33 @@ function PlanCard({ plan, onEdit }) {
         </div>
       </div>
 
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center justify-between text-[10px] font-bold">
-          <span className="text-[var(--color-primary)]">{progress.toFixed(1)}% completato</span>
-          <span className="text-[var(--text-muted)]">Rimanenti: {formatCurrency(plan.target_amount - plan.current_amount)}</span>
+      {/* Chart PAC */}
+      <PACChart plan={plan} movements={planMovements} />
+
+      {isGoal && (
+        <div className="space-y-2 my-4">
+          <div className="flex items-center justify-between text-[10px] font-bold">
+            <span className="text-[var(--color-primary)]">{progress.toFixed(1)}% completato</span>
+            <span className="text-[var(--text-muted)]">Rimanenti: {formatCurrency(plan.target_amount - plan.current_amount)}</span>
+          </div>
+          <div className="h-2 bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border-subtle)]">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              className="h-full bg-[var(--color-primary)]"
+            />
+          </div>
         </div>
-        <div className="h-2 bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border-subtle)]">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-            className="h-full bg-[var(--color-primary)]"
-          />
+      )}
+
+      {plan.type === 'piggy_bank' && (
+        <div className="my-4 py-2 border-t border-b border-[var(--border-subtle)] border-dashed">
+          <p className="text-[10px] text-center text-[var(--text-muted)] italic font-medium">
+            "Salvadanaio libero: metti da parte quello che puoi, senza fretta."
+          </p>
         </div>
-      </div>
+      )}
 
       <div className="flex gap-2">
         <Button 
