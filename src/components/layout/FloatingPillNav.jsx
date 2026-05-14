@@ -2,6 +2,7 @@
 // Pill flottante, icone-only, nessun testo visibile
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -33,7 +34,7 @@ function FloatingPillNav() {
   const [moreOpen, setMoreOpen] = useState(false)
   const location = useLocation()
 
-  return (
+  return createPortal(
     <>
       {/* Drawer "Altro" */}
       <AnimatePresence>
@@ -44,7 +45,7 @@ function FloatingPillNav() {
       <nav
         className="lg:hidden fixed z-[110]"
         style={{
-          bottom: '4px',
+          bottom: '8px',
           left: '50%',
           transform: 'translateX(-50%)',
         }}
@@ -82,7 +83,8 @@ function FloatingPillNav() {
           />
         </motion.div>
       </nav>
-    </>
+    </>,
+    document.body
   )
 }
 
