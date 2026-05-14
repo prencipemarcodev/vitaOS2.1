@@ -45,7 +45,7 @@ function FloatingPillNav() {
       <nav
         className="lg:hidden fixed z-[110]"
         style={{
-          bottom: '-34px',
+          bottom: '12px',
           left: '50%',
           transform: 'translateX(-50%)',
         }}

@@ -23,7 +23,7 @@ function AppInner() {
   // Se il config non è ancora caricato, mostra uno spinner
   if (!userConfig) {
     return (
-      <div className="flex h-full items-center justify-center bg-[var(--bg-base)]">
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--bg-base)]">
         <div className="flex flex-col items-center gap-3">
           <span
             className="text-2xl font-semibold text-[var(--text-primary)]"
@@ -43,7 +43,7 @@ function AppInner() {
   }
 
   return (
-    <div className="absolute inset-0 flex overflow-hidden bg-[var(--bg-base)]">
+    <div className="h-[100dvh] w-full flex overflow-hidden bg-[var(--bg-base)]">
       {/* Desktop Sidebar */}
       <Sidebar />
 
