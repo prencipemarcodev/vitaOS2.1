@@ -7,6 +7,7 @@ import {
 import { useRunTracker } from '@/hooks/useRunTracker'
 import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
 import RunMap from './RunMap'
+import RunFocusMode from './RunFocusMode'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import clsx from 'clsx'
@@ -23,6 +24,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   } = tracker
 
   const [countdown, setCountdown] = useState(null)
+  const [isFocusMode, setIsFocusMode] = useState(false)
 
   // Countdown logic
   useEffect(() => {
@@ -291,6 +293,13 @@ function RunTrackingScreen({ onFinish, onCancel }) {
         {status === 'running' ? (
           <>
             <button 
+              onClick={() => setIsFocusMode(true)}
+              className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-[var(--text-muted)] active:scale-90 transition-transform"
+              title="Focus Mode"
+            >
+              <Activity size={20} />
+            </button>
+            <button 
               onClick={pause}
               className="w-16 h-16 rounded-full border-2 border-orange-500 flex items-center justify-center text-orange-500 active:scale-90 transition-transform"
             >
@@ -322,6 +331,16 @@ function RunTrackingScreen({ onFinish, onCancel }) {
           </>
         )}
       </footer>
+
+      {/* Focus Mode Overlay */}
+      <AnimatePresence>
+        {isFocusMode && (
+          <RunFocusMode 
+            tracker={tracker} 
+            onUnlock={() => setIsFocusMode(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
