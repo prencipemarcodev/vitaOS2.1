@@ -4,7 +4,7 @@ import { Toaster } from 'sonner'
 import { useAppStore } from '@/store/useAppStore'
 import { useSupabaseSync } from '@/hooks/useSupabaseSync'
 import Sidebar from '@/components/layout/Sidebar'
-import BottomNav from '@/components/layout/BottomNav'
+import FloatingPillNav, { PILL_HEIGHT } from '@/components/layout/FloatingPillNav'
 import AppRouter from '@/router'
 import Onboarding from '@/pages/Onboarding'
 
@@ -49,13 +49,18 @@ function AppInner() {
       {/* Main content area */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Aggiunge spazio sotto per la navbar mobile */}
-        <div className="flex flex-col flex-1 overflow-hidden pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom,0px))] lg:pb-0">
+        <div
+          className="flex flex-col flex-1 overflow-hidden"
+          style={{
+            paddingBottom: `calc(${PILL_HEIGHT}px + 20px + env(safe-area-inset-bottom, 0px))`,
+          }}
+        >
           <AppRouter />
         </div>
       </div>
 
       {/* Mobile Bottom Nav */}
-      <BottomNav />
+      <FloatingPillNav />
     </div>
   )
 }
@@ -70,7 +75,7 @@ function App() {
         position="bottom-right"
         toastOptions={{
           style: {
-            bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
+            bottom: `calc(${PILL_HEIGHT}px + 20px + env(safe-area-inset-bottom, 0px))`,
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',
