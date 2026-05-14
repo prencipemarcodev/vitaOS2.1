@@ -10,7 +10,7 @@ import { formatCurrency } from '@/lib/formatters'
 import TransactionList from './TransactionList'
 import TransactionModal from './TransactionModal'
 import BalanceChart from './BalanceChart'
-import CategoryDonut from './CategoryDonut'
+import FinanceDistribution from './FinanceDistribution'
 
 function Finanze() {
   const { transactions, categories, loading } = useFinanceStore()
@@ -88,7 +88,7 @@ function Finanze() {
           <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4">
             <div className="lg:col-span-2 space-y-4 overflow-y-auto pr-1 pb-4">
               <BalanceChart transactions={transactions} userConfig={userConfig} />
-              <CategoryDonut transactions={transactions} categories={categories} />
+              <FinanceDistribution transactions={transactions} categories={categories} />
             </div>
             <div className="flex flex-col h-full min-h-0 overflow-hidden">
               <div className="flex items-center justify-between mb-2 px-1">

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { Edit2, Trash2, Plus, Minus } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
@@ -64,8 +64,24 @@ function PlanCard({ plan, onEdit }) {
 
   const canDeposit = saldo >= 50
 
-  const handleAdjust = async (amount) => {
-    const newAmount = Math.max(0, parseFloat(plan.current_amount || 0) + amount)
+  const [customAmount, setCustomAmount] = useState('')
+
+  const handleAdjust = async (type) => {
+    const amount = parseFloat(customAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Inserisci una cifra valida')
+      return
+    }
+
+    const multiplier = type === 'deposit' ? 1 : -1
+    const adjustment = amount * multiplier
+    const newAmount = Math.max(0, parseFloat(plan.current_amount || 0) + adjustment)
+    
+    if (type === 'deposit' && amount > saldo) {
+      toast.error('Saldo insufficiente per questo deposito')
+      return
+    }
+
     try {
       const { data: updated, error } = await supabase
         .from('saving_plans')
@@ -82,23 +98,23 @@ function PlanCard({ plan, onEdit }) {
         .from('saving_movements')
         .insert({
           plan_id: plan.id,
-          amount: amount,
-          type: amount > 0 ? 'deposit' : 'withdrawal',
+          amount: adjustment,
+          type: type,
           date: new Date().toISOString().split('T')[0]
         })
         .select()
         .single()
       if (movement) addMovement(movement)
       
-      toast.success(amount > 0 ? `Depositati €${amount}` : `Prelevati €${Math.abs(amount)}`)
+      toast.success(type === 'deposit' ? `Depositati ${formatCurrency(amount)}` : `Prelevati ${formatCurrency(amount)}`)
+      setCustomAmount('')
 
-      // Aggiunge notifica persistente nel pannello
       addNotification({
-        title: amount > 0 ? 'Deposito Risparmi' : 'Prelievo Risparmi',
-        message: amount > 0 
+        title: type === 'deposit' ? 'Deposito Risparmi' : 'Prelievo Risparmi',
+        message: type === 'deposit' 
           ? `Hai aggiunto ${formatCurrency(amount)} a "${plan.name}"`
-          : `Hai prelevato ${formatCurrency(Math.abs(amount))} da "${plan.name}"`,
-        type: amount > 0 ? 'success' : 'info',
+          : `Hai prelevato ${formatCurrency(amount)} da "${plan.name}"`,
+        type: type === 'deposit' ? 'success' : 'info',
         icon: 'PiggyBank'
       })
     } catch (err) {
@@ -127,7 +143,7 @@ function PlanCard({ plan, onEdit }) {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <h3 className="font-bold text-[var(--text-primary)]">{plan.name}</h3>
+              <h3 className="font-bold text-[var(--text-primary)] leading-tight">{plan.name}</h3>
               {performance && (
                 <Badge variant={performance.color} className="text-[7px] px-1 py-0 uppercase">
                   {performance.label}
@@ -180,27 +196,30 @@ function PlanCard({ plan, onEdit }) {
         </div>
       )}
 
-      <div className="flex gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="flex-1 text-[10px] font-bold border border-[var(--border-subtle)] h-8"
-          onClick={() => handleAdjust(-50)}
-          icon={Minus}
-        >
-          50€
-        </Button>
-        <Button 
-          variant="primary" 
-          size="sm" 
-          className="flex-1 text-[10px] font-bold h-8"
-          onClick={() => handleAdjust(50)}
-          icon={Plus}
-          disabled={!canDeposit}
-          title={!canDeposit ? 'Saldo insufficiente' : ''}
-        >
-          50€
-        </Button>
+      <div className="flex items-center gap-2 mt-2 bg-[var(--bg-base)] p-1.5 rounded-2xl border border-[var(--border-subtle)]">
+        <input 
+          type="number" 
+          placeholder="Quota €"
+          className="flex-1 bg-transparent border-0 text-xs font-bold px-2 focus:ring-0 placeholder:text-[var(--text-muted)] placeholder:font-normal"
+          value={customAmount}
+          onChange={(e) => setCustomAmount(e.target.value)}
+        />
+        <div className="flex gap-1">
+          <button 
+            onClick={() => handleAdjust('withdrawal')}
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--color-danger-ghost)] hover:text-[var(--color-danger)] transition-colors"
+            title="Preleva"
+          >
+            <Minus size={16} />
+          </button>
+          <button 
+            onClick={() => handleAdjust('deposit')}
+            className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
+            title="Deposita"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
     </Card>
   )
