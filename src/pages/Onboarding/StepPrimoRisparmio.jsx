@@ -11,7 +11,22 @@ function StepPrimoRisparmio({ formData, updateFormData }) {
   const plan = formData.first_plan || { name: '', target_amount: '', target_date: '', monthly_contribution: '' }
 
   const updatePlan = (updates) => {
-    updateFormData({ first_plan: { ...plan, ...updates } })
+    const newPlan = { ...plan, ...updates }
+    
+    // Auto-calcolo contributo se cambiano importo o data
+    if (updates.target_amount || updates.target_date) {
+      const amount = parseFloat(newPlan.target_amount) || 0
+      const date = newPlan.target_date ? new Date(newPlan.target_date) : null
+      
+      if (amount > 0 && date && !isNaN(date.getTime())) {
+        const today = new Date()
+        const months = (date.getFullYear() - today.getFullYear()) * 12 + (date.getMonth() - today.getMonth())
+        const effectiveMonths = Math.max(1, months)
+        newPlan.monthly_contribution = (amount / effectiveMonths).toFixed(0)
+      }
+    }
+
+    updateFormData({ first_plan: newPlan })
   }
 
   const handleToggle = (v) => {
