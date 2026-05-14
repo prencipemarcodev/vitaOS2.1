@@ -32,12 +32,34 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
   // Calcola monte ore settimanale
   const weeklyHours = DAYS.reduce((sum, d) => {
     const day = value[d.key]
-    if (!day?.enabled || !day.from || !day.to) return sum
-    const [fh, fm] = day.from.split(':').map(Number)
-    const [th, tm] = day.to.split(':').map(Number)
-    const mins = (th * 60 + tm) - (fh * 60 + fm)
-    return sum + Math.max(mins, 0)
+    if (!day?.enabled) return sum
+
+    let dayMins = 0
+
+    if (mode === 'study') {
+      // Somma mattina + sera
+      if (day.morning?.enabled && day.morning.from && day.morning.to) {
+        const [fh, fm] = day.morning.from.split(':').map(Number)
+        const [th, tm] = day.morning.to.split(':').map(Number)
+        dayMins += Math.max((th * 60 + tm) - (fh * 60 + fm), 0)
+      }
+      if (day.evening?.enabled && day.evening.from && day.evening.to) {
+        const [fh, fm] = day.evening.from.split(':').map(Number)
+        const [th, tm] = day.evening.to.split(':').map(Number)
+        dayMins += Math.max((th * 60 + tm) - (fh * 60 + fm), 0)
+      }
+    } else {
+      // Logica standard (Work/Gym)
+      if (day.from && day.to) {
+        const [fh, fm] = day.from.split(':').map(Number)
+        const [th, tm] = day.to.split(':').map(Number)
+        dayMins = Math.max((th * 60 + tm) - (fh * 60 + fm), 0)
+      }
+    }
+
+    return sum + dayMins
   }, 0)
+  
   const weeklyH = (weeklyHours / 60).toFixed(1)
   const monthlyH = ((weeklyHours / 60) * (52 / 12)).toFixed(1)
 
