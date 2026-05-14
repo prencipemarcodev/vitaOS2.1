@@ -4,10 +4,10 @@
 
 :root {
   /* ── Brand ── */
-  --color-primary: #B46243;
-  --color-primary-light: #d28c6e;
-  --color-primary-dark: #8c4128;
-  --color-primary-ghost: rgba(180, 98, 67, 0.12);
+  --color-primary: #1a1714;
+  --color-primary-light: #3a3530;
+  --color-primary-dark: #000000;
+  --color-primary-ghost: rgba(26, 23, 20, 0.08);
 
   /* ── Superfici — Light Mode ── */
   --bg-base: #fafaf8;

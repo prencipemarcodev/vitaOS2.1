@@ -125,7 +125,7 @@ function MoreDrawer({ onClose }) {
     <>
       <motion.div
         key="more-backdrop"
-        className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-[2px]"
+        className="fixed inset-0 z-[120] bg-black/30 backdrop-blur-[1px]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -133,16 +133,19 @@ function MoreDrawer({ onClose }) {
       />
       <motion.div
         key="more-drawer"
-        className="fixed left-0 right-0 z-[130] bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] rounded-t-[24px] shadow-[0_-8px_32px_rgba(0,0,0,0.1)]"
+        className="fixed left-4 right-4 z-[130] 
+          bg-white/95 backdrop-blur-md
+          border border-[var(--border-subtle)] 
+          rounded-[32px] shadow-[var(--shadow-lg)]"
         style={{
-          bottom: `calc(${PILL_HEIGHT}px + 16px)`,
+          bottom: `calc(${PILL_HEIGHT}px + 24px)`,
         }}
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        initial={{ y: 20, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 20, opacity: 0, scale: 0.95 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       >
-        <div className="p-4 grid grid-cols-4 gap-4">
+        <div className="p-5 grid grid-cols-4 gap-2">
           {MORE_NAV.map((item) => {
             const isActive = location.pathname.startsWith(item.to)
             return (
@@ -150,18 +153,20 @@ function MoreDrawer({ onClose }) {
                 key={item.to}
                 to={item.to}
                 onClick={onClose}
-                className="flex flex-col items-center gap-1.5 py-2 group"
+                className="flex flex-col items-center gap-2 py-2 group"
               >
                 <div className={clsx(
-                  'transition-all duration-300',
-                  isActive ? 'text-[var(--color-primary)] scale-110' : 'text-[var(--text-muted)] group-active:scale-90'
+                  'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300',
+                  isActive 
+                    ? 'bg-[var(--text-primary)] text-white shadow-md scale-105' 
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] group-active:scale-95'
                 )}>
-                  <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 <span className={clsx(
                   'text-[10px] font-bold tracking-tight uppercase transition-colors',
-                  isActive ? 'text-[var(--color-primary)]' : 'text-[var(--text-muted)]'
-                )}>
+                  isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'
+                )} style={{ fontFamily: 'var(--font-display)' }}>
                   {item.label}
                 </span>
               </NavLink>
