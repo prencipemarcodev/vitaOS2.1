@@ -1548,23 +1548,23 @@ VITE_SUPABASE_ANON_KEY=xxxx
 
 ## 11. CHECKLIST PRE-DEPLOY VERCEL
 
-- [ ] Variabili env configurate su Vercel
-- [ ] RLS attivato su Supabase per tutte le tabelle (incluse `recurring_events`, `weight_log`, `notifications_read`)
-- [ ] Seed categorie default eseguito
-- [ ] `vercel.json` con rewrite SPA
-- [ ] Onboarding wizard funzionante: tutti e 6 gli step, salvataggio intermedio, skip
-- [ ] Test desktop 1280px, 1440px, 1920px — above the fold verificato su tutti i pannelli
-- [ ] Test mobile 375px (iPhone SE), 390px (iPhone 14), 414px (Pro Max)
-- [ ] Selettore mese assente su Overview, Risparmi, Note, Impostazioni
-- [ ] Dark mode: tutti i componenti verificati incluso GlobeProgress, TimeBlockSelector, overlay shortcut
-- [ ] Nessun scroll di pagina su desktop (regola globale)
-- [ ] Touch targets ≥ 44px su mobile
-- [ ] Safe area insets gestiti su BottomNav
-- [ ] Swipe gestures funzionanti (carousel, swipe-to-delete)
-- [ ] Shortcut tastiera: tutte le 10 shortcut testate, disabilitate su mobile e su input focus
-- [ ] Esportazione: JSON backup scaricabile, CSV Finanze e Firme con dati corretti
-- [ ] Ricorrenze annuali: appaiono nel calendario ogni anno senza duplicati in DB
-- [ ] Delta comparativo: Finanze e Firme mostrano correttamente il confronto con mese precedente
+- [x] Variabili env configurate su Vercel
+- [x] RLS attivato su Supabase per tutte le tabelle (incluse `recurring_events`, `weight_log`, `notifications_read`)
+- [x] Seed categorie default eseguito
+- [x] `vercel.json` con rewrite SPA
+- [x] Onboarding wizard funzionante: tutti e 6 gli step, salvataggio intermedio, skip
+- [x] Test desktop 1280px, 1440px, 1920px — above the fold verificato su tutti i pannelli
+- [x] Test mobile 375px (iPhone SE), 390px (iPhone 14), 414px (Pro Max)
+- [x] Selettore mese assente su Overview, Risparmi, Note, Impostazioni
+- [x] Dark mode: tutti i componenti verificati incluso GlobeProgress, TimeBlockSelector, overlay shortcut
+- [x] Nessun scroll di pagina su desktop (regola globale)
+- [x] Touch targets ≥ 44px su mobile
+- [x] Safe area insets gestiti su BottomNav
+- [x] Swipe gestures funzionanti (carousel, swipe-to-delete)
+- [x] Shortcut tastiera: tutte le 10 shortcut testate, disabilitate su mobile e su input focus
+- [x] Esportazione: JSON backup scaricabile, CSV Finanze e Firme con dati corretti
+- [x] Ricorrenze annuali: appaiono nel calendario ogni anno senza duplicati in DB
+- [x] Delta comparativo: Finanze e Firme mostrano correttamente il confronto con mese precedente
 - [ ] Performance Lighthouse ≥ 85
 
 ```json

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Play, Pause, Square, AlertCircle, MapPin, 
-  ChevronLeft, Navigation, Info, Zap
+  ChevronLeft, Navigation, Info, Zap, Satellite
 } from 'lucide-react'
 import { useRunTracker } from '@/hooks/useRunTracker'
 import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
@@ -26,6 +26,13 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   const [countdown, setCountdown] = useState(null)
   const [isFocusMode, setIsFocusMode] = useState(false)
 
+  // Auto-start if permission granted
+  useEffect(() => {
+    if (permissionStatus === 'granted' && status === 'idle' && countdown === null) {
+      start()
+    }
+  }, [permissionStatus, status])
+
   // Countdown logic
   useEffect(() => {
     if (countdown === null) return
@@ -33,7 +40,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
       const t = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(t)
     } else {
-      start()
+      forceStart() // Avvia realmente il tracking dopo il countdown
       setCountdown(null)
     }
   }, [countdown])
@@ -41,16 +48,20 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   const handleStartRequest = async () => {
     const ok = await requestPermission()
     if (ok) {
-      setCountdown(3)
+      start() // Va in waiting_gps
     }
   }
 
+  const handleManualStart = () => {
+    setCountdown(3)
+  }
+
   // --- SCHERMATA 1: RICHIESTA PERMESSO ---
-  if (status === 'idle' && countdown === null) {
+  if (status === 'idle' && permissionStatus !== 'granted' && countdown === null) {
     return (
       <div className="fixed inset-0 z-[200] bg-[var(--bg-base)] flex flex-col">
         <header className="h-[var(--header-height)] px-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0">
-          <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] hover:opacity-70 transition-opacity">
+          <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
             <ChevronLeft size={16} />
             Torna a Salute
           </button>
@@ -95,10 +106,6 @@ function RunTrackingScreen({ onFinish, onCancel }) {
               Non adesso
             </button>
           </div>
-
-          <p className="mt-12 text-[10px] text-[var(--text-muted)] max-w-[200px]">
-            La posizione viene usata solo durante la corsa e non viene condivisa.
-          </p>
         </div>
       </div>
     )
@@ -107,7 +114,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   // --- COUNTDOWN ---
   if (countdown !== null) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--color-primary)] flex items-center justify-center">
+      <div className="fixed inset-0 z-[300] bg-[var(--color-primary)] flex items-center justify-center">
         <motion.span 
           key={countdown}
           initial={{ scale: 0.5, opacity: 0 }}
@@ -122,11 +129,16 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   }
 
   // --- SCHERMATA 2: ATTESA SEGNALE ---
-  if (status === 'waiting_gps') {
+  if (status === 'waiting_gps' || (status === 'idle' && permissionStatus === 'granted')) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--bg-base)] flex flex-col">
-        <header className="p-4 text-center border-b border-[var(--border-subtle)] bg-white">
-          <h1 className="text-sm font-bold uppercase tracking-widest text-[var(--text-muted)]">In attesa GPS</h1>
+      <div className="fixed inset-0 z-[200] bg-[var(--bg-base)] flex flex-col">
+        <header className="h-[var(--header-height)] px-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0">
+          <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
+            <ChevronLeft size={16} />
+            Torna a Salute
+          </button>
+          <h1 className="text-sm font-bold tracking-tight">Acquisendo segnale</h1>
+          <div className="w-24" />
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -140,6 +152,21 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                 (accuracy && accuracy < 15) ? "border-t-green-500" : "border-t-[var(--color-primary)]"
               )}
             />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                animate={{ 
+                  rotate: [0, -10, 10, -10, 0],
+                  y: [0, -5, 0, -5, 0]
+                }}
+                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                className={clsx(
+                  "transition-colors duration-500",
+                  (accuracy && accuracy < 15) ? "text-green-500" : "text-[var(--color-primary)]"
+                )}
+              >
+                <Satellite size={40} />
+              </motion.div>
+            </div>
           </div>
 
           <h2 className="text-xl font-black mb-2">Acquisendo segnale...</h2>
@@ -183,7 +210,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
 
           <div className="mt-10 w-full max-w-xs">
             <button 
-              onClick={forceStart}
+              onClick={handleManualStart}
               className={clsx(
                 "w-full py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95",
                 accuracy <= 15 

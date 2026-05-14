@@ -13,6 +13,14 @@ export function useRunTracker() {
   const [status, setStatus] = useState('idle') // idle | waiting_gps | countdown | running | paused | finished
   const [permissionStatus, setPermissionStatus] = useState('prompt') // prompt | granted | denied
   const [accuracy, setAccuracy] = useState(null)
+
+  useEffect(() => {
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then(result => {
+        setPermissionStatus(result.state)
+      })
+    }
+  }, [])
   const [elapsed, setElapsed] = useState(0)
   const [distanceM, setDistanceM] = useState(0)
   const [currentPace, setCurrentPace] = useState(null)
@@ -72,11 +80,8 @@ export function useRunTracker() {
     const newPoint = { lat: latitude, lng: longitude, alt: altitude ?? 0, ts }
 
     if (status === 'waiting_gps') {
-      if (acc < 80) { // Soglia leggermente più permissiva (da 50 a 80m)
-        setStatus('running')
-        startTimer()
-        splitStartRef.current = ts
-      }
+      // Restiamo in waiting_gps finché l'utente non preme "Inizia Corsa" o triggeriamo il countdown dalla UI
+      // La UI monitorerà la precisione (acc) per suggerire l'avvio
     }
 
     if (status === 'running') {
