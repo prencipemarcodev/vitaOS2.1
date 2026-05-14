@@ -26,7 +26,7 @@ const MORE_NAV = [
 
 const ALL_NAV = [...MAIN_NAV, ...MORE_NAV]
 
-export const PILL_HEIGHT = 56
+export const PILL_HEIGHT = 48
 
 function FloatingPillNav() {
   const [moreOpen, setMoreOpen] = useState(false)
@@ -65,7 +65,7 @@ function FloatingPillNav() {
           animate={{ 
             y: 0, 
             opacity: 1,
-            width: moreOpen ? '280px' : '230px'
+            width: moreOpen ? '250px' : '195px'
           }}
           transition={{ 
             type: 'spring', 
@@ -134,13 +134,13 @@ function PillButton({ icon: Icon, isActive, onClick, label }) {
       whileHover={{ scale: 1.05 }}
       onClick={onClick}
       className={clsx(
-        'w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300',
+        'w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-300',
         isActive
           ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
           : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]'
       )}
     >
-      <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+      <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
     </motion.button>
   )
 }
