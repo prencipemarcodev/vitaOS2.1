@@ -65,7 +65,7 @@ function FloatingPillNav() {
           animate={{ 
             y: 0, 
             opacity: 1,
-            width: moreOpen ? '100%' : 'auto'
+            width: moreOpen ? '320px' : 'auto'
           }}
           transition={{ 
             type: 'spring', 
