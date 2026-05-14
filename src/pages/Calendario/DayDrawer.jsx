@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useAppStore } from '@/store/useAppStore'
-import { Briefcase, GraduationCap, Dumbbell } from 'lucide-react'
+import { Briefcase, GraduationCap, Dumbbell, Star } from 'lucide-react'
+import { isHoliday } from '@/lib/italianCalendar'
 
 function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
   const { removeEvent, removeAbsence } = useCalendarStore()
@@ -89,6 +90,21 @@ function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Festività */}
+              {isHoliday(date) && (
+                <section>
+                  <div className="p-4 rounded-2xl bg-[var(--color-danger-ghost)] border border-[var(--color-danger)]/20 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[var(--color-danger)] shadow-sm">
+                      <Star size={20} fill="currentColor" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--color-danger)] uppercase tracking-widest">Festività Nazionale</p>
+                      <h3 className="text-lg font-bold text-[var(--text-primary)]">{isHoliday(date)}</h3>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* Programma del giorno */}
               {hasProgram && (
                 <section>
