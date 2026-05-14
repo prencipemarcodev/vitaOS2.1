@@ -20,7 +20,7 @@ import PACChart from './PACChart'
 
 function PlanCard({ plan, onEdit }) {
   const { updatePlan, removePlan, addMovement, movements } = useSavingsStore()
-  const { transactions } = useFinanceStore()
+  const { transactions, categories, addTransaction } = useFinanceStore()
   const { userConfig } = useAppStore()
   const { addNotification } = useNotificationStore()
   const { pushError } = useNotifications()
@@ -93,18 +93,40 @@ function PlanCard({ plan, onEdit }) {
       
       updatePlan(plan.id, updated)
       
-      // Log movement
+      const today = new Date().toISOString().split('T')[0]
+
+      // 1. Log saving movement
       const { data: movement } = await supabase
         .from('saving_movements')
         .insert({
           plan_id: plan.id,
           amount: adjustment,
           type: type,
-          date: new Date().toISOString().split('T')[0]
+          date: today
         })
         .select()
         .single()
       if (movement) addMovement(movement)
+
+      // 2. Log finance transaction (Syncing with balance)
+      // Cerchiamo la categoria "Risparmi"
+      let savingsCategory = categories.find(c => c.name.toLowerCase().includes('risparmi'))
+      
+      const { data: tx } = await supabase
+        .from('transactions')
+        .insert({
+          amount: amount,
+          type: type === 'deposit' ? 'expense' : 'income',
+          category_id: savingsCategory?.id || categories[0]?.id,
+          description: type === 'deposit' ? `Accantonamento: ${plan.name}` : `Prelievo da: ${plan.name}`,
+          date: today
+        })
+        .select()
+        .single()
+      
+      if (tx) {
+        addTransaction(tx)
+      }
       
       toast.success(type === 'deposit' ? `Depositati ${formatCurrency(amount)}` : `Prelevati ${formatCurrency(amount)}`)
       setCustomAmount('')
@@ -112,8 +134,8 @@ function PlanCard({ plan, onEdit }) {
       addNotification({
         title: type === 'deposit' ? 'Deposito Risparmi' : 'Prelievo Risparmi',
         message: type === 'deposit' 
-          ? `Hai aggiunto ${formatCurrency(amount)} a "${plan.name}"`
-          : `Hai prelevato ${formatCurrency(amount)} da "${plan.name}"`,
+          ? `Hai aggiunto ${formatCurrency(amount)} a "${plan.name}" e registrato l'uscita nelle finanze.`
+          : `Hai prelevato ${formatCurrency(amount)} da "${plan.name}" e registrato l'entrata nelle finanze.`,
         type: type === 'deposit' ? 'success' : 'info',
         icon: 'PiggyBank'
       })
