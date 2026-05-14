@@ -7,12 +7,14 @@ import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { toast } from 'sonner'
-import { ICON_OPTIONS, getIcon } from '@/lib/icons'
+import IconPickerModal from '@/components/ui/IconPickerModal'
+import { getIcon } from '@/lib/icons'
 
 function PlanModal({ isOpen, onClose, planToEdit = null }) {
   const { addPlan, updatePlan } = useSavingsStore()
   const { pushError } = useNotifications()
   const [loading, setLoading] = useState(false)
+  const [showIconPicker, setShowIconPicker] = useState(false)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -115,13 +117,16 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-center gap-1">
             <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Icona</label>
-            <select 
-              className="bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-2 py-1.5 text-sm"
-              value={formData.icon}
-              onChange={e => setFormData({ ...formData, icon: e.target.value })}
+            <button 
+              type="button"
+              onClick={() => setShowIconPicker(true)}
+              className="w-12 h-10 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-base)] flex items-center justify-center text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all"
             >
-              {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
-            </select>
+              {(() => {
+                const Icon = getIcon(formData.icon)
+                return <Icon size={20} />
+              })()}
+            </button>
           </div>
           <div className="flex-1">
             <Input 
@@ -134,6 +139,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
           </div>
         </div>
 
+        {/* ... resto del form ... */}
         {formData.type === 'goal' && (
           <div className="grid grid-cols-2 gap-4">
             <Input 
@@ -189,6 +195,13 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
           <Button variant="primary" type="submit" loading={loading}>{planToEdit ? 'Aggiorna' : 'Crea Piano'}</Button>
         </div>
       </form>
+
+      <IconPickerModal 
+        isOpen={showIconPicker} 
+        onClose={() => setShowIconPicker(false)}
+        currentIcon={formData.icon}
+        onSelect={(icon) => setFormData({ ...formData, icon })}
+      />
     </Modal>
   )
 }
