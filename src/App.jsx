@@ -42,7 +42,7 @@ function AppInner() {
   }
 
   return (
-    <div className="h-[100svh] flex overflow-hidden bg-[var(--bg-base)]">
+    <div className="h-[100dvh] flex overflow-hidden bg-[var(--bg-base)]">
       {/* Desktop Sidebar */}
       <Sidebar />
 
@@ -70,7 +70,7 @@ function App() {
         position="bottom-right"
         toastOptions={{
           style: {
-            bottom: `calc(${PILL_HEIGHT}px + 24px)`,
+            bottom: `calc(${PILL_HEIGHT}px + 20px)`,
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',
