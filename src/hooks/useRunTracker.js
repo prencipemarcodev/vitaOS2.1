@@ -72,7 +72,7 @@ export function useRunTracker() {
     const newPoint = { lat: latitude, lng: longitude, alt: altitude ?? 0, ts }
 
     if (status === 'waiting_gps') {
-      if (acc < 50) { // Fix accettabile
+      if (acc < 80) { // Soglia leggermente più permissiva (da 50 a 80m)
         setStatus('running')
         startTimer()
         splitStartRef.current = ts
@@ -178,6 +178,14 @@ export function useRunTracker() {
     }
   }, [stopTimer, releaseWakeLock])
 
+  const forceStart = useCallback(() => {
+    if (status === 'waiting_gps') {
+      setStatus('running')
+      startTimer()
+      splitStartRef.current = Date.now()
+    }
+  }, [status, startTimer])
+
   const reset = useCallback(() => {
     setStatus('idle')
     setElapsed(0)
@@ -210,6 +218,6 @@ export function useRunTracker() {
     status, error, elapsed, distanceKm,
     currentPace, currentSpeed, maxSpeed, avgPace, calories, elevationGain,
     polyline, splits, permissionStatus, accuracy,
-    start, pause, resume, finish, reset, requestPermission
+    start, pause, resume, finish, reset, requestPermission, forceStart
   }
 }

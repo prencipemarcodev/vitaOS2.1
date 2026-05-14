@@ -19,7 +19,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
     status, error, elapsed, distanceKm, 
     currentPace, currentSpeed, calories, elevationGain,
     polyline, splits, permissionStatus, accuracy,
-    start, pause, resume, finish, requestPermission
+    start, pause, resume, finish, reset, requestPermission, forceStart
   } = tracker
 
   const [countdown, setCountdown] = useState(null)
@@ -133,17 +133,28 @@ function RunTrackingScreen({ onFinish, onCancel }) {
               <p className="text-xs font-black">±{Math.round(accuracy || 0)}m</p>
             </div>
             <div className="text-center border-r border-[var(--border-subtle)]">
-              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Satelliti</p>
-              <p className="text-xs font-black text-green-500">{accuracy < 20 ? 'Ottimo' : 'Fixing...'}</p>
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Fix</p>
+              <p className={clsx("text-xs font-black", (accuracy && accuracy < 80) ? "text-green-500" : "text-orange-500")}>
+                {accuracy ? (accuracy < 80 ? 'Ottimo' : 'Scarso') : '...'}
+              </p>
             </div>
             <div className="text-center">
               <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Stato</p>
               <div className="flex items-center justify-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase">Fix...</span>
+                <span className="text-[10px] font-bold uppercase">Fixing...</span>
               </div>
             </div>
           </Card>
+
+          <div className="mt-8 w-full max-w-xs">
+            <button 
+              onClick={forceStart}
+              className="w-full py-3 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-xl text-xs font-bold border border-[var(--border-subtle)] active:scale-95 transition-all"
+            >
+              Inizia comunque
+            </button>
+          </div>
 
           {isIOS && (
             <div className="mt-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex gap-3 text-left max-w-xs">
