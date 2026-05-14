@@ -96,9 +96,10 @@ function WorkLog({ sessions, onEdit, userConfig }) {
                 <Trash2 size={15} />
               </button>
             </div>
-          </Card>
-        )
-      })}
+          </div>
+        </Card>
+      )
+    })}
     </div>
   )
 }
