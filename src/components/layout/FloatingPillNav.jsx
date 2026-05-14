@@ -109,6 +109,9 @@ function FloatingPillNav() {
             </AnimatePresence>
           </div>
 
+          {/* Separatore visivo */}
+          <div className="w-px h-4 bg-[var(--border-subtle)] mx-0.5 shrink-0" />
+
           {/* Tasto Espansione / Chiusura */}
           <div className="flex items-center pr-1 bg-gradient-to-l from-white via-white to-transparent pl-4 h-full shrink-0">
              <motion.div layout>
