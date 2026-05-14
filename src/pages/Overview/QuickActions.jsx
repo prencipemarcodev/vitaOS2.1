@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { LogIn, LogOut, Clock, CalendarPlus } from 'lucide-react'
+import { CalendarPlus, Clock, ArrowDownLeft, ArrowUpRight, StickyNote } from 'lucide-react'
 import Card from '@/components/ui/Card'
 
 const ACTIONS = [
-  { icon: LogIn,       label: 'Entrata',  color: 'var(--color-success)', path: '/firme',      action: 'checkin' },
-  { icon: LogOut,      label: 'Uscita',   color: 'var(--color-danger)',  path: '/firme',      action: 'checkout' },
-  { icon: Clock,       label: 'Timbra',   color: 'var(--color-primary)', path: '/firme',      action: 'stamp' },
-  { icon: CalendarPlus,label: 'Evento',   color: 'var(--color-info)',    path: '/calendario', action: 'add' },
+  { icon: CalendarPlus, label: 'Evento',   color: '#4a90d9', path: '/calendario' },
+  { icon: Clock,        label: 'Timbra',   color: 'var(--color-primary)', path: '/firme' },
+  { icon: ArrowDownLeft,label: 'Spesa',    color: '#e05252', path: '/finanze' },
+  { icon: ArrowUpRight, label: 'Entrata',  color: '#3d9970', path: '/finanze' },
+  { icon: StickyNote,   label: 'Nota',     color: '#ff851b', path: '/note' },
 ]
 
 function QuickActions() {
@@ -18,7 +19,7 @@ function QuickActions() {
       <p className="text-[10px] uppercase tracking-wider font-medium text-[var(--text-muted)] px-2 mb-2">
         Azioni rapide
       </p>
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-5 gap-1.5">
         {ACTIONS.map((a, i) => (
           <motion.button
             key={a.label}
