@@ -120,7 +120,10 @@ function RunTrackingScreen({ onFinish, onCancel }) {
             <motion.div 
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-              className="absolute inset-0 border-4 border-t-[var(--color-primary)] rounded-full"
+              className={clsx(
+                "absolute inset-0 border-4 rounded-full",
+                (accuracy && accuracy < 15) ? "border-t-green-500" : "border-t-[var(--color-primary)]"
+              )}
             />
           </div>
 
@@ -130,36 +133,57 @@ function RunTrackingScreen({ onFinish, onCancel }) {
           <Card padding="md" className="w-full max-w-xs grid grid-cols-3 gap-2">
             <div className="text-center border-r border-[var(--border-subtle)]">
               <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Precisione</p>
-              <p className="text-xs font-black">±{Math.round(accuracy || 0)}m</p>
+              <p className={clsx("text-xs font-black", (accuracy && accuracy <= 15) ? "text-green-500" : "text-orange-500")}>
+                ±{Math.round(accuracy || 0)}m
+              </p>
             </div>
             <div className="text-center border-r border-[var(--border-subtle)]">
-              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Fix</p>
-              <p className={clsx("text-xs font-black", (accuracy && accuracy < 80) ? "text-green-500" : "text-orange-500")}>
-                {accuracy ? (accuracy < 80 ? 'Ottimo' : 'Scarso') : '...'}
+              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Satelliti</p>
+              <p className={clsx("text-xs font-black", (accuracy && accuracy < 15) ? "text-green-500" : "text-orange-500")}>
+                {accuracy ? (accuracy < 15 ? 'Ottimo' : 'Fixing...') : '...'}
               </p>
             </div>
             <div className="text-center">
               <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Stato</p>
               <div className="flex items-center justify-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase">Fixing...</span>
+                <div className={clsx("w-1.5 h-1.5 rounded-full animate-pulse", (accuracy && accuracy < 15) ? "bg-green-500" : "bg-orange-400")} />
+                <span className="text-[10px] font-bold uppercase">{(accuracy && accuracy < 15) ? 'Pronto' : 'FIX...'}</span>
               </div>
             </div>
           </Card>
 
-          <div className="mt-8 w-full max-w-xs">
+          {/* Warning se precisione scarsa */}
+          {accuracy > 15 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex gap-3 text-left max-w-xs"
+            >
+              <AlertCircle size={18} className="text-orange-500 shrink-0" />
+              <p className="text-[10px] text-orange-800 leading-normal">
+                Segnale GPS debole. Se inizi ora, la precisione del percorso e del passo potrebbe non essere accurata.
+              </p>
+            </motion.div>
+          )}
+
+          <div className="mt-10 w-full max-w-xs">
             <button 
               onClick={forceStart}
-              className="w-full py-3 bg-[var(--bg-elevated)] text-[var(--text-primary)] rounded-xl text-xs font-bold border border-[var(--border-subtle)] active:scale-95 transition-all"
+              className={clsx(
+                "w-full py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95",
+                accuracy <= 15 
+                  ? "bg-[var(--color-primary)] text-white shadow-[var(--color-primary-ghost)]" 
+                  : "bg-white border-2 border-[var(--color-primary)] text-[var(--color-primary)] shadow-sm"
+              )}
             >
-              Inizia comunque
+              Inizia Corsa
             </button>
           </div>
 
           {isIOS && (
-            <div className="mt-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex gap-3 text-left max-w-xs">
-              <Info size={18} className="text-orange-500 shrink-0" />
-              <p className="text-[10px] text-orange-800 leading-normal">
+            <div className="mt-8 p-4 bg-[var(--bg-elevated)] rounded-2xl flex gap-3 text-left max-w-xs opacity-60">
+              <Info size={16} className="text-[var(--text-muted)] shrink-0" />
+              <p className="text-[9px] text-[var(--text-muted)] leading-normal">
                 Su iOS tieni lo schermo acceso durante tutta la corsa per non interrompere il tracking.
               </p>
             </div>
