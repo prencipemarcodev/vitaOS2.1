@@ -65,29 +65,33 @@ function FloatingPillNav() {
           animate={{ 
             y: 0, 
             opacity: 1,
-            width: moreOpen ? '250px' : '195px'
+            // 195px è la misura per 4 icone + sep + dots
+            // 245px è la misura per 5 icone + sep + X
+            width: moreOpen ? '245px' : '195px'
           }}
           transition={{ 
             type: 'spring', 
-            stiffness: 350, 
-            damping: 35,
-            layout: { duration: 0.35 }
+            stiffness: 300, 
+            damping: 30,
+            layout: { duration: 0.3 }
           }}
           className={clsx(
-            "flex items-center gap-1 px-2 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-full shadow-[var(--shadow-lg)] overflow-hidden",
-            moreOpen ? "max-w-full" : "max-w-[max-content]"
+            "flex items-center gap-0.5 px-1.5 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-full shadow-[var(--shadow-lg)] overflow-hidden",
           )}
           style={{ height: PILL_HEIGHT }}
         >
-          {/* Container Scrollabile */}
+          {/* Container delle icone: statico o scorrevole */}
           <div 
             ref={scrollRef}
             className={clsx(
-              "flex items-center gap-1 overflow-x-auto scrollbar-hide px-1 h-full transition-all duration-300",
-              moreOpen ? "flex-1 scroll-smooth" : "flex-initial"
+              "flex items-center gap-0.5 h-full transition-all duration-300",
+              moreOpen ? "overflow-x-auto scrollbar-hide flex-1 scroll-smooth" : "overflow-hidden shrink-0"
             )}
+            style={{ 
+              width: moreOpen ? 'auto' : '150px' // 4 icone da ~38px
+            }}
           >
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence mode="popLayout" initial={false}>
               {(moreOpen ? ALL_NAV : MAIN_NAV).map((item) => {
                 const isActive = location.pathname === item.to || 
                                 (item.to !== '/' && location.pathname.startsWith(item.to))
@@ -99,6 +103,7 @@ function FloatingPillNav() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    className="shrink-0"
                   >
                     <NavLink to={item.to} onClick={() => setMoreOpen(false)}>
                       <PillButton icon={item.icon} isActive={isActive} label={item.label} />
@@ -110,10 +115,10 @@ function FloatingPillNav() {
           </div>
 
           {/* Separatore visivo */}
-          <div className="w-px h-4 bg-[var(--border-subtle)] mx-0.5 shrink-0" />
+          <div className="w-px h-4 bg-[var(--border-subtle)] shrink-0" />
 
           {/* Tasto Espansione / Chiusura */}
-          <div className="flex items-center pr-1 bg-gradient-to-l from-white via-white to-transparent pl-4 h-full shrink-0">
+          <div className="flex items-center shrink-0">
              <motion.div layout>
               <PillButton
                 icon={moreOpen ? X : MoreHorizontal}
