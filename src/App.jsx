@@ -48,13 +48,8 @@ function AppInner() {
 
       {/* Main content area */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Aggiunge spazio sotto per la navbar mobile */}
-        <div
-          className="flex flex-col flex-1 overflow-hidden"
-          style={{
-            paddingBottom: `calc(${PILL_HEIGHT}px + 20px + env(safe-area-inset-bottom, 0px))`,
-          }}
-        >
+        {/* Area principale che ospita le pagine */}
+        <div className="flex flex-col flex-1 overflow-hidden">
           <AppRouter />
         </div>
       </div>
