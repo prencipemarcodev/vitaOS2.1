@@ -153,24 +153,26 @@ function Onboarding() {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[var(--bg-base)]">
       {/* ── Header ── */}
-      <header className="flex items-center justify-between px-6 py-4 shrink-0">
-        <div className="flex items-center gap-2">
+      <header className="flex items-center justify-between px-6 py-4 pt-[calc(env(safe-area-inset-top,20px)+12px)] shrink-0">
+        <div className="flex flex-col">
           <span
-            className="text-xl font-semibold text-[var(--text-primary)]"
+            className="text-lg font-semibold text-[var(--text-primary)] leading-tight"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
           </span>
-          <span className="text-xs text-[var(--text-muted)] mt-1">Configurazione iniziale</span>
+          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">
+            Configurazione
+          </span>
         </div>
         <Button
           variant="ghost"
           size="sm"
           icon={SkipForward}
           onClick={handleSkip}
-          className="text-[var(--text-muted)]"
+          className="text-[var(--text-muted)] h-8 !text-xs font-bold"
         >
-          Salta per ora
+          Salta
         </Button>
       </header>
 
