@@ -48,8 +48,8 @@ function Calendario() {
         }
       />
 
-      <PageWrapper noPadding>
-        <div className="h-full flex flex-col p-3 lg:p-4 overflow-hidden">
+      <PageWrapper>
+        <div className="flex-1 flex flex-col p-2 lg:p-4 overflow-hidden">
           <CalendarGrid 
             selectedMonth={selectedMonth} 
             events={events} 
