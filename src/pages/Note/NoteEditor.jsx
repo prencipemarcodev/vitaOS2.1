@@ -79,16 +79,17 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={noteToEdit ? 'Modifica Nota' : 'Nuova Nota'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="px-1 space-y-3">
-          <Input 
+        <div className="px-6 space-y-4">
+          <input 
+            type="text"
             placeholder="Titolo" 
             value={formData.title} 
             onChange={e => setFormData({ ...formData, title: e.target.value })} 
-            className="border-0 text-xl font-black p-0 focus:ring-0 shadow-none placeholder:text-gray-300"
+            className="w-full border-0 text-3xl font-black p-0 focus:ring-0 shadow-none placeholder:text-gray-200 bg-transparent"
           />
           <textarea
             placeholder="Inizia a scrivere..."
-            className="w-full h-48 resize-none bg-transparent border-0 focus:ring-0 text-base leading-relaxed p-0 scrollbar-hide placeholder:text-gray-300"
+            className="w-full h-80 resize-none bg-transparent border-0 focus:ring-0 text-lg leading-relaxed p-0 scrollbar-hide placeholder:text-gray-300"
             value={formData.content}
             onChange={e => setFormData({ ...formData, content: e.target.value })}
             required
