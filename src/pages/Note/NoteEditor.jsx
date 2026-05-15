@@ -18,9 +18,8 @@ const COLORS = [
 
 function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
   const { addNote, updateNote } = useNoteStore()
-  const { pushError } = useNotifications()
+  const { pushError, pushSuccess } = useNotifications()
   const [loading, setLoading] = useState(false)
-  const [showAllColors, setShowAllColors] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -41,7 +40,6 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
     } else {
       setFormData({ title: '', content: '', color: '#ffffff', is_pinned: false, tags: [] })
     }
-    setShowAllColors(false)
   }, [noteToEdit, isOpen])
 
   const handleSubmit = async (e) => {
@@ -55,11 +53,13 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
         const { data, error } = await supabase.from('notes').update(payload).eq('id', noteToEdit.id).select().single()
         if (error) throw error
         updateNote(noteToEdit.id, data)
+        pushSuccess(`Nota "${formData.title || 'Senza titolo'}" aggiornata`, 'edit-3')
         toast.success('Nota aggiornata')
       } else {
         const { data, error } = await supabase.from('notes').insert(payload).select().single()
         if (error) throw error
         addNote(data)
+        pushSuccess(`Nota "${formData.title || 'Nuova nota'}" creata`, 'sticky-note')
         toast.success('Nota creata')
       }
       onClose()
