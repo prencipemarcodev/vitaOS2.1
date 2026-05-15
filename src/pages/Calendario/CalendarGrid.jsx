@@ -62,56 +62,65 @@ function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
               key={day.toISOString()}
               onClick={() => onDayClick(day)}
               className={clsx(
-                'min-h-[60px] p-1.5 cursor-pointer transition-colors relative group',
+                'min-h-[72px] sm:min-h-[100px] p-1 sm:p-1.5 cursor-pointer transition-colors relative group',
                 !isCurrentMonth ? 'bg-[var(--bg-base)] opacity-40' : 'bg-white hover:bg-[var(--bg-elevated)]',
-                isToday(day) && 'bg-[#3d997008]'
+                isToday(day) && 'bg-[var(--color-primary-ghost)]'
               )}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className={clsx(
-                  'text-xs font-bold leading-none w-6 h-6 flex items-center justify-center rounded-full',
-                  isToday(day) ? 'bg-[var(--color-primary)] text-white' : (holiday ? 'text-[var(--color-danger)]' : 'text-[var(--text-secondary)]')
+                   'text-[10px] sm:text-xs font-black leading-none w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full',
+                   isToday(day) ? 'bg-[var(--color-primary)] text-white shadow-sm' : (holiday ? 'text-[var(--color-danger)]' : 'text-[var(--text-secondary)]')
                 )}>
                   {format(day, 'd')}
                 </span>
                 {holiday && (
-                  <span className="text-[9px] font-bold text-[var(--color-danger)] uppercase truncate ml-1 flex-1 text-right hidden sm:block">
+                  <span className="text-[7px] sm:text-[9px] font-bold text-[var(--color-danger)] uppercase truncate ml-1 flex-1 text-right">
                     {holiday}
                   </span>
                 )}
               </div>
 
-              {/* Programma giornaliero (Work/Study/Gym) */}
-              <div className="hidden sm:flex flex-col gap-0.5 mb-1.5 min-h-[14px]">
-                {getProgram(day).map((p, i) => (
-                  <div key={i} className="flex items-center gap-1 leading-none">
-                    <span className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
-                    <span className="text-[7px] font-bold uppercase truncate" style={{ color: p.color }}>
-                      {p.label} {p.time}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Day markers (events, absences) */}
-              <div className="space-y-1">
+              {/* Event Labels & Markers */}
+              <div className="flex flex-col gap-0.5 overflow-hidden">
+                {/* 1. Assenze (Ferie/Malattia) - Badge largo */}
                 {dayAbsence && (
                   <div className={clsx(
-                    'h-1.5 rounded-full w-full',
-                    dayAbsence.type === 'ferie' ? 'bg-[#3d9970]' : 'bg-[#e05252]'
-                  )} />
+                    'px-1 py-0.5 rounded-md text-[7px] font-black uppercase truncate leading-none mb-0.5',
+                    dayAbsence.type === 'ferie' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  )}>
+                    {dayAbsence.type === 'ferie' ? 'Ferie' : 'Malattia'}
+                  </div>
                 )}
-                <div className="flex flex-wrap gap-1">
-                  {dayEvents.slice(0, 3).map((e, idx) => (
-                    <div 
-                      key={e.id} 
-                      className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]"
-                    />
-                  ))}
-                  {dayEvents.length > 3 && (
-                    <span className="text-[8px] font-bold text-[var(--text-muted)]">+{dayEvents.length - 3}</span>
-                  )}
-                </div>
+
+                {/* 2. Programma (Lavoro/Studio/Gym) */}
+                {getProgram(day).map((p, i) => (
+                  <div 
+                    key={i} 
+                    className="px-1 py-0.5 rounded-md text-[7px] font-black uppercase truncate leading-none"
+                    style={{ backgroundColor: `${p.color}15`, color: p.color }}
+                  >
+                    {p.label}
+                  </div>
+                ))}
+
+                {/* 3. Eventi Custom */}
+                {dayEvents.slice(0, 1).map((e) => (
+                  <div 
+                    key={e.id} 
+                    className="px-1 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[7px] font-black uppercase truncate leading-none"
+                  >
+                    {e.title}
+                  </div>
+                ))}
+
+                {/* 4. Indicatore "Ancora altri" */}
+                {(dayEvents.length > 1) && (
+                  <div className="flex items-center gap-1 pl-1">
+                    <div className="w-1 h-1 rounded-full bg-gray-400" />
+                    <span className="text-[6px] font-bold text-gray-500">+{dayEvents.length - 1}</span>
+                  </div>
+                )}
               </div>
             </div>
           )
