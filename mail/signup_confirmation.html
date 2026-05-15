@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f9f9f9;
+      background-color: #fafaf8;
       margin: 0;
       padding: 0;
       color: #1a1714;
@@ -15,41 +15,40 @@
       max-width: 600px;
       margin: 40px auto;
       background-color: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
       overflow: hidden;
-      border: 1px solid #eaeaec;
+      border: 1px solid rgba(0,0,0,0.06);
     }
     .header {
-      background: linear-gradient(135deg, #1a1714 0%, #2d2824 100%);
-      padding: 40px 20px;
+      padding: 30px 20px;
       text-align: center;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
     }
     .logo {
-      color: #ffffff;
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -1px;
+      color: #1a1714;
+      font-size: 24px;
+      font-weight: 600;
       margin: 0;
-      font-style: italic;
+      font-family: Georgia, serif;
     }
     .logo span {
-      color: #d4a017; /* VitaOS Primary Color */
+      color: #B46243;
     }
     .content {
       padding: 40px;
       text-align: center;
     }
     h1 {
-      font-size: 24px;
-      font-weight: 800;
+      font-size: 20px;
+      font-weight: 700;
       margin-top: 0;
       color: #1a1714;
     }
     p {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.6;
-      color: #666;
+      color: #5c5753;
       margin-bottom: 30px;
     }
     .button {
@@ -58,18 +57,19 @@
       color: #ffffff !important;
       text-decoration: none;
       font-weight: 700;
-      padding: 14px 32px;
-      border-radius: 8px;
-      font-size: 14px;
-      letter-spacing: 1px;
+      padding: 12px 28px;
+      border-radius: 14px;
+      font-size: 13px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     .footer {
       text-align: center;
       padding: 20px;
-      font-size: 12px;
-      color: #999;
-      border-top: 1px solid #eee;
+      font-size: 11px;
+      color: #9b9591;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      background-color: #fafaf8;
     }
   </style>
 </head>
@@ -82,7 +82,7 @@
       <h1>Benvenuto a bordo!</h1>
       <p>Siamo felici di averti con noi. VitaOS è il tuo nuovo hub personale per gestire finanze, risparmi, salute e molto altro.<br><br>Per iniziare il tuo viaggio e sbloccare tutte le funzionalità, conferma il tuo indirizzo email cliccando sul pulsante qui sotto.</p>
       <a href="{{ .ConfirmationURL }}" class="button">Conferma Email</a>
-      <p style="margin-top: 30px; font-size: 13px; color: #aaa;">Se non hai richiesto tu questa iscrizione, puoi ignorare questa email in sicurezza.</p>
+      <p style="margin-top: 30px; font-size: 12px; color: #9b9591;">Se non hai richiesto tu questa iscrizione, puoi ignorare questa email in sicurezza.</p>
     </div>
     <div class="footer">
       &copy; 2026 VitaOS. Tutti i diritti riservati.
