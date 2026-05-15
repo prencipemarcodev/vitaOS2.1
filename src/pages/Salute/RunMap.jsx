@@ -32,9 +32,15 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
       scrollWheelZoom: !isLive,
     })
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Usiamo CartoDB Voyager (spesso più veloce e meno bloccato di OSM standard)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
+      subdomains: 'abcd',
     }).addTo(mapRef.current)
+
+    // Impostiamo una vista di default iniziale (es. Roma o un punto neutro) 
+    // finché non arrivano coordinate reali
+    mapRef.current.setView([41.9028, 12.4964], 13)
 
     polylineRef.current = L.polyline([], {
       color: TRACK_COLOR,
@@ -51,40 +57,51 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
       fillOpacity: 1,
     }).addTo(mapRef.current)
 
+    // Forza ricalcolo dopo un attimo per sicurezza
+    setTimeout(() => {
+      mapRef.current?.invalidateSize()
+    }, 500)
+
     return () => {
       mapRef.current?.remove()
       mapRef.current = null
     }
   }, [])
 
-  // Fix per mappa grigia (forza ricalcolo dimensioni dopo il render)
+  // Fix per mappa grigia (forza ricalcolo dimensioni ogni volta che cambia lo stato di visibilità)
   useEffect(() => {
-    if (mapRef.current) {
-      const timer = setTimeout(() => {
+    const handleResize = () => {
+      if (mapRef.current) {
         mapRef.current.invalidateSize()
-      }, 400)
-      return () => clearTimeout(timer)
+      }
     }
-  }, [])
+    
+    // Forza ricalcolo all'avvio e dopo ogni possibile transizione
+    const timers = [100, 500, 1000].map(ms => setTimeout(handleResize, ms))
+    
+    return () => timers.forEach(t => clearTimeout(t))
+  }, [isLive, polyline.length])
 
   // Aggiorna polyline e posizione
   useEffect(() => {
-    if (!mapRef.current || polyline.length === 0) return
+    if (!mapRef.current) return
 
-    const latLngs = polyline.map(p => [p.lat, p.lng])
-    polylineRef.current?.setLatLngs(latLngs)
+    // Se abbiamo punti, centriamo su quelli
+    if (polyline.length > 0) {
+      const latLngs = polyline.map(p => [p.lat, p.lng])
+      polylineRef.current?.setLatLngs(latLngs)
 
-    const last = polyline[polyline.length - 1]
-    markerRef.current?.setLatLng([last.lat, last.lng])
+      const last = polyline[polyline.length - 1]
+      markerRef.current?.setLatLng([last.lat, last.lng])
 
-    if (isLive) {
-      mapRef.current.setView([last.lat, last.lng], 16)
-    } else if (polyline.length > 1) {
-      // Alla fine: inquadra tutto il percorso
-      const bounds = L.latLngBounds(latLngs)
-      mapRef.current.fitBounds(bounds, { padding: [30, 30] })
-    } else {
-      mapRef.current.setView([last.lat, last.lng], 16)
+      if (isLive) {
+        mapRef.current.setView([last.lat, last.lng], 16)
+      } else if (polyline.length > 1) {
+        const bounds = L.latLngBounds(latLngs)
+        mapRef.current.fitBounds(bounds, { padding: [30, 30] })
+      } else {
+        mapRef.current.setView([last.lat, last.lng], 16)
+      }
     }
   }, [polyline, isLive])
 
