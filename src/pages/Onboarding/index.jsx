@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Check, SkipForward } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import Button from '@/components/ui/Button'
+import Logo from '@/components/layout/Logo'
+import StepIdentita from './StepIdentita'
 import StepReddito from './StepReddito'
 import StepOrariLavoro from './StepOrariLavoro'
 import StepOrariStudioGym from './StepOrariStudioGym'
@@ -12,6 +14,7 @@ import StepPrimoRisparmio from './StepPrimoRisparmio'
 import StepDone from './StepDone'
 
 const STEPS = [
+  { id: 'identita',    label: 'Identità',         component: StepIdentita },
   { id: 'reddito',     label: 'Reddito',          component: StepReddito },
   { id: 'lavoro',      label: 'Orari lavoro',     component: StepOrariLavoro },
   { id: 'studio_gym',  label: 'Studio & Palestra', component: StepOrariStudioGym },
@@ -21,19 +24,24 @@ const STEPS = [
 ]
 
 function Onboarding() {
-  const [currentStep, setCurrentStep] = useState(0)
+  const { setOnboardingCompleted, userConfig, setShowOnboardingForce } = useAppStore()
+  const [currentStep, setCurrentStep] = useState(userConfig?.onboarding_step || 0)
   const [direction, setDirection] = useState(1)
   const [formData, setFormData] = useState({
+    // Step 0 — Identità
+    first_name: userConfig?.first_name || '',
+    last_name: userConfig?.last_name || '',
+
     // Step 1 — Reddito
-    monthly_net_income: '',
-    has_thirteenth: true,
-    has_fourteenth: false,
-    thirteenth_month: 12,
-    fourteenth_month: 6,
-    savings_target_pct: 20,
+    monthly_net_income: userConfig?.monthly_net_income || '',
+    has_thirteenth: userConfig?.has_thirteenth ?? true,
+    has_fourteenth: userConfig?.has_fourteenth ?? false,
+    thirteenth_month: userConfig?.thirteenth_month || 12,
+    fourteenth_month: userConfig?.fourteenth_month || 6,
+    savings_target_pct: userConfig?.savings_target_pct || 20,
 
     // Step 2 — Orari lavoro
-    work_schedule: {
+    work_schedule: userConfig?.work_schedule || {
       '1': { enabled: true, from: '08:30', to: '17:30' },
       '2': { enabled: true, from: '08:30', to: '17:30' },
       '3': { enabled: true, from: '08:30', to: '17:30' },
@@ -44,19 +52,21 @@ function Onboarding() {
     },
 
     // Step 3 — Studio & Palestra
-    study_schedule: {},
-    gym_schedule: {},
+    study_schedule: userConfig?.study_schedule || {},
+    gym_schedule: userConfig?.gym_schedule || {},
 
     // Step 4 — Saldo
-    initial_bank_balance: '',
-    initial_cash_balance: '',
+    initial_bank_balance: userConfig?.initial_bank_balance || '',
+    initial_cash_balance: userConfig?.initial_cash_balance || '',
 
     // Step 5 — Primo risparmio (opzionale)
     first_plan: null,
   })
 
-  const { setOnboardingCompleted, userConfig } = useAppStore()
   const configId = userConfig?.id
+  
+  // Il tasto Salta è attivo solo se l'identità è stata inserita
+  const canSkip = formData.first_name.trim().length > 0 && formData.last_name.trim().length > 0
 
   const updateFormData = useCallback((updates) => {
     setFormData((prev) => ({ ...prev, ...updates }))
@@ -68,6 +78,10 @@ function Onboarding() {
 
     const stepSaveMap = {
       0: {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+      },
+      1: {
         monthly_net_income: parseFloat(formData.monthly_net_income) || 0,
         has_thirteenth: formData.has_thirteenth,
         has_fourteenth: formData.has_fourteenth,
@@ -75,27 +89,27 @@ function Onboarding() {
         fourteenth_month: formData.fourteenth_month,
         savings_target_pct: formData.savings_target_pct,
       },
-      1: {
+      2: {
         work_schedule: formData.work_schedule,
         daily_hours: calculateDailyHours(formData.work_schedule),
       },
-      2: {
+      3: {
         study_schedule: formData.study_schedule,
         gym_schedule: formData.gym_schedule,
       },
-      3: {
+      4: {
         initial_bank_balance: parseFloat(formData.initial_bank_balance) || 0,
         initial_cash_balance: parseFloat(formData.initial_cash_balance) || 0,
       },
     }
 
-    const data = stepSaveMap[stepIndex]
-    if (data) {
+    const data = { ...stepSaveMap[stepIndex], onboarding_step: stepIndex + 1 }
+    if (data && configId) {
       await supabase.from('user_config').update(data).eq('id', configId)
     }
 
-    // Step 5 — crea piano risparmio se compilato
-    if (stepIndex === 4 && formData.first_plan) {
+    // Step 6 (Primo risparmio)
+    if (stepIndex === 5 && formData.first_plan) {
       const plan = formData.first_plan
       if (plan.name && plan.target_amount) {
         await supabase.from('saving_plans').insert({
@@ -127,17 +141,25 @@ function Onboarding() {
   }
 
   const handleSkip = async () => {
+    if (!canSkip) return
     if (configId) {
-      await supabase.from('user_config').update({ onboarding_completed: true }).eq('id', configId)
+      // Salva almeno il nome prima di saltare
+      await supabase.from('user_config').update({ 
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        onboarding_completed: true 
+      }).eq('id', configId)
     }
+    setShowOnboardingForce(false)
     setOnboardingCompleted(true)
   }
 
   const handleFinish = async () => {
     await saveStepData(currentStep)
     if (configId) {
-      await supabase.from('user_config').update({ onboarding_completed: true }).eq('id', configId)
+      await supabase.from('user_config').update({ onboarding_completed: true, onboarding_step: 6 }).eq('id', configId)
     }
+    setShowOnboardingForce(false)
     setOnboardingCompleted(true)
   }
 
@@ -155,12 +177,7 @@ function Onboarding() {
       {/* ── Header ── */}
       <header className="flex items-center justify-between px-6 py-4 pt-[calc(env(safe-area-inset-top,20px)+12px)] shrink-0">
         <div className="flex flex-col">
-          <span
-            className="text-lg font-semibold text-[var(--text-primary)] leading-tight"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
-          </span>
+          <Logo className="text-lg leading-tight" name={formData.first_name} />
           <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">
             Configurazione
           </span>
@@ -170,6 +187,7 @@ function Onboarding() {
           size="sm"
           icon={SkipForward}
           onClick={handleSkip}
+          disabled={!canSkip}
           className="text-[var(--text-muted)] h-8 !text-xs font-bold"
         >
           Salta

@@ -1,11 +1,12 @@
-import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Calendar, FileSignature, Wallet,
-  PiggyBank, Heart, StickyNote, Settings, ChevronLeft, ChevronRight,
+  PiggyBank, Heart, StickyNote, Settings, LogIn
 } from 'lucide-react'
 import clsx from 'clsx'
+import { useAuthStore } from '@/store/useAuthStore'
+import Logo from './Logo'
 
 const NAV_ITEMS = [
   { to: '/',             icon: LayoutDashboard, label: 'Overview',      id: '1' },
@@ -29,12 +30,7 @@ function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center h-[var(--header-height)] px-6 shrink-0 border-b border-[var(--border-subtle)]">
-        <span
-          className="text-base font-semibold text-[var(--text-primary)] whitespace-nowrap"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
-        </span>
+        <Logo className="text-base" />
       </div>
 
       {/* Nav links */}

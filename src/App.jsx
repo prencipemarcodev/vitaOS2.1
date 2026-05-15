@@ -7,7 +7,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import FloatingPillNav, { PILL_HEIGHT } from '@/components/layout/FloatingPillNav'
 import AppRouter from '@/router'
 import Onboarding from '@/pages/Onboarding'
-
+import Logo from '@/components/layout/Logo'
 
 import { useLocation } from 'react-router-dom'
 import AuthPage from '@/pages/AuthPage'
@@ -15,8 +15,32 @@ import AdminLogin from '@/pages/Admin/AdminLogin'
 import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 
+import { toast } from 'sonner'
+import { Sparkles } from 'lucide-react'
+
+function OnboardingReminder() {
+  const { userConfig, setShowOnboardingForce } = useAppStore()
+  
+  useEffect(() => {
+    // Se l'onboarding è "finito" ma gli step non sono completi (step < 6)
+    if (userConfig?.onboarding_completed && (userConfig?.onboarding_step || 0) < 6) {
+      toast('Completa la configurazione', {
+        description: 'Personalizza i tuoi orari e il tuo reddito per ottenere il massimo da VitaOS.',
+        icon: <Sparkles className="text-[var(--color-primary)]" size={18} />,
+        duration: 10000,
+        action: {
+          label: 'Inizia',
+          onClick: () => setShowOnboardingForce(true)
+        }
+      })
+    }
+  }, [userConfig, setShowOnboardingForce])
+
+  return null
+}
+
 function AppInner() {
-  const { theme, onboardingCompleted, userConfig } = useAppStore()
+  const { theme, onboardingCompleted, userConfig, showOnboardingForce } = useAppStore()
   const { session, setSession, loading: authLoading } = useAuthStore()
   const location = useLocation()
 
@@ -46,9 +70,7 @@ function AppInner() {
     return (
       <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--bg-base)]">
         <div className="flex flex-col items-center gap-3">
-          <span className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
-          </span>
+          <Logo className="text-2xl" />
           <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -73,9 +95,7 @@ function AppInner() {
     return (
       <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--bg-base)]">
         <div className="flex flex-col items-center gap-3">
-          <span className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
-          </span>
+          <Logo className="text-2xl" />
           <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -83,12 +103,13 @@ function AppInner() {
   }
 
   // 6. Se onboarding non completato → mostra wizard fullscreen
-  if (!onboardingCompleted) {
+  if (!onboardingCompleted || useAppStore.getState().showOnboardingForce) {
     return <Onboarding />
   }
 
   return (
     <div className="h-[100dvh] w-full flex overflow-hidden bg-[var(--bg-base)]">
+      <OnboardingReminder />
       {/* Desktop Sidebar */}
       <Sidebar />
 

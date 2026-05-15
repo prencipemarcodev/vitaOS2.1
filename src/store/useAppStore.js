@@ -26,6 +26,8 @@ export const useAppStore = create(
       // Onboarding
       onboardingCompleted: false,
       setOnboardingCompleted: (v) => set({ onboardingCompleted: v }),
+      showOnboardingForce: false,
+      setShowOnboardingForce: (v) => set({ showOnboardingForce: v }),
 
       // User config (mirror from Supabase user_config row)
       userConfig: null,
