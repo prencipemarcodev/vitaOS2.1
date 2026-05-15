@@ -100,7 +100,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
         </div>
 
         <div className="flex flex-col gap-3 pt-3 border-t border-black/5">
-          <div className="flex items-center justify-between px-4">
+          <div className="flex items-center justify-center px-4">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               {hexColors.map(c => (
                 <button
@@ -124,7 +124,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
               variant="primary" 
               type="submit" 
               loading={loading} 
-              className="flex-[2] py-5 shadow-xl shadow-black/10 font-black uppercase tracking-widest bg-black text-white"
+              className="flex-1 py-5 shadow-xl shadow-black/10 font-black uppercase tracking-widest bg-black text-white"
             >
               Salva
             </Button>
