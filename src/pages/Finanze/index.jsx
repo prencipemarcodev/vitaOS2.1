@@ -51,7 +51,7 @@ function Finanze() {
       />
 
       <PageWrapper>
-        <div className="space-y-4 h-full flex flex-col overflow-hidden">
+        <div className="space-y-4 lg:h-full flex flex-col lg:overflow-hidden">
           {/* Top Row: KPIs - Optimized for mobile space */}
           <div className="grid grid-cols-3 gap-1.5 sm:gap-3 shrink-0">
             <Card padding="sm" className="flex items-center gap-2 sm:gap-3">
@@ -86,15 +86,15 @@ function Finanze() {
           </div>
 
           <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4">
-            <div className="lg:col-span-2 space-y-4 overflow-y-auto pr-1 pb-4">
+            <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
               <BalanceChart transactions={transactions} userConfig={userConfig} />
               <FinanceDistribution transactions={transactions} categories={categories} />
             </div>
-            <div className="flex flex-col h-full min-h-0 overflow-hidden">
+            <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
               <div className="flex items-center justify-between mb-2 px-1">
                 <h3 className="text-sm font-bold text-[var(--text-primary)]">Movimenti</h3>
               </div>
-              <div className="flex-1 overflow-y-auto pr-1 pb-4">
+              <div className="flex-1 lg:overflow-y-auto pr-1 pb-4">
                 <TransactionList transactions={transactions} categories={categories} onEdit={handleEdit} />
               </div>
             </div>
