@@ -89,8 +89,7 @@ function LogoutButton() {
   )
 }
 
-import { useAuthStore } from '@/store/useAuthStore'
-import { LogIn } from 'lucide-react'
+
 
 function NavItem({ item, isActive }) {
   if (!item) return null
