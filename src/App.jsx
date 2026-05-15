@@ -154,7 +154,7 @@ function App() {
         position="bottom-right"
         toastOptions={{
           style: {
-            bottom: `calc(${PILL_HEIGHT}px + 16px)`,
+            bottom: `calc(${PILL_HEIGHT}px + 12px)`,
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',
