@@ -155,13 +155,13 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
                 </div>
                 <div className="space-y-3">
                   {dayRecurring.map((re, i) => (
-                    <div key={`re-${i}`} className="p-4 rounded-2xl border border-purple-200 bg-purple-50 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-purple-600 shadow-sm shrink-0">
-                        <Star size={20} fill="currentColor" />
+                    <div key={`re-${i}`} className="flex items-center gap-3 p-3 rounded-2xl bg-[rgba(155,89,182,0.08)] border border-[rgba(155,89,182,0.1)]">
+                      <div className="w-8 h-8 rounded-xl bg-[rgba(155,89,182,0.12)] flex items-center justify-center text-[#9b59b6]">
+                        <Star size={16} fill="currentColor" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Ricorrenza Annuale</p>
-                        <h3 className="text-base font-bold text-[var(--text-primary)]">🎂 {re.title}</h3>
+                        <p className="text-[10px] font-bold text-[#9b59b6] uppercase">Ricorrenza Annuale</p>
+                        <p className="text-xs font-semibold">🎂 {re.title}</p>
                       </div>
                     </div>
                   ))}
