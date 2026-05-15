@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const { session, signOut } = useAuthStore()
+  const { session, signOut, isAdminMaster } = useAuthStore()
   const [stats, setStats] = useState({
     usersCount: 0,
     dbSize: 'Calcolo...',
@@ -18,26 +18,27 @@ export default function AdminDashboard() {
 
   // Controllo accesso rigoroso
   useEffect(() => {
-    if (!session || session.user.email !== 'prencipemarco.dev@gmail.com') {
+    const isAuthed = isAdminMaster || (session && session.user.email === 'prencipemarco.dev@gmail.com')
+    
+    if (!isAuthed) {
       // Se non sei l'admin, fuori!
       navigate('/')
     } else {
-      // Caricamento finte statistiche per demo, 
-      // qui potresti fare query reali se hai le policy RLS sbloccate per l'admin
+      // Caricamento statistiche
       setStats({
-        usersCount: 1, // Tu
+        usersCount: 1, 
         dbSize: '1.2 MB',
         status: 'Operativo'
       })
     }
-  }, [session, navigate])
+  }, [session, isAdminMaster, navigate])
 
   const handleLogout = async () => {
     await signOut()
     navigate('/admin')
   }
 
-  if (!session) return null
+  if (!session && !isAdminMaster) return null
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] p-6 md:p-12 overflow-y-auto">
