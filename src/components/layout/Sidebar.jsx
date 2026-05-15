@@ -62,17 +62,39 @@ function Sidebar() {
           ))}
         </ul>
 
-        {/* BOTTOM: Settings */}
-        <div className="px-2 mt-auto pt-4 border-t border-[var(--border-subtle)]">
+        {/* BOTTOM: Settings & Logout */}
+        <div className="px-2 mt-auto pt-4 border-t border-[var(--border-subtle)] space-y-1">
           <NavItem 
             item={NAV_ITEMS.find(i => i.to === '/impostazioni')} 
             isActive={location.pathname.startsWith('/impostazioni')} 
           />
+          <LogoutButton />
         </div>
       </div>
     </nav>
   )
 }
+
+function LogoutButton() {
+  const { signOut } = useAuthStore()
+  
+  return (
+    <button
+      onClick={() => {
+        if(confirm('Vuoi uscire da VitaOS?')) signOut()
+      }}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)]
+        text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600
+        transition-all duration-[var(--transition-fast)]"
+    >
+      <LogIn size={18} className="shrink-0 rotate-180" />
+      <span className="text-[13px] font-medium">Esci</span>
+    </button>
+  )
+}
+
+import { useAuthStore } from '@/store/useAuthStore'
+import { LogIn } from 'lucide-react'
 
 function NavItem({ item, isActive }) {
   if (!item) return null

@@ -9,26 +9,41 @@ import AppRouter from '@/router'
 import Onboarding from '@/pages/Onboarding'
 
 
+import AuthPage from '@/pages/AuthPage'
+import { useAuthStore } from '@/store/useAuthStore'
+import { supabase } from '@/lib/supabase'
+
 function AppInner() {
   const { theme, onboardingCompleted, userConfig } = useAppStore()
+  const { session, setSession, loading: authLoading } = useAuthStore()
 
-  // Sync theme on mount
+  // 1. Listen for Auth Changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [setSession])
+
+  // 2. Sync theme on mount
   useEffect(() => {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
-  // Load all data from Supabase into Zustand stores
+  // 3. Load all data from Supabase into Zustand stores
   useSupabaseSync()
 
-  // Se il config non è ancora caricato, mostra uno spinner
-  if (!userConfig) {
+  // Se l'autenticazione sta caricando o la sessione è in fase di recupero
+  if (authLoading) {
     return (
       <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--bg-base)]">
         <div className="flex flex-col items-center gap-3">
-          <span
-            className="text-2xl font-semibold text-[var(--text-primary)]"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
+          <span className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
             vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
           </span>
           <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
@@ -37,7 +52,26 @@ function AppInner() {
     )
   }
 
-  // Se onboarding non completato → mostra wizard fullscreen
+  // 4. Se non sei loggato → Mostra pagina di Auth
+  if (!session) {
+    return <AuthPage />
+  }
+
+  // 5. Se loggato ma config non ancora caricato (in attesa di useSupabaseSync)
+  if (!userConfig) {
+    return (
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--bg-base)]">
+        <div className="flex flex-col items-center gap-3">
+          <span className="text-2xl font-semibold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
+          </span>
+          <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  // 6. Se onboarding non completato → mostra wizard fullscreen
   if (!onboardingCompleted) {
     return <Onboarding />
   }

@@ -28,11 +28,27 @@ export function useSupabaseSync() {
 
   // ── Load user config ──
   const loadUserConfig = useCallback(async () => {
-    const { data } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    let { data, error } = await supabase
       .from('user_config')
       .select('*')
-      .limit(1)
+      .eq('user_id', user.id)
       .single()
+
+    if (error && (error.code === 'PGRST116' || error.code === '42703')) {
+      // Config non trovata (PGRST116) o colonna user_id non ancora pronta (42703)
+      // Proviamo a creare una riga di default per il nuovo utente
+      const { data: newData, error: insertError } = await supabase
+        .from('user_config')
+        .insert({ user_id: user.id })
+        .select()
+        .single()
+      
+      if (!insertError) data = newData
+    }
+
     if (data) {
       setUserConfig(data)
       setOnboardingCompleted(data.onboarding_completed || false)
