@@ -8,10 +8,65 @@ import {
 import { useRunTracker } from '@/hooks/useRunTracker'
 import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
 import RunMap from './RunMap'
-import RunFocusMode from './RunFocusMode'
+import { 
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, Tooltip 
+} from 'recharts'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import clsx from 'clsx'
+
+// --- Componenti Grafici ---
+const PaceChart = ({ data }) => (
+  <div className="h-24 w-full mt-2">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data}>
+        <Bar dataKey="pace_sec" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+        <XAxis dataKey="km" hide />
+        <YAxis hide domain={['auto', 'auto']} />
+        <Tooltip 
+          cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-white p-2 border border-[var(--border-subtle)] rounded-lg shadow-sm text-[10px] font-bold">
+                  {formatPace(payload[0].value)}/km
+                </div>
+              )
+            }
+            return null
+          }}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+)
+
+const ElevationChart = ({ data }) => {
+  // Downsampling per performance (max 50 punti)
+  const step = Math.max(1, Math.floor(data.length / 50))
+  const chartData = data.filter((_, i) => i % step === 0).map((p, i) => ({
+    alt: p.alt,
+    index: i
+  }))
+
+  return (
+    <div className="h-24 w-full mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id="colorAlt" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3d9970" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#3d9970" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <Area type="monotone" dataKey="alt" stroke="#3d9970" fillOpacity={1} fill="url(#colorAlt)" strokeWidth={2} />
+          <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 
@@ -228,20 +283,42 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="paused" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} className="flex flex-col items-center py-12">
-                <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">Corsa in pausa</h2>
-                <p className="text-6xl font-black mb-12">{distanceKm.toFixed(2)} <span className="text-2xl">km</span></p>
-                <div className="w-full max-w-xs space-y-4">
-                  <div className="flex items-center justify-between px-2 text-[10px] font-bold text-[var(--text-muted)] uppercase"><span>Km</span><span>Pace</span></div>
-                  {splits.slice(-3).map((s, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <span className="text-xs font-bold w-8 text-[var(--text-muted)]">{s.km} km</span>
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (300/s.pace_sec) * 100)}%` }} className="h-full bg-orange-400" />
-                      </div>
-                      <span className="text-xs font-black tabular-nums">{formatPace(s.pace_sec)}</span>
+              <motion.div key="paused" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} className="flex flex-col items-center py-6 space-y-6">
+                <div className="text-center">
+                  <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-2">Corsa in pausa</h2>
+                  <p className="text-6xl font-black">{distanceKm.toFixed(2)} <span className="text-2xl">km</span></p>
+                </div>
+
+                <div className="w-full space-y-6">
+                  {/* Pace Trend */}
+                  <div>
+                    <div className="flex items-center justify-between px-1 mb-1">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Andamento (Passo/KM)</p>
+                      <p className="text-[10px] font-bold text-[var(--text-primary)]">{splits.length} KM completati</p>
                     </div>
-                  ))}
+                    <Card padding="sm" className="bg-white/50">
+                      {splits.length > 0 ? (
+                        <PaceChart data={splits} />
+                      ) : (
+                        <div className="h-24 flex items-center justify-center text-[10px] text-[var(--text-muted)] font-bold italic">Nessun dato disponibile</div>
+                      )}
+                    </Card>
+                  </div>
+
+                  {/* Elevation Trend */}
+                  <div>
+                    <div className="flex items-center justify-between px-1 mb-1">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Altimetria (Dislivello)</p>
+                      <p className="text-[10px] font-bold text-green-600">+{elevationGain}m guadagnati</p>
+                    </div>
+                    <Card padding="sm" className="bg-white/50">
+                      {polyline.length > 5 ? (
+                        <ElevationChart data={polyline} />
+                      ) : (
+                        <div className="h-24 flex items-center justify-center text-[10px] text-[var(--text-muted)] font-bold italic">Acquisizione profilo...</div>
+                      )}
+                    </Card>
+                  </div>
                 </div>
               </motion.div>
             )}
