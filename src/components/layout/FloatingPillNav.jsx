@@ -63,20 +63,20 @@ function FloatingPillNav() {
           layout
           initial={{ y: 80, opacity: 0 }}
           animate={{ 
-            y: -12, // Leggermente sollevato dalla safe area per eleganza
+            y: -12, 
             opacity: 1,
-            width: moreOpen ? '280px' : '220px'
+            width: moreOpen ? '320px' : '270px'
           }}
           transition={{ 
             type: 'spring', 
-            stiffness: 350, 
+            stiffness: 400, 
             damping: 35,
             layout: { duration: 0.3 }
           }}
           className={clsx(
-            "flex items-center gap-1.5 px-3 bg-white/95 backdrop-blur-xl border border-black/5 rounded-full shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] overflow-hidden pointer-events-auto",
+            "flex items-center gap-2 px-3.5 bg-white/95 backdrop-blur-xl border border-black/5 rounded-full shadow-[0_12px_40px_-12px_rgba(0,0,0,0.2)] overflow-hidden pointer-events-auto",
           )}
-          style={{ height: 52 }}
+          style={{ height: 54 }}
         >
           {/* Container delle icone: statico o scorrevole */}
           <div 
@@ -86,7 +86,7 @@ function FloatingPillNav() {
               moreOpen ? "overflow-x-auto scrollbar-hide flex-1 scroll-smooth" : "overflow-hidden shrink-0"
             )}
             style={{ 
-              width: moreOpen ? 'auto' : '170px'
+              width: moreOpen ? 'auto' : '190px'
             }}
           >
             <AnimatePresence mode="popLayout" initial={false}>
