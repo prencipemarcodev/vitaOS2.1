@@ -63,7 +63,7 @@ function FloatingPillNav() {
           layout
           initial={{ y: 80, opacity: 0 }}
           animate={{ 
-            y: -12, 
+            y: -4, 
             opacity: 1,
             width: moreOpen ? '320px' : '270px'
           }}
