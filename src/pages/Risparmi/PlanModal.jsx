@@ -60,7 +60,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
     try {
       const payload = {
         ...formData,
-        target_amount: formData.type === 'piggy_bank' ? null : parseFloat(formData.target_amount),
+        target_amount: formData.type === 'piggy_bank' ? 0 : parseFloat(formData.target_amount),
         current_amount: parseFloat(formData.current_amount || 0),
         monthly_contribution: formData.type === 'piggy_bank' ? 0 : parseFloat(formData.monthly_contribution || 0),
         priority: parseInt(formData.priority),
