@@ -7,9 +7,9 @@ import Button from './Button'
  * @param {string} title
  * @param {ReactNode} footer
  */
-function Modal({ isOpen, onClose, title, children, footer, size = 'md', className }) {
+function Modal({ isOpen, onClose, title, children, footer, size = 'md', className, ...props }) {
   return (
-    <ModalPortal isOpen={isOpen} onClose={onClose} size={size} className={className}>
+    <ModalPortal isOpen={isOpen} onClose={onClose} size={size} className={className} {...props}>
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
         {title && (
