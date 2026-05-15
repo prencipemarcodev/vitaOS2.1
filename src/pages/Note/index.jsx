@@ -88,7 +88,7 @@ function Note() {
               {filteredNotes.some(n => n.is_pinned) && (
                 <div>
                   <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4 ml-1">In evidenza</h3>
-                  <div className="columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+                  <div className="columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4 px-1 pb-4">
                     {filteredNotes.filter(n => n.is_pinned).map(note => (
                       <NoteCard key={note.id} note={note} onEdit={handleEdit} />
                     ))}
