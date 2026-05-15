@@ -183,18 +183,18 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           onChange={e => setFormData({ ...formData, description: e.target.value })} 
         />
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" onClick={onClose}>Annulla</Button>
+        <div className="flex flex-col gap-2 pt-4">
           <Button 
             type="submit" 
+            variant={isExpense ? 'danger' : 'success'}
             loading={loading}
-            className={`px-8 transition-all ${
-              isExpense 
-                ? 'bg-[var(--color-danger)] hover:bg-[#c0392b] text-white' 
-                : 'bg-[var(--color-success)] hover:bg-[#27ae60] text-white'
-            }`}
+            size="lg"
+            className="w-full shadow-lg font-black tracking-wide"
           >
-            {txToEdit ? 'Aggiorna' : 'Crea Transazione'}
+            {txToEdit ? 'Aggiorna Transazione' : 'Crea Transazione'}
+          </Button>
+          <Button variant="ghost" onClick={onClose} className="w-full text-[var(--text-muted)] font-bold">
+            Annulla
           </Button>
         </div>
       </form>

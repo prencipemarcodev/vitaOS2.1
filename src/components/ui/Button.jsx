@@ -30,6 +30,11 @@ const variantMap = {
     'hover:opacity-90',
     'active:scale-[0.97]',
   ],
+  success: [
+    'bg-[var(--color-success)] text-white border-transparent',
+    'hover:opacity-90',
+    'active:scale-[0.97]',
+  ],
   primary_ghost: [
     'bg-[var(--color-primary-ghost)] text-[var(--color-primary)] border-transparent',
     'hover:bg-[var(--color-primary-light)]',
