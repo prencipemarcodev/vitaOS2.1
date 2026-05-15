@@ -71,7 +71,7 @@ function FinanceDistribution({ transactions, categories }) {
     const expenses = transactions.filter(t => t.type === 'expense')
     const grouped = expenses.reduce((acc, tx) => {
       // Usiamo toString() per assicurarci che il confronto funzioni se uno è numero e l'altro stringa
-      const cat = categories.find(c => c.id?.toString() === tx.category_id?.toString())
+      const cat = categories.find(c => c.id?.toString() === tx.category?.toString())
       const name = cat?.name || 'Altro'
       acc[name] = (acc[name] || 0) + parseFloat(tx.amount)
       return acc
@@ -85,7 +85,7 @@ function FinanceDistribution({ transactions, categories }) {
   const incomeData = useMemo(() => {
     const incomes = transactions.filter(t => t.type === 'income')
     const grouped = incomes.reduce((acc, tx) => {
-      const cat = categories.find(c => c.id?.toString() === tx.category_id?.toString())
+      const cat = categories.find(c => c.id?.toString() === tx.category?.toString())
       const name = cat?.name || 'Stipendio'
       acc[name] = (acc[name] || 0) + parseFloat(tx.amount)
       return acc
