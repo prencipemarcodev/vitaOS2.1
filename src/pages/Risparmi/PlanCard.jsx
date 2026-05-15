@@ -65,6 +65,7 @@ function PlanCard({ plan, onEdit }) {
   const canDeposit = saldo >= 50
 
   const [customAmount, setCustomAmount] = useState('')
+  const [method, setMethod] = useState('bank')
 
   const handleAdjust = async (type) => {
     const amount = parseFloat(customAmount)
@@ -109,7 +110,6 @@ function PlanCard({ plan, onEdit }) {
       if (movement) addMovement(movement)
 
       // 2. Log finance transaction (Syncing with balance)
-      // Cerchiamo la categoria "Risparmi"
       let savingsCategory = categories.find(c => c.name.toLowerCase().includes('risparmi'))
       
       const { data: tx } = await supabase
@@ -117,8 +117,9 @@ function PlanCard({ plan, onEdit }) {
         .insert({
           amount: amount,
           type: type === 'deposit' ? 'expense' : 'income',
-          category_id: savingsCategory?.id || categories[0]?.id,
+          category: savingsCategory?.name || 'Risparmio',
           description: type === 'deposit' ? `Accantonamento: ${plan.name}` : `Prelievo da: ${plan.name}`,
+          payment_method: method,
           date: today
         })
         .select()
@@ -218,29 +219,55 @@ function PlanCard({ plan, onEdit }) {
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-2 bg-[var(--bg-base)] p-1.5 rounded-2xl border border-[var(--border-subtle)]">
-        <input 
-          type="number" 
-          placeholder="Quota €"
-          className="flex-1 bg-transparent border-0 text-xs font-bold px-2 focus:ring-0 placeholder:text-[var(--text-muted)] placeholder:font-normal"
-          value={customAmount}
-          onChange={(e) => setCustomAmount(e.target.value)}
-        />
-        <div className="flex gap-1">
+      <div className="space-y-2 mt-4">
+        {/* Selettore Metodo */}
+        <div className="flex gap-1 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border-subtle)]">
           <button 
-            onClick={() => handleAdjust('withdrawal')}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--color-danger-ghost)] hover:text-[var(--color-danger)] transition-colors"
-            title="Preleva"
+            onClick={() => setMethod('bank')}
+            className={clsx(
+              "flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-[8px] font-black transition-all",
+              method === 'bank' ? "bg-white shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)] hover:bg-black/5"
+            )}
           >
-            <Minus size={16} />
+            <CreditCard size={10} />
+            CONTO
           </button>
           <button 
-            onClick={() => handleAdjust('deposit')}
-            className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
-            title="Deposita"
+            onClick={() => setMethod('cash')}
+            className={clsx(
+              "flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-[8px] font-black transition-all",
+              method === 'cash' ? "bg-white shadow-sm text-orange-600" : "text-[var(--text-muted)] hover:bg-black/5"
+            )}
           >
-            <Plus size={16} />
+            <Banknote size={10} />
+            CONTANTI
           </button>
+        </div>
+
+        <div className="flex items-center gap-2 bg-[var(--bg-base)] p-1.5 rounded-2xl border border-[var(--border-subtle)]">
+          <input 
+            type="number" 
+            placeholder="Quota €"
+            className="flex-1 bg-transparent border-0 text-xs font-bold px-2 focus:ring-0 placeholder:text-[var(--text-muted)] placeholder:font-normal"
+            value={customAmount}
+            onChange={(e) => setCustomAmount(e.target.value)}
+          />
+          <div className="flex gap-1">
+            <button 
+              onClick={() => handleAdjust('withdrawal')}
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--color-danger-ghost)] hover:text-[var(--color-danger)] transition-colors"
+              title="Preleva"
+            >
+              <Minus size={16} />
+            </button>
+            <button 
+              onClick={() => handleAdjust('deposit')}
+              className="w-8 h-8 rounded-xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
+              title="Deposita"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </Card>
