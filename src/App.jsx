@@ -79,7 +79,8 @@ function AppInner() {
 
   // 4. Gestione Rotte Admin (Isolate dal resto dell'app)
   if (location.pathname.startsWith('/admin')) {
-    if (!session) {
+    const { isAdminMaster } = useAuthStore.getState()
+    if (!session && !isAdminMaster) {
       return <AdminLogin />
     }
     return <AppRouter />

@@ -62,6 +62,8 @@ export default function AdminLogin() {
     
     // Fallback Master OTP
     if (otp === '27042000') {
+      const { setIsAdminMaster } = useAuthStore.getState()
+      setIsAdminMaster(true)
       toast.success('Accesso via Master OTP autorizzato')
       navigate('/admin/dashboard')
       setLoading(false)

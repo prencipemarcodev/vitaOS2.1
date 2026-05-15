@@ -5,6 +5,7 @@ export const useAuthStore = create((set) => ({
   session: null,
   user: null,
   loading: true,
+  isAdminMaster: false,
 
   setSession: (session) => set({ 
     session, 
@@ -12,8 +13,10 @@ export const useAuthStore = create((set) => ({
     loading: false 
   }),
 
+  setIsAdminMaster: (val) => set({ isAdminMaster: val }),
+
   signOut: async () => {
     await supabase.auth.signOut()
-    set({ session: null, user: null, loading: false })
+    set({ session: null, user: null, loading: false, isAdminMaster: false })
   }
 }))
