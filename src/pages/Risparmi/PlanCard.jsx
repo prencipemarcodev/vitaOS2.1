@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import clsx from 'clsx'
-import { Edit2, Trash2, Plus, Minus } from 'lucide-react'
+import { Edit2, Trash2, Plus, Minus, CreditCard, Banknote } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useSavingsStore } from '@/store/useSavingsStore'
