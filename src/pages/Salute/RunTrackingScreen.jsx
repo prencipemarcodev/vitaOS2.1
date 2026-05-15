@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Play, Pause, Square, AlertCircle, MapPin, 
-  ChevronLeft, Navigation, Info, Zap, Satellite
+  ChevronLeft, Navigation, Info, Zap, Satellite, Activity
 } from 'lucide-react'
 import { useRunTracker } from '@/hooks/useRunTracker'
 import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
