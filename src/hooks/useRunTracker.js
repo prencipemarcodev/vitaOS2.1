@@ -42,6 +42,7 @@ export function useRunTracker() {
   const [polyline, setPolyline] = useState([])
   const [splits, setSplits] = useState([])
   const [error, setError] = useState(null)
+  const [livePosition, setLivePosition] = useState(null) // Posizione in tempo reale (lat, lng)
 
   const watchIdRef = useRef(null)
   const timerRef = useRef(null)
@@ -91,6 +92,9 @@ export function useRunTracker() {
     
     const ts = position.timestamp
     const newPoint = { lat: latitude, lng: longitude, alt: altitude ?? 0, ts }
+    
+    // Aggiorniamo sempre la posizione live per la mappa
+    setLivePosition({ lat: latitude, lng: longitude })
 
     if (status === 'waiting_gps') {
       // Restiamo in waiting_gps finché l'utente non preme "Inizia Corsa" o triggeriamo il countdown dalla UI
@@ -266,7 +270,7 @@ export function useRunTracker() {
   return {
     status, error, elapsed, distanceKm,
     currentPace, currentSpeed, maxSpeed, avgPace, calories, elevationGain,
-    polyline, splits, permissionStatus, accuracy,
+    polyline, splits, permissionStatus, accuracy, livePosition,
     start, pause, resume, finish, reset, requestPermission, forceStart
   }
 }

@@ -224,7 +224,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                   </Card>
                 </div>
                 <div className="h-64 rounded-3xl overflow-hidden border border-[var(--border-subtle)] shadow-sm">
-                  <RunMap polyline={polyline} isLive={true} height={256} />
+                  <RunMap polyline={polyline} livePosition={tracker.livePosition} isLive={true} height={256} />
                 </div>
               </motion.div>
             ) : (

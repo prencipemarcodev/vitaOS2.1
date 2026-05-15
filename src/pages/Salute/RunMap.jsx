@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 })
 
-export function RunMap({ polyline = [], isLive = false, height = 300 }) {
+export function RunMap({ polyline = [], livePosition = null, isLive = false, height = 300 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const polylineRef = useRef(null)
@@ -39,20 +39,18 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
     }).addTo(mapRef.current)
 
     // Tentiamo di centrare sulla posizione reale dell'utente come default iniziale
-    if (navigator.geolocation) {
+    if (livePosition) {
+      mapRef.current.setView([livePosition.lat, livePosition.lng], 15)
+    } else if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           mapRef.current?.setView([pos.coords.latitude, pos.coords.longitude], 15)
         },
         () => {
-          // Fallback se il GPS non risponde subito: Monte Sant'Angelo (visto che sei lì!)
-          mapRef.current?.setView([41.7077, 15.9606], 13)
+          mapRef.current?.setView([41.7077, 15.9606], 13) // Fallback Monte Sant'Angelo
         },
         { enableHighAccuracy: true, timeout: 5000 }
       )
-    } else {
-      // Fallback estremo: Monte Sant'Angelo
-      mapRef.current.setView([41.7077, 15.9606], 13)
     }
 
     polylineRef.current = L.polyline([], {
@@ -62,7 +60,9 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
       lineJoin: 'round'
     }).addTo(mapRef.current)
 
-    markerRef.current = L.circleMarker([0, 0], {
+    // Inizializza marker sulla livePosition se disponibile, altrimenti a 0,0 temporaneamente
+    const startPos = livePosition ? [livePosition.lat, livePosition.lng] : [0, 0]
+    markerRef.current = L.circleMarker(startPos, {
       radius: 7,
       fillColor: TRACK_COLOR_LIVE,
       color: '#fff',
@@ -100,24 +100,31 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
   useEffect(() => {
     if (!mapRef.current) return
 
-    // Se abbiamo punti, centriamo su quelli
+    // Aggiorniamo il marker: diamo priorità all'ultimo punto della polyline, 
+    // ma usiamo livePosition se la polyline è ancora vuota.
+    const currentPoint = (polyline.length > 0) 
+      ? polyline[polyline.length - 1] 
+      : livePosition
+
+    if (currentPoint) {
+      markerRef.current?.setLatLng([currentPoint.lat, currentPoint.lng])
+      
+      if (isLive) {
+        mapRef.current.setView([currentPoint.lat, currentPoint.lng], 16)
+      }
+    }
+
+    // Aggiorniamo la traccia
     if (polyline.length > 0) {
       const latLngs = polyline.map(p => [p.lat, p.lng])
       polylineRef.current?.setLatLngs(latLngs)
 
-      const last = polyline[polyline.length - 1]
-      markerRef.current?.setLatLng([last.lat, last.lng])
-
-      if (isLive) {
-        mapRef.current.setView([last.lat, last.lng], 16)
-      } else if (polyline.length > 1) {
+      if (!isLive && polyline.length > 1) {
         const bounds = L.latLngBounds(latLngs)
         mapRef.current.fitBounds(bounds, { padding: [30, 30] })
-      } else {
-        mapRef.current.setView([last.lat, last.lng], 16)
       }
     }
-  }, [polyline, isLive])
+  }, [polyline, livePosition, isLive])
 
   return (
     <div
