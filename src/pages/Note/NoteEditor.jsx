@@ -100,7 +100,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
         </div>
 
         <div className="flex flex-col gap-3 pt-3 border-t border-black/5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-4">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               {hexColors.map(c => (
                 <button
@@ -118,7 +118,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 px-4 pb-2">
             <Button variant="ghost" onClick={onClose} className="flex-1 text-black/40 font-bold">Annulla</Button>
             <Button 
               variant="primary" 
