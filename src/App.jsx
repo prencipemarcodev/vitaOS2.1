@@ -9,13 +9,16 @@ import AppRouter from '@/router'
 import Onboarding from '@/pages/Onboarding'
 
 
+import { useLocation } from 'react-router-dom'
 import AuthPage from '@/pages/AuthPage'
+import AdminLogin from '@/pages/Admin/AdminLogin'
 import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 
 function AppInner() {
   const { theme, onboardingCompleted, userConfig } = useAppStore()
   const { session, setSession, loading: authLoading } = useAuthStore()
+  const location = useLocation()
 
   // 1. Listen for Auth Changes
   useEffect(() => {
@@ -52,12 +55,20 @@ function AppInner() {
     )
   }
 
-  // 4. Se non sei loggato → Mostra pagina di Auth
+  // 4. Gestione Rotte Admin (Isolate dal resto dell'app)
+  if (location.pathname.startsWith('/admin')) {
+    if (!session) {
+      return <AdminLogin />
+    }
+    return <AppRouter />
+  }
+
+  // 5. Se non sei loggato → Mostra pagina di Auth utente
   if (!session) {
     return <AuthPage />
   }
 
-  // 5. Se loggato ma config non ancora caricato (in attesa di useSupabaseSync)
+  // 6. Se loggato ma config non ancora caricato (in attesa di useSupabaseSync)
   if (!userConfig) {
     return (
       <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--bg-base)]">

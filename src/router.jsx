@@ -11,6 +11,7 @@ const Risparmi     = lazy(() => import('@/pages/Risparmi'))
 const Salute       = lazy(() => import('@/pages/Salute'))
 const Note         = lazy(() => import('@/pages/Note'))
 const Impostazioni = lazy(() => import('@/pages/Impostazioni'))
+const AdminDashboard = lazy(() => import('@/pages/Admin/index'))
 
 function PageFallback() {
   return (
@@ -34,6 +35,10 @@ function AppRouter() {
         <Route path="/salute/*"     element={<Salute />} />
         <Route path="/note"         element={<Note />} />
         <Route path="/impostazioni" element={<Impostazioni />} />
+        
+        {/* Rotte Admin */}
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
         <Route path="*"             element={<Overview />} />
       </Routes>
     </Suspense>
