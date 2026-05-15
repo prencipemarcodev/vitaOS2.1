@@ -185,8 +185,8 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   // --- SCHERMATA 3 & 4: RUNNING & PAUSED ---
   else {
     content = (
-      <div className="flex flex-col h-full">
-        <header className="px-6 py-4 flex items-center justify-between bg-white border-b border-[var(--border-subtle)]">
+      <div className="flex flex-col h-full bg-[var(--bg-base)]">
+        <header className="px-6 pb-4 flex items-center justify-between bg-white border-b border-[var(--border-subtle)]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
           <div className="flex items-center gap-2">
             <div className={clsx("w-2 h-2 rounded-full", status === 'running' ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{status === 'running' ? 'GPS Attivo' : 'In pausa'}</span>

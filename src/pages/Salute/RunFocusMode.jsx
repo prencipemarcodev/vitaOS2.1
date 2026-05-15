@@ -40,10 +40,11 @@ function RunFocusMode({ tracker, onUnlock }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between py-12 px-6 select-none touch-none"
+      className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between px-6 select-none touch-none"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 20px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)' }}
     >
       {/* Apple Music Player (Grayscale) */}
-      <div className="w-full rounded-2xl overflow-hidden border border-white/10 bg-black shadow-2xl">
+      <div className="w-full rounded-2xl overflow-hidden border border-white/10 bg-black shadow-2xl mt-4">
         <iframe 
           allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" 
           frameBorder="0" 

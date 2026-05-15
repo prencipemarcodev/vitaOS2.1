@@ -57,6 +57,16 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
     }
   }, [])
 
+  // Fix per mappa grigia (forza ricalcolo dimensioni dopo il render)
+  useEffect(() => {
+    if (mapRef.current) {
+      const timer = setTimeout(() => {
+        mapRef.current.invalidateSize()
+      }, 400)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
   // Aggiorna polyline e posizione
   useEffect(() => {
     if (!mapRef.current || polyline.length === 0) return
@@ -81,7 +91,7 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
   return (
     <div
       ref={containerRef}
-      className="relative z-0 shadow-inner"
+      className="relative z-0 shadow-inner bg-gray-100"
       style={{ height, width: '100%', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}
     />
   )
