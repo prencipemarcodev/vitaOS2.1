@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useAppStore } from '@/store/useAppStore'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import { useSupabaseSync } from '@/hooks/useSupabaseSync'
 import Sidebar from '@/components/layout/Sidebar'
 import FloatingPillNav, { PILL_HEIGHT } from '@/components/layout/FloatingPillNav'
@@ -20,10 +21,13 @@ import { Sparkles } from 'lucide-react'
 
 function OnboardingReminder() {
   const { userConfig, setShowOnboardingForce } = useAppStore()
+  const { notifications, addNotification } = useNotificationStore()
   
   useEffect(() => {
     // Se l'onboarding è "finito" ma gli step non sono completi (step < 6)
     if (userConfig?.onboarding_completed && (userConfig?.onboarding_step || 0) < 6) {
+      
+      // 1. Mostra il toast (veloce)
       toast('Completa la configurazione', {
         description: 'Personalizza i tuoi orari e il tuo reddito per ottenere il massimo da VitaOS.',
         icon: <Sparkles className="text-[var(--color-primary)]" size={18} />,
@@ -33,8 +37,21 @@ function OnboardingReminder() {
           onClick: () => setShowOnboardingForce(true)
         }
       })
+
+      // 2. Aggiungi al centro notifiche se non già presente
+      const hasOnboardingNotif = notifications.some(n => n.id === 'onboarding-reminder')
+      if (!hasOnboardingNotif) {
+        addNotification({
+          id: 'onboarding-reminder',
+          type: 'info',
+          message: 'Configurazione incompleta: clicca qui per personalizzare i tuoi orari e il reddito.',
+          icon: 'sparkles',
+          category: 'Sistema',
+          action: () => setShowOnboardingForce(true)
+        })
+      }
     }
-  }, [userConfig, setShowOnboardingForce])
+  }, [userConfig?.onboarding_completed, userConfig?.onboarding_step, setShowOnboardingForce])
 
   return null
 }
