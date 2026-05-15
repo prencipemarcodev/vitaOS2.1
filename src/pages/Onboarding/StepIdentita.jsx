@@ -33,12 +33,6 @@ export default function StepIdentita({ formData, updateFormData }) {
         />
       </div>
 
-      <div className="p-4 bg-[var(--color-primary-ghost)] rounded-[var(--radius-md)] border border-[var(--color-primary-light)]/20">
-        <p className="text-xs text-[var(--color-primary-dark)] font-medium leading-relaxed">
-          <strong>Nota:</strong> Inserendo il tuo nome, l'applicazione si trasformerà in 
-          <span className="font-bold"> {formData.first_name || '...'}OS</span>.
-        </p>
-      </div>
     </div>
   )
 }

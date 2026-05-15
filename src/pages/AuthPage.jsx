@@ -13,31 +13,33 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  const [error, setError] = useState('')
+  const [shake, setShake] = useState(false)
+
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
-        toast.success('Accesso effettuato!')
+        const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        if (authError) throw authError
       } else {
-        const { error } = await supabase.auth.signUp({ 
+        const { error: authError } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
-            emailRedirectTo: window.location.origin,
-            data: {
-              // Dati aggiuntivi per il profilo se necessario
-            }
+            emailRedirectTo: window.location.origin
           }
         })
-        if (error) throw error
-        toast.success('Registrazione completata! Controlla la tua email per confermare.')
+        if (authError) throw authError
+        setError('Registrazione completata! Controlla la tua email per confermare.')
       }
-    } catch (error) {
-      toast.error(error.message)
+    } catch (err) {
+      setError(err.message)
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
     } finally {
       setLoading(false)
     }
@@ -83,21 +85,42 @@ export default function AuthPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-2"
-              size="lg"
-              loading={loading}
-              iconRight={ArrowRight}
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs font-medium text-red-500 mt-1"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            <motion.div
+              animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
+              transition={{ duration: 0.4 }}
             >
-              {isLogin ? 'Accedi' : 'Registrati'}
-            </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mt-2"
+                size="lg"
+                loading={loading}
+                iconRight={ArrowRight}
+              >
+                {isLogin ? 'Accedi' : 'Registrati'}
+              </Button>
+            </motion.div>
           </form>
 
           <div className="mt-6 pt-6 border-t border-[var(--border-subtle)] text-center">
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin)
+                setError('')
+              }}
               className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-colors flex items-center justify-center gap-2 mx-auto"
             >
               {isLogin ? (

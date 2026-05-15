@@ -28,30 +28,38 @@ export function useSupabaseSync() {
 
   // ── Load user config ──
   const loadUserConfig = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-    let { data, error } = await supabase
-      .from('user_config')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (error && (error.code === 'PGRST116' || error.code === '42703')) {
-      // Config non trovata (PGRST116) o colonna user_id non ancora pronta (42703)
-      // Proviamo a creare una riga di default per il nuovo utente
-      const { data: newData, error: insertError } = await supabase
+      let { data, error } = await supabase
         .from('user_config')
-        .insert({ user_id: user.id })
-        .select()
-        .single()
-      
-      if (!insertError) data = newData
-    }
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle() // Usa maybeSingle per evitare errori 406/PGRST116 se non trova nulla
 
-    if (data) {
-      setUserConfig(data)
-      setOnboardingCompleted(data.onboarding_completed || false)
+      // Se c'è un errore o se la riga non esiste, proviamo a crearla
+      if (error || !data) {
+        console.log('Profilo non trovato o errore (', error?.code, '), creazione in corso...')
+        const { data: newData, error: insertError } = await supabase
+          .from('user_config')
+          .insert({ 
+            user_id: user.id,
+            onboarding_completed: false,
+            onboarding_step: 0
+          })
+          .select()
+          .maybeSingle()
+        
+        if (!insertError) data = newData
+      }
+
+      if (data) {
+        setUserConfig(data)
+        setOnboardingCompleted(data.onboarding_completed || false)
+      }
+    } catch (err) {
+      console.error('Errore critico durante sync config:', err)
     }
   }, [setUserConfig, setOnboardingCompleted])
 
