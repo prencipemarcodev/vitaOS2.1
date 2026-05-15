@@ -61,11 +61,8 @@ function Risparmi() {
           </Card>
 
           <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 space-y-6">
-            {/* Left Column: Smart Advice */}
-            <SmartAdvicePanel />
-
-            {/* Right Column: Plans List */}
-            <div className="lg:col-span-2 flex flex-col lg:h-full min-h-0">
+            {/* Left/Middle Columns: Plans List */}
+            <div className="lg:col-span-2 flex flex-col lg:h-full min-h-0 order-2 lg:order-1">
               <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 px-1">I tuoi Obiettivi</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:overflow-y-auto pr-1 pb-4">
                 {plans.filter(p => p.type !== 'piggy_bank').map(plan => (
@@ -82,6 +79,11 @@ function Risparmi() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Right Column: Smart Advice */}
+            <div className="order-1 lg:order-2">
+              <SmartAdvicePanel />
             </div>
           </div>
         </div>
