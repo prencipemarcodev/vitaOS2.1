@@ -8,7 +8,7 @@
 export function calculateOvertime(date, checkIn, checkOut, schedule) {
   if (!checkIn || !checkOut || !schedule) return { ordinary: 0, overtime: 0 }
 
-  const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' })
+  const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
   const daySchedule = schedule[dayOfWeek]
 
   if (!daySchedule || !daySchedule.active) {
