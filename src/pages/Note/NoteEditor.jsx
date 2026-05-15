@@ -122,7 +122,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
             <Button 
               variant="ghost" 
               onClick={onClose} 
-              className="flex-1 bg-red-50 text-red-600/60 hover:bg-red-100 font-bold"
+              className="flex-1 h-14 bg-red-50 text-red-600/60 hover:bg-red-100 font-bold"
             >
               Annulla
             </Button>
@@ -130,7 +130,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
               variant="primary" 
               type="submit" 
               loading={loading} 
-              className="flex-[2] py-5 shadow-xl shadow-black/10 font-black uppercase tracking-widest bg-black text-white"
+              className="flex-[2] h-14 shadow-xl shadow-black/10 font-black uppercase tracking-widest bg-black text-white"
             >
               Salva
             </Button>
