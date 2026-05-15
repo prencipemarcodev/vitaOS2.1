@@ -44,34 +44,24 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center p-4">
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[var(--color-primary-ghost)] rounded-full blur-[120px] opacity-50" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[var(--color-success-ghost)] rounded-full blur-[120px] opacity-50" />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md z-10"
+        className="w-full max-w-sm z-10"
       >
-        <div className="text-center mb-8">
-          <motion.div 
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            className="w-16 h-16 bg-black rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-2xl"
+        <div className="text-center mb-8 flex flex-col items-center">
+          <span
+            className="text-4xl font-semibold text-[var(--text-primary)] mb-2"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
-            <span className="text-white text-2xl font-black italic">vO</span>
-          </motion.div>
-          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight italic" style={{ fontFamily: 'var(--font-display)' }}>
-            VitaOS
-          </h1>
-          <p className="text-[var(--text-muted)] text-sm mt-2 font-medium">
+            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
+          </span>
+          <p className="text-[var(--text-muted)] text-sm font-medium">
             {isLogin ? 'Bentornato! Accedi per gestire la tua vita.' : 'Inizia oggi il tuo viaggio con VitaOS.'}
           </p>
         </div>
 
-        <Card padding="xl" className="shadow-2xl border-[var(--border-subtle)]">
+        <Card padding="xl" className="shadow-lg border-[var(--border-subtle)]">
           <form onSubmit={handleAuth} className="space-y-4">
             <Input
               label="Email"
@@ -95,7 +85,8 @@ export default function AuthPage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full h-12 shadow-lg shadow-black/10"
+              className="w-full mt-2"
+              size="lg"
               loading={loading}
               iconRight={ArrowRight}
             >
@@ -103,19 +94,19 @@ export default function AuthPage() {
             </Button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-[var(--border-subtle)] text-center">
+          <div className="mt-6 pt-6 border-t border-[var(--border-subtle)] text-center">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--color-primary)] transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
+              className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-colors flex items-center justify-center gap-2 mx-auto"
             >
               {isLogin ? (
                 <>
-                  <UserPlus size={14} />
+                  <UserPlus size={16} />
                   Non hai un account? Registrati
                 </>
               ) : (
                 <>
-                  <LogIn size={14} />
+                  <LogIn size={16} />
                   Hai già un account? Accedi
                 </>
               )}

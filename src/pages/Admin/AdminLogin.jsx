@@ -76,34 +76,29 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      {/* Background decoration admin */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
-        <div className="absolute w-[60%] h-[60%] bg-purple-900/20 rounded-full blur-[150px]" />
-      </div>
-
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm z-10"
       >
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-900 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-2xl border border-white/10">
-            <Shield className="text-white" size={32} />
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-            Admin Control
-          </h1>
-          <p className="text-purple-300/60 text-xs mt-2 uppercase tracking-widest font-bold">
-            Accesso Riservato
+        <div className="text-center mb-8 flex flex-col items-center">
+          <span
+            className="text-4xl font-semibold text-[var(--text-primary)] mb-2"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            vita<span style={{ color: 'var(--color-primary)' }}>OS</span>
+          </span>
+          <p className="text-[var(--text-muted)] text-sm font-medium">
+            Accesso Riservato Amministrazione
           </p>
         </div>
 
-        <Card padding="xl" className="bg-[#111] border-white/10 shadow-2xl relative overflow-hidden">
+        <Card padding="xl" className="shadow-lg border-[var(--border-subtle)] relative overflow-hidden">
           {/* Progress bar */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+          <div className="absolute top-0 left-0 w-full h-1 bg-[var(--bg-elevated)]">
             <motion.div 
-              className="h-full bg-purple-500"
+              className="h-full bg-[var(--color-primary)]"
               initial={{ width: '50%' }}
               animate={{ width: step === 1 ? '50%' : '100%' }}
             />
@@ -116,44 +111,31 @@ export default function AdminLogin() {
               onSubmit={handleCredentialsSubmit} 
               className="space-y-4 pt-2"
             >
-              <div>
-                <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1.5 block">Username</label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30">
-                    <User size={16} />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-colors"
-                    placeholder="Inserisci username"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1.5 block">Password</label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30">
-                    <Lock size={16} />
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm focus:outline-none focus:border-purple-500/50 transition-colors"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Username"
+                type="text"
+                placeholder="Inserisci username"
+                icon={User}
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                icon={Lock}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
 
               <Button
                 type="submit"
+                variant="primary"
+                size="lg"
                 loading={loading}
-                className="w-full h-12 bg-white text-black hover:bg-gray-200 mt-6 font-black uppercase tracking-widest"
+                className="w-full mt-2"
                 iconRight={ArrowRight}
               >
                 Verifica Identità
@@ -167,43 +149,41 @@ export default function AdminLogin() {
               className="space-y-4 pt-2"
             >
               <div className="text-center mb-6">
-                <Mail className="mx-auto text-purple-400 mb-2" size={24} />
-                <p className="text-sm text-white/70">
+                <Mail className="mx-auto text-[var(--color-primary)] mb-2" size={24} />
+                <p className="text-sm text-[var(--text-secondary)]">
                   Abbiamo inviato un codice OTP a<br/>
-                  <strong className="text-white">{ADMIN_EMAIL}</strong>
+                  <strong className="text-[var(--text-primary)]">{ADMIN_EMAIL}</strong>
                 </p>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1.5 block">Codice OTP</label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30">
-                    <KeyRound size={16} />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:border-purple-500/50 transition-colors"
-                    placeholder="000000"
-                    maxLength={6}
-                  />
-                </div>
-              </div>
+              <Input
+                label="Codice OTP"
+                type="text"
+                placeholder="000000"
+                icon={KeyRound}
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                maxLength={6}
+                className="text-center tracking-[0.5em] font-mono font-bold"
+              />
 
               <div className="flex gap-2 mt-6">
                 <Button
                   type="button"
+                  variant="subtle"
+                  size="lg"
                   onClick={() => setStep(1)}
-                  className="flex-1 h-12 bg-white/5 text-white hover:bg-white/10 font-bold"
+                  className="flex-1"
                 >
                   Annulla
                 </Button>
                 <Button
                   type="submit"
+                  variant="primary"
+                  size="lg"
                   loading={loading}
-                  className="flex-[2] h-12 bg-purple-600 text-white hover:bg-purple-700 font-black uppercase tracking-widest"
+                  className="flex-[2]"
                 >
                   Accedi
                 </Button>
