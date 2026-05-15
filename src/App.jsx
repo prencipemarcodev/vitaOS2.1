@@ -41,7 +41,7 @@ function OnboardingReminder() {
 
 function AppInner() {
   const { theme, onboardingCompleted, userConfig, showOnboardingForce } = useAppStore()
-  const { session, setSession, loading: authLoading } = useAuthStore()
+  const { session, setSession, loading: authLoading, isAdminMaster } = useAuthStore()
   const location = useLocation()
 
   // 1. Listen for Auth Changes
@@ -79,7 +79,6 @@ function AppInner() {
 
   // 4. Gestione Rotte Admin (Isolate dal resto dell'app)
   if (location.pathname.startsWith('/admin')) {
-    const { isAdminMaster } = useAuthStore.getState()
     if (!session && !isAdminMaster) {
       return <AdminLogin />
     }
