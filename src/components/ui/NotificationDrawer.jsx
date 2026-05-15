@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Check, CheckCheck, AlertCircle, Info, Bell } from 'lucide-react'
+import { X, Check, CheckCheck, AlertCircle, Info, Bell, Sparkles } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import Button from './Button'
 import clsx from 'clsx'
@@ -10,12 +10,11 @@ const ICON_MAP = {
   'alert-circle': AlertCircle,
   'info': Info,
   'bell': Bell,
+  'sparkles': Sparkles,
 }
 
 /**
  * NotificationDrawer — pannello laterale destra (non modal, no blur).
- * Desktop: drawer laterale 320px.
- * Mobile: pannello fullscreen sopra il contenuto con sfondo solido.
  */
 function NotificationDrawer({ isOpen, onClose }) {
   const { notifications, markAsRead, markAllAsRead, dismiss } = useNotifications()
@@ -33,7 +32,6 @@ function NotificationDrawer({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Backdrop — desktop only, subtle dim */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -47,43 +45,29 @@ function NotificationDrawer({ isOpen, onClose }) {
         )}
       </AnimatePresence>
 
-      {/* Drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.aside
             key="notif-drawer"
-            className="fixed z-[110] flex flex-col
-              bg-[var(--bg-surface)]
-              /* Mobile: fullscreen */
-              inset-0
-              /* Desktop: right panel */
-              lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-80 lg:max-w-[90vw]
-              lg:border-l lg:border-[var(--border-subtle)] lg:shadow-2xl"
+            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)] inset-0 lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-80 lg:max-w-[90vw] lg:border-l lg:border-[var(--border-subtle)] lg:shadow-2xl"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
-            {/* Header */}
             <div 
               className="flex items-center justify-between px-4 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top,40px)]"
               style={{ height: 'calc(var(--header-height) + env(safe-area-inset-top,40px))' }}
             >
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifiche</h3>
               <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  icon={CheckCheck}
-                  onClick={markAllAsRead}
-                >
+                <Button variant="ghost" size="xs" icon={CheckCheck} onClick={markAllAsRead}>
                   Segna tutte
                 </Button>
-                <Button variant="ghost" size="xs" icon={X} onClick={onClose} aria-label="Chiudi" />
+                <Button variant="ghost" size="xs" icon={X} onClick={onClose} />
               </div>
             </div>
 
-            {/* List */}
             <div className="flex-1 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-[var(--text-muted)]">
@@ -93,10 +77,10 @@ function NotificationDrawer({ isOpen, onClose }) {
               ) : (
                 <>
                   {today.length > 0 && (
-                    <NotifGroup title="Oggi" items={today} onRead={markAsRead} onDismiss={dismiss} />
+                    <NotifGroup title="Oggi" items={today} onRead={markAsRead} onDismiss={dismiss} onClose={onClose} />
                   )}
                   {older.length > 0 && (
-                    <NotifGroup title="Precedenti" items={older} onRead={markAsRead} onDismiss={dismiss} />
+                    <NotifGroup title="Precedenti" items={older} onRead={markAsRead} onDismiss={dismiss} onClose={onClose} />
                   )}
                 </>
               )}
@@ -108,21 +92,29 @@ function NotificationDrawer({ isOpen, onClose }) {
   )
 }
 
-function NotifGroup({ title, items, onRead, onDismiss }) {
+function NotifGroup({ title, items, onRead, onDismiss, onClose }) {
   return (
     <div>
       <p className="px-4 py-2 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
         {title}
       </p>
       {items.map((n) => (
-        <NotifItem key={n.id} notification={n} onRead={onRead} onDismiss={onDismiss} />
+        <NotifItem key={n.id} notification={n} onRead={onRead} onDismiss={onDismiss} onClose={onClose} />
       ))}
     </div>
   )
 }
 
-function NotifItem({ notification: n, onRead, onDismiss }) {
+function NotifItem({ notification: n, onRead, onDismiss, onClose }) {
   const Icon = ICON_MAP[n.icon] || Bell
+
+  const handleClick = () => {
+    onRead(n.id)
+    if (n.action) {
+      n.action()
+    }
+    onClose()
+  }
 
   return (
     <motion.div
@@ -131,11 +123,9 @@ function NotifItem({ notification: n, onRead, onDismiss }) {
       animate={{ opacity: n.read ? 0.5 : 1, x: 0 }}
       exit={{ opacity: 0, height: 0 }}
       className={clsx(
-        'flex items-start gap-3 px-4 py-3 cursor-pointer',
-        'hover:bg-[var(--bg-elevated)] transition-colors',
-        'border-b border-[var(--border-subtle)] last:border-0'
+        'flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-[var(--bg-elevated)] transition-colors border-b border-[var(--border-subtle)] last:border-0'
       )}
-      onClick={() => onRead(n.id)}
+      onClick={handleClick}
     >
       <div className={clsx(
         'w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5',
@@ -152,7 +142,6 @@ function NotifItem({ notification: n, onRead, onDismiss }) {
       <button
         onClick={(e) => { e.stopPropagation(); onDismiss(n.id) }}
         className="shrink-0 p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--color-danger)] transition-colors"
-        aria-label="Rimuovi notifica"
       >
         <X size={12} />
       </button>
