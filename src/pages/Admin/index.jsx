@@ -16,21 +16,37 @@ export default function AdminDashboard() {
     status: 'Online'
   })
 
-  // Controllo accesso rigoroso
+  // Controllo accesso rigoroso e caricamento dati reali
   useEffect(() => {
     const isAuthed = isAdminMaster || (session && session.user.email === 'prencipemarco.dev@gmail.com')
     
     if (!isAuthed) {
-      // Se non sei l'admin, fuori!
       navigate('/')
-    } else {
-      // Caricamento statistiche
-      setStats({
-        usersCount: 1, 
-        dbSize: '1.2 MB',
-        status: 'Operativo'
-      })
+      return
     }
+
+    async function fetchStats() {
+      try {
+        // Conteggio utenti reali dalla tabella user_config
+        const { count, error } = await supabase
+          .from('user_config')
+          .select('*', { count: 'exact', head: true })
+        
+        if (error) throw error
+
+        setStats({
+          usersCount: count || 0,
+          dbSize: '1.4 MB', // Questo rimane simulato o richiede RPC
+          status: 'Operativo'
+        })
+      } catch (err) {
+        console.warn('Impossibile recuperare statistiche reali (probabile accesso via Master OTP senza sessione DB):', err.message)
+        // Fallback a dati plausibili se non abbiamo sessione DB
+        setStats(prev => ({ ...prev, status: 'Limitato (No Session)' }))
+      }
+    }
+
+    fetchStats()
   }, [session, isAdminMaster, navigate])
 
   const handleLogout = async () => {
