@@ -74,7 +74,7 @@ function TransactionList({ transactions, categories, onEdit }) {
                   {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                 </p>
                 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1">
                   <button onClick={() => onEdit(tx)} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--color-primary)]">
                     <Edit2 size={14} />
                   </button>
