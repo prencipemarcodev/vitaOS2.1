@@ -8,6 +8,7 @@ import {
 import { useRunTracker } from '@/hooks/useRunTracker'
 import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
 import RunMap from './RunMap'
+import RunFocusMode from './RunFocusMode'
 import { 
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip 
