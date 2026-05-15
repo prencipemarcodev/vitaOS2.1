@@ -106,6 +106,7 @@ function Calendario() {
         date={selectedDate} 
         events={events} 
         absences={absences} 
+        recurringEvents={recurringEvents}
         onAddEvent={handleAddEvent}
       />
 

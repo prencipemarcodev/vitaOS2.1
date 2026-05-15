@@ -11,12 +11,13 @@ import { useAppStore } from '@/store/useAppStore'
 import { Briefcase, GraduationCap, Dumbbell, Star } from 'lucide-react'
 import { isHoliday } from '@/lib/italianCalendar'
 
-function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
+function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = [], onAddEvent }) {
   const { removeEvent, removeAbsence } = useCalendarStore()
   const { pushError } = useNotifications()
   const { userConfig } = useAppStore()
 
   const dayEvents = events.filter(e => isSameDay(new Date(e.date), date))
+  const dayRecurring = recurringEvents.filter(re => date.getDate() === re.day && (date.getMonth() + 1) === re.month)
   const dayAbsences = absences.filter(a => {
     const d = new Date(a.start_date)
     const e = new Date(a.end_date)
@@ -153,6 +154,18 @@ function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
                   <Button variant="ghost" size="xs" icon={Plus} onClick={onAddEvent}>Aggiungi</Button>
                 </div>
                 <div className="space-y-3">
+                  {dayRecurring.map((re, i) => (
+                    <div key={`re-${i}`} className="p-4 rounded-2xl border border-purple-200 bg-purple-50 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-purple-600 shadow-sm shrink-0">
+                        <Star size={20} fill="currentColor" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Ricorrenza Annuale</p>
+                        <h3 className="text-base font-bold text-[var(--text-primary)]">🎂 {re.title}</h3>
+                      </div>
+                    </div>
+                  ))}
+
                   {dayEvents.map(event => (
                     <div key={event.id} className="group p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-base)] hover:border-[var(--color-primary)] transition-all">
                       <div className="flex items-start justify-between">
@@ -178,7 +191,7 @@ function DayDrawer({ isOpen, onClose, date, events, absences, onAddEvent }) {
                       </div>
                     </div>
                   ))}
-                  {dayEvents.length === 0 && (
+                  {dayEvents.length === 0 && dayRecurring.length === 0 && (
                     <div className="text-center py-10 text-[var(--text-muted)]">
                       <CalIcon size={32} className="mx-auto mb-2 opacity-20" />
                       <p className="text-xs font-bold uppercase tracking-widest opacity-40">Nessun evento</p>
