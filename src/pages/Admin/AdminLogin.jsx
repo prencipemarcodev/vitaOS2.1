@@ -7,6 +7,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/useAuthStore'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
