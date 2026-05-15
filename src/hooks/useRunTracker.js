@@ -15,11 +15,24 @@ export function useRunTracker() {
   const [accuracy, setAccuracy] = useState(null)
 
   useEffect(() => {
+    // 1. Tenta con Permissions API (Chrome/Android)
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: 'geolocation' }).then(result => {
         setPermissionStatus(result.state)
+        // Ascolta cambiamenti
+        result.onchange = () => setPermissionStatus(result.state)
       })
-    }
+    } 
+    
+    // 2. Fallback per Safari/iOS: Tentativo silenzioso
+    // Se il permesso è già dato, questa chiamata è quasi istantanea e non apre popup di sistema
+    navigator.geolocation.getCurrentPosition(
+      () => setPermissionStatus('granted'),
+      (err) => {
+        if (err.code === 1) setPermissionStatus('denied')
+      },
+      { timeout: 1000, maximumAge: Infinity } // Molto veloce, solo per controllo
+    )
   }, [])
   const [elapsed, setElapsed] = useState(0)
   const [distanceM, setDistanceM] = useState(0)
