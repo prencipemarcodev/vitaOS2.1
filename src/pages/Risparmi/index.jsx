@@ -8,7 +8,6 @@ import { Plus, PiggyBank, Sparkles } from 'lucide-react'
 import PlanCard from './PlanCard'
 import PlanModal from './PlanModal'
 import SmartAdvicePanel from './SmartAdvicePanel'
-import FreeSavingsCard from './FreeSavingsCard'
 import { formatCurrency } from '@/lib/formatters'
 
 function Risparmi() {
@@ -62,18 +61,13 @@ function Risparmi() {
           </Card>
 
           <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 space-y-6">
-            {/* Left Column: Smart Advice & Mobile Piggy Bank */}
-            <div className="space-y-6">
-              <div className="lg:hidden">
-                <FreeSavingsCard />
-              </div>
-              <SmartAdvicePanel />
-            </div>
+            {/* Left Column: Smart Advice */}
+            <SmartAdvicePanel />
 
-            {/* Middle Column: Plans List */}
-            <div className="flex flex-col lg:h-full min-h-0">
+            {/* Right Column: Plans List */}
+            <div className="lg:col-span-2 flex flex-col lg:h-full min-h-0">
               <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 px-1">I tuoi Obiettivi</h3>
-              <div className="grid grid-cols-1 gap-4 lg:overflow-y-auto pr-1 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:overflow-y-auto pr-1 pb-4">
                 {plans.filter(p => p.type !== 'piggy_bank').map(plan => (
                   <PlanCard 
                     key={plan.id} 
@@ -82,18 +76,12 @@ function Risparmi() {
                   />
                 ))}
                 {plans.filter(p => p.type !== 'piggy_bank').length === 0 && (
-                  <div className="text-center py-12 opacity-40">
+                  <div className="col-span-2 text-center py-12 opacity-40">
                     <PiggyBank size={40} className="mx-auto mb-2" />
                     <p className="text-xs font-bold">Inizia a risparmiare oggi!</p>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Right Column: Desktop Piggy Bank */}
-            <div className="hidden lg:block space-y-6">
-              <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Salvadanaio</h3>
-              <FreeSavingsCard />
             </div>
           </div>
         </div>

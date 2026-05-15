@@ -34,7 +34,7 @@ function NoteCard({ note, onEdit }) {
       onClick={() => onEdit(note)}
       style={{ backgroundColor: note.color || '#ffffff' }}
       className={clsx(
-        'group cursor-pointer transition-all hover:shadow-md relative break-inside-avoid mb-6 mx-1 border-none shadow-[var(--shadow-sm)]',
+        'group cursor-pointer transition-all hover:shadow-xl relative break-inside-avoid mb-6 mx-1 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)]',
         size === 'small' ? 'min-h-[100px]' : size === 'medium' ? 'min-h-[160px]' : 'min-h-[220px]'
       )}
     >

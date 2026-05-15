@@ -8,7 +8,7 @@ import { isHoliday } from '@/lib/italianCalendar'
 import clsx from 'clsx'
 import { useAppStore } from '@/store/useAppStore'
 
-function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
+function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], onDayClick }) {
   const { userConfig } = useAppStore()
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(new Date(selectedMonth)), { weekStartsOn: 1 })
@@ -104,7 +104,19 @@ function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
                   </div>
                 ))}
 
-                {/* 3. Eventi Custom */}
+                {/* 3. Ricorrenze Annuali (Compleanni/Anniversari) */}
+                {recurringEvents.filter(re => {
+                  return day.getDate() === re.day && (day.getMonth() + 1) === re.month
+                }).map((re, i) => (
+                  <div 
+                    key={`re-${i}`} 
+                    className="px-1 py-0.5 bg-purple-100 text-purple-700 rounded-md text-[7px] font-black uppercase truncate leading-none"
+                  >
+                    🎂 {re.title}
+                  </div>
+                ))}
+
+                {/* 4. Eventi Custom */}
                 {dayEvents.slice(0, 1).map((e) => (
                   <div 
                     key={e.id} 

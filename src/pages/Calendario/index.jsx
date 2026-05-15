@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import { Plus } from 'lucide-react'
 
 function Calendario() {
-  const { events, absences, loading } = useCalendarStore()
+  const { events, absences, recurringEvents, loading } = useCalendarStore()
   const { selectedMonth } = useAppStore()
   
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -76,6 +76,7 @@ function Calendario() {
               selectedMonth={selectedMonth} 
               events={events} 
               absences={absences} 
+              recurringEvents={recurringEvents}
               onDayClick={handleDayClick} 
             />
           </div>
