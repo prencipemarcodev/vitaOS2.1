@@ -22,7 +22,7 @@ function CalendarGrid({ selectedMonth, events, absences, onDayClick }) {
     const p = []
     
     const work = userConfig.work_schedule?.[dayIdx]
-    if (work?.enabled) p.push({ label: 'Lavoro', time: work.from, color: 'var(--color-primary)' })
+    if (work?.enabled) p.push({ label: 'Lavoro', time: work.from, color: '#B46243' })
     
     const study = userConfig.study_schedule?.[dayIdx]
     if (study?.enabled) p.push({ label: 'Studio', time: study.from, color: '#4a90d9' })
