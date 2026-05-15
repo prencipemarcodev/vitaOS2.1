@@ -26,7 +26,7 @@ const MORE_NAV = [
 
 const ALL_NAV = [...MAIN_NAV, ...MORE_NAV]
 
-export const PILL_HEIGHT = 48
+export const PILL_HEIGHT = 74
 
 function FloatingPillNav() {
   const [moreOpen, setMoreOpen] = useState(false)
@@ -152,4 +152,3 @@ function PillButton({ icon: Icon, isActive, onClick, label }) {
 }
 
 export default FloatingPillNav
-

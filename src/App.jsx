@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useAppStore } from '@/store/useAppStore'
@@ -145,21 +145,34 @@ function AppInner() {
 }
 
 function App() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   return (
     <BrowserRouter>
       <AppInner />
 
       {/* Toast notifications */}
       <Toaster
-        position="bottom-right"
+        position={isMobile ? "top-center" : "bottom-right"}
         toastOptions={{
           style: {
-            bottom: `calc(${PILL_HEIGHT}px + 12px)`,
+            // Su mobile: Sotto l'header (circa 60px + 12px di gap)
+            // Su desktop: Attaccato alla pillola in basso
+            top: isMobile ? 'calc(var(--header-height) + 12px)' : 'auto',
+            bottom: isMobile ? 'auto' : `calc(${PILL_HEIGHT}px + 0px)`,
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',
             borderRadius: 'var(--radius-md)',
             fontSize: '0.875rem',
+            width: isMobile ? 'calc(100vw - 32px)' : 'auto',
+            maxWidth: isMobile ? '400px' : 'none'
           },
         }}
       />
