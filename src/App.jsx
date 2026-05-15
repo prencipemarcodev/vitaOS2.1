@@ -164,7 +164,7 @@ function App() {
           style: {
             // Su mobile: Sotto l'header (Safe Area + Header Height + 12px gap)
             // Su desktop: Attaccato alla pillola in basso
-            top: isMobile ? 'calc(env(safe-area-inset-top, 0px) + var(--header-height) + 6px)' : 'auto',
+            top: isMobile ? 'calc(env(safe-area-inset-top, 0px) + var(--header-height) + 3px)' : 'auto',
             bottom: isMobile ? 'auto' : '20px',
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
