@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Benvenuto su VitaOS</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      color: #1a1714;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+      overflow: hidden;
+      border: 1px solid #eaeaec;
+    }
+    .header {
+      background: linear-gradient(135deg, #1a1714 0%, #2d2824 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .logo {
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 0;
+      font-style: italic;
+    }
+    .logo span {
+      color: #d4a017; /* VitaOS Primary Color */
+    }
+    .content {
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 0;
+      color: #1a1714;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #1a1714;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #999;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <p class="logo">vita<span>OS</span></p>
+    </div>
+    <div class="content">
+      <h1>Benvenuto a bordo!</h1>
+      <p>Siamo felici di averti con noi. VitaOS è il tuo nuovo hub personale per gestire finanze, risparmi, salute e molto altro.<br><br>Per iniziare il tuo viaggio e sbloccare tutte le funzionalità, conferma il tuo indirizzo email cliccando sul pulsante qui sotto.</p>
+      <a href="{{ .ConfirmationURL }}" class="button">Conferma Email</a>
+      <p style="margin-top: 30px; font-size: 13px; color: #aaa;">Se non hai richiesto tu questa iscrizione, puoi ignorare questa email in sicurezza.</p>
+    </div>
+    <div class="footer">
+      &copy; 2026 VitaOS. Tutti i diritti riservati.
+    </div>
+  </div>
+</body>
+</html>

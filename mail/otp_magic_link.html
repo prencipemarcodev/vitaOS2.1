@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Codice di Accesso - VitaOS</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0a0a0a; /* Dark theme for Admin/OTP feel */
+      margin: 0;
+      padding: 0;
+      color: #ffffff;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #111111;
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(147, 51, 234, 0.1); /* Purple glow */
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+    .header {
+      background: linear-gradient(135deg, #4c1d95 0%, #312e81 100%);
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 1px solid #444;
+    }
+    .logo {
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 0;
+      font-style: italic;
+    }
+    .logo span {
+      color: #a855f7; /* Purple accent */
+    }
+    .content {
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 0;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+    .otp-box {
+      display: inline-block;
+      background-color: #000000;
+      border: 1px solid #444;
+      padding: 20px 40px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .otp-code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 12px;
+      color: #ffffff;
+      margin: 0;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #222;
+      background-color: #0a0a0a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <p class="logo">vita<span>OS</span></p>
+    </div>
+    <div class="content">
+      <h1>Il tuo Codice di Accesso</h1>
+      <p>Hai richiesto un codice OTP per accedere a VitaOS. Inserisci il seguente codice numerico nella schermata di login per confermare la tua identità.</p>
+      
+      <div class="otp-box">
+        <p class="otp-code">{{ .Token }}</p>
+      </div>
+
+      <p style="font-size: 13px; margin-top: 10px;"><em>Questo codice scadrà tra pochi minuti. Non condividerlo con nessuno.</em></p>
+      
+      <p style="margin-top: 40px; font-size: 13px; color: #666;">Se non hai richiesto questo codice, puoi ignorare l'email. Nessuno può accedere senza di esso.</p>
+    </div>
+    <div class="footer">
+      &copy; 2026 VitaOS Security.
+    </div>
+  </div>
+</body>
+</html>
