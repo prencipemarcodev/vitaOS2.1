@@ -64,7 +64,7 @@ function Note() {
       />
 
       <PageWrapper>
-        <div className="h-full overflow-y-auto pr-1">
+        <div className="h-full flex flex-col pr-1">
           {/* Mobile search bar */}
           <div className="lg:hidden mb-4 relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
@@ -78,7 +78,7 @@ function Note() {
           </div>
 
           {filteredNotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 opacity-30">
+            <div className="flex-1 flex flex-col items-center justify-center opacity-30 pb-20">
               <StickyNote size={48} className="mb-4" />
               <p className="text-sm font-bold uppercase tracking-widest">Nessuna nota trovata</p>
             </div>

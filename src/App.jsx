@@ -162,10 +162,10 @@ function App() {
         position={isMobile ? "top-center" : "bottom-right"}
         toastOptions={{
           style: {
-            // Su mobile: Sotto l'header (circa 60px + 12px di gap)
+            // Su mobile: Sotto l'header (Safe Area + Header Height + 12px gap)
             // Su desktop: Attaccato alla pillola in basso
-            top: isMobile ? 'calc(var(--header-height) + 12px)' : 'auto',
-            bottom: isMobile ? 'auto' : `calc(${PILL_HEIGHT}px + 0px)`,
+            top: isMobile ? 'calc(env(safe-area-inset-top, 0px) + var(--header-height) + 12px)' : 'auto',
+            bottom: isMobile ? 'auto' : '20px',
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',
