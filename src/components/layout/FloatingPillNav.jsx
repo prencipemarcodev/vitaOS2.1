@@ -56,38 +56,37 @@ function FloatingPillNav() {
       </AnimatePresence>
 
       <nav
-        className="lg:hidden fixed z-[110] bottom-4 left-0 right-0 flex justify-center px-4"
+        className="lg:hidden fixed z-[110] bottom-0 left-0 right-0 flex justify-center pb-[env(safe-area-inset-bottom,16px)] pointer-events-none"
         aria-label="Navigazione principale"
       >
         <motion.div
           layout
           initial={{ y: 80, opacity: 0 }}
           animate={{ 
-            y: 0, 
+            y: -12, // Leggermente sollevato dalla safe area per eleganza
             opacity: 1,
-            // Dimensioni aumentate per evitare ritagli laterali
-            width: moreOpen ? '265px' : '210px'
+            width: moreOpen ? '280px' : '220px'
           }}
           transition={{ 
             type: 'spring', 
-            stiffness: 300, 
-            damping: 30,
+            stiffness: 350, 
+            damping: 35,
             layout: { duration: 0.3 }
           }}
           className={clsx(
-            "flex items-center gap-1 px-3 bg-white/95 backdrop-blur-md border border-[var(--border-default)] rounded-full shadow-[var(--shadow-lg)] overflow-hidden",
+            "flex items-center gap-1.5 px-3 bg-white/95 backdrop-blur-xl border border-black/5 rounded-full shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] overflow-hidden pointer-events-auto",
           )}
-          style={{ height: PILL_HEIGHT }}
+          style={{ height: 52 }}
         >
           {/* Container delle icone: statico o scorrevole */}
           <div 
             ref={scrollRef}
             className={clsx(
-              "flex items-center gap-1 h-full transition-all duration-300",
+              "flex items-center gap-1.5 h-full transition-all duration-300",
               moreOpen ? "overflow-x-auto scrollbar-hide flex-1 scroll-smooth" : "overflow-hidden shrink-0"
             )}
             style={{ 
-              width: moreOpen ? 'auto' : '160px'
+              width: moreOpen ? 'auto' : '170px'
             }}
           >
             <AnimatePresence mode="popLayout" initial={false}>
@@ -114,7 +113,7 @@ function FloatingPillNav() {
           </div>
 
           {/* Separatore visivo */}
-          <div className="w-px h-4 bg-[var(--border-subtle)] shrink-0" />
+          <div className="w-px h-5 bg-black/5 shrink-0" />
 
           {/* Tasto Espansione / Chiusura */}
           <div className="flex items-center shrink-0">
@@ -141,13 +140,13 @@ function PillButton({ icon: Icon, isActive, onClick, label }) {
       whileHover={{ scale: 1.05 }}
       onClick={onClick}
       className={clsx(
-        'w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-300',
+        'w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-300',
         isActive
           ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
-          : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]'
+          : 'text-[var(--text-muted)] hover:bg-black/[0.03]'
       )}
     >
-      <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+      <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
     </motion.button>
   )
 }
