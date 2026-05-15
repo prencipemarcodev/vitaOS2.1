@@ -61,7 +61,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        <Card padding="xl" className="shadow-lg border-[var(--border-subtle)]">
+        <div className="w-full max-w-sm z-10">
           <form onSubmit={handleAuth} className="space-y-4">
             <Input
               label="Email"
@@ -112,7 +112,7 @@ export default function AuthPage() {
               )}
             </button>
           </div>
-        </Card>
+        </div>
       </motion.div>
     </div>
   )

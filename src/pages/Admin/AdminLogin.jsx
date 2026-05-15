@@ -94,7 +94,7 @@ export default function AdminLogin() {
           </p>
         </div>
 
-        <Card padding="xl" className="shadow-lg border-[var(--border-subtle)] relative overflow-hidden">
+        <div className="w-full max-w-sm z-10 relative overflow-hidden">
           {/* Progress bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-[var(--bg-elevated)]">
             <motion.div 
@@ -109,7 +109,7 @@ export default function AdminLogin() {
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               onSubmit={handleCredentialsSubmit} 
-              className="space-y-4 pt-2"
+              className="space-y-4 pt-4"
             >
               <Input
                 label="Username"
@@ -146,7 +146,7 @@ export default function AdminLogin() {
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               onSubmit={handleOtpSubmit} 
-              className="space-y-4 pt-2"
+              className="space-y-4 pt-4"
             >
               <div className="text-center mb-6">
                 <Mail className="mx-auto text-[var(--color-primary)] mb-2" size={24} />
@@ -190,7 +190,7 @@ export default function AdminLogin() {
               </div>
             </motion.form>
           )}
-        </Card>
+        </div>
       </motion.div>
     </div>
   )
