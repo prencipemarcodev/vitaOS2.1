@@ -38,9 +38,22 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
       subdomains: 'abcd',
     }).addTo(mapRef.current)
 
-    // Impostiamo una vista di default iniziale (es. Roma o un punto neutro) 
-    // finché non arrivano coordinate reali
-    mapRef.current.setView([41.9028, 12.4964], 13)
+    // Tentiamo di centrare sulla posizione reale dell'utente come default iniziale
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          mapRef.current?.setView([pos.coords.latitude, pos.coords.longitude], 15)
+        },
+        () => {
+          // Fallback se il GPS non risponde subito: Monte Sant'Angelo (visto che sei lì!)
+          mapRef.current?.setView([41.7077, 15.9606], 13)
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      )
+    } else {
+      // Fallback estremo: Monte Sant'Angelo
+      mapRef.current.setView([41.7077, 15.9606], 13)
+    }
 
     polylineRef.current = L.polyline([], {
       color: TRACK_COLOR,
