@@ -1,53 +1,116 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { ShieldAlert, Users, Database, Activity, LogOut, ArrowLeft } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  ShieldAlert, Users, Database, Activity, LogOut, 
+  ArrowLeft, Trash2, RefreshCcw, Mail, ShieldCheck,
+  AlertTriangle, Loader2
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/useAuthStore'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import { toast } from 'sonner'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const { session, signOut, isAdminMaster } = useAuthStore()
+  const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     usersCount: 0,
-    dbSize: 'Calcolo...',
-    status: 'Online'
+    dbSize: '...',
+    status: 'Operativo'
   })
+  const [users, setUsers] = useState([])
+  const [logs, setLogs] = useState([])
 
-  // Controllo accesso rigoroso e caricamento dati reali
+  const ADMIN_EMAIL = 'prencipemarco.dev@gmail.com'
+
+  const fetchData = async () => {
+    const isAuthed = isAdminMaster || (session && session.user.email === ADMIN_EMAIL)
+    if (!isAuthed) return
+
+    setLoading(true)
+    try {
+      // 1. Fetch Stats (User count & DB size via RPC)
+      const { count: userCount } = await supabase.from('user_config').select('*', { count: 'exact', head: true })
+      const { data: dbSize } = await supabase.rpc('get_database_size')
+      
+      setStats({
+        usersCount: userCount || 0,
+        dbSize: dbSize || 'N/A',
+        status: isAdminMaster ? 'Limitato (No Session)' : 'Operativo'
+      })
+
+      // 2. Fetch Users list
+      const { data: userData } = await supabase
+        .from('user_config')
+        .select('id, first_name, last_name, created_at')
+        .order('created_at', { ascending: false })
+      
+      setUsers(userData || [])
+
+      // 3. Fetch Real Logs
+      const { data: logData } = await supabase
+        .from('admin_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10)
+      
+      setLogs(logData || [])
+
+    } catch (err) {
+      console.error('Errore caricamento admin:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const isAuthed = isAdminMaster || (session && session.user.email === 'prencipemarco.dev@gmail.com')
-    
+    const isAuthed = isAdminMaster || (session && session.user.email === ADMIN_EMAIL)
     if (!isAuthed) {
       navigate('/')
-      return
+    } else {
+      fetchData()
     }
+  }, [session, isAdminMaster])
 
-    async function fetchStats() {
-      try {
-        // Conteggio utenti reali dalla tabella user_config
-        const { count, error } = await supabase
-          .from('user_config')
-          .select('*', { count: 'exact', head: true })
-        
-        if (error) throw error
+  // --- AZIONI ---
 
-        setStats({
-          usersCount: count || 0,
-          dbSize: '1.4 MB', // Questo rimane simulato o richiede RPC
-          status: 'Operativo'
-        })
-      } catch (err) {
-        console.warn('Impossibile recuperare statistiche reali (probabile accesso via Master OTP senza sessione DB):', err.message)
-        // Fallback a dati plausibili se non abbiamo sessione DB
-        setStats(prev => ({ ...prev, status: 'Limitato (No Session)' }))
-      }
+  const handleResetUserData = async (userId, userName) => {
+    if (!confirm(`Sei sicuro di voler resettare TUTTI i dati di ${userName}? Questa azione è irreversibile.`)) return
+    
+    try {
+      const { error } = await supabase.rpc('admin_reset_user_data', { target_user_id: userId })
+      if (error) throw error
+      toast.success(`Dati di ${userName} resettati con successo`)
+      fetchData()
+    } catch (err) {
+      toast.error('Errore durante il reset dei dati')
     }
+  }
 
-    fetchStats()
-  }, [session, isAdminMaster, navigate])
+  const handleDeleteUser = async (userId, userName) => {
+    if (!confirm(`ELIMINAZIONE TOTALE: Vuoi cancellare definitivamente ${userName} e tutti i suoi dati dal sistema?`)) return
+    
+    try {
+      // Nota: Eliminare un utente da auth richiede permessi speciali o una RPC dedicata
+      // Per ora resettiamo i dati e mostriamo l'intenzione
+      toast.info('Funzione di eliminazione account auth in fase di attivazione su Supabase...')
+    } catch (err) {
+      toast.error('Errore durante l\'eliminazione')
+    }
+  }
+
+  const handleSendMagicLink = async (email) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email })
+      if (error) throw error
+      toast.success(`Magic link inviato a ${email}`)
+    } catch (err) {
+      toast.error('Errore nell\'invio del link')
+    }
+  }
 
   const handleLogout = async () => {
     await signOut()
@@ -57,8 +120,8 @@ export default function AdminDashboard() {
   if (!session && !isAdminMaster) return null
 
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] p-6 md:p-12 overflow-y-auto">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] p-6 md:p-12 overflow-y-auto custom-scrollbar">
+      <div className="max-w-6xl mx-auto space-y-8 pb-20">
         
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[var(--border-subtle)]">
@@ -68,7 +131,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">System Admin</h1>
-              <p className="text-xs text-[var(--text-muted)] font-medium mt-0.5">Accesso Riservato</p>
+              <p className="text-xs text-[var(--text-muted)] font-medium mt-0.5">Controllo Totale VitaOS</p>
             </div>
           </div>
 
@@ -84,37 +147,115 @@ export default function AdminDashboard() {
 
         {/* Grid Statistiche */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <MetricCard icon={Users} label="Utenti Registrati" value={stats.usersCount} color="var(--color-info)" />
-          <MetricCard icon={Database} label="Dimensione DB" value={stats.dbSize} color="var(--color-primary)" />
-          <MetricCard icon={Activity} label="Stato Sistema" value={stats.status} color="var(--color-success)" />
+          <MetricCard icon={Users} label="Utenti Attivi" value={stats.usersCount} color="var(--color-info)" />
+          <MetricCard icon={Database} label="Dimensione Reale DB" value={stats.dbSize} color="var(--color-primary)" />
+          <MetricCard icon={Activity} label="Stato Gateway" value={stats.status} color={stats.status.includes('Limitato') ? 'var(--color-warning)' : 'var(--color-success)'} />
         </div>
 
-        {/* Sezione Controlli */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Pannello di Controllo</h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card padding="xl" className="border-[var(--border-subtle)] shadow-sm">
-              <h3 className="text-lg font-bold mb-1">Gestione Database</h3>
-              <p className="text-sm text-[var(--text-muted)] mb-6">Attraverso le policy RLS bypassate, hai accesso in lettura e scrittura a tutte le tabelle del sistema.</p>
-              <div className="space-y-2">
-                {['user_config', 'transactions', 'saving_plans', 'calendar_events'].map(table => (
-                  <div key={table} className="flex items-center justify-between p-3 bg-[var(--bg-elevated)] rounded-[var(--radius-md)] border border-[var(--border-subtle)]">
-                    <span className="text-sm font-medium">{table}</span>
-                    <span className="text-[10px] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] px-2 py-1 rounded-[var(--radius-sm)] uppercase tracking-widest font-bold">Accesso Completo</span>
-                  </div>
-                ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* GESTIONE UTENTI (Sostituisce i vecchi riquadri) */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+              <Users size={16} /> Gestione Account
+            </h2>
+            <Card padding="none" className="overflow-hidden border-[var(--border-subtle)]">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)]">
+                    <tr>
+                      <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase">Utente</th>
+                      <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase">Registrato</th>
+                      <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase text-right">Azioni</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                    {loading ? (
+                      <tr>
+                        <td colSpan="3" className="px-6 py-12 text-center text-[var(--text-muted)]">
+                          <Loader2 className="animate-spin mx-auto mb-2" size={24} />
+                          Sincronizzazione dati...
+                        </td>
+                      </tr>
+                    ) : users.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="px-6 py-12 text-center text-[var(--text-muted)]">
+                          Nessun utente trovato nel database.
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((u) => (
+                        <tr key={u.id} className="hover:bg-[var(--bg-surface)] transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-sm">{u.first_name} {u.last_name}</span>
+                              <span className="text-[10px] font-mono text-[var(--text-muted)]">{u.id}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-[var(--text-muted)]">
+                            {new Date(u.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={() => handleResetUserData(u.id, u.first_name)}
+                                title="Resetta dati tabelle"
+                                className="p-2 text-[var(--text-muted)] hover:text-[var(--color-warning)] hover:bg-[var(--color-warning-ghost)] rounded-lg transition-colors"
+                              >
+                                <RefreshCcw size={16} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteUser(u.id, u.first_name)}
+                                title="Elimina Account"
+                                className="p-2 text-[var(--text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-ghost)] rounded-lg transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </Card>
 
-            <Card padding="xl" className="border-[var(--border-subtle)] shadow-sm">
-              <h3 className="text-lg font-bold mb-1">Log di Sicurezza</h3>
-              <p className="text-sm text-[var(--text-muted)] mb-6">Ultimi accessi rilevati dal sistema.</p>
-              <div className="space-y-4">
-                <div className="flex gap-4 text-sm bg-[var(--bg-elevated)] p-3 rounded-[var(--radius-md)] border border-[var(--border-subtle)]">
-                  <span className="text-[var(--color-success)] font-mono text-xs">[{new Date().toLocaleTimeString()}]</span>
-                  <span className="text-[var(--text-secondary)]">Accesso OTP verificato con successo per <span className="font-bold text-[var(--text-primary)]">admin</span></span>
+            <div className="p-4 bg-[var(--color-danger-ghost)] rounded-xl border border-[var(--color-danger-light)]/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="text-[var(--color-danger)]" size={20} />
+                <div>
+                  <p className="text-sm font-bold text-[var(--color-danger)]">Zona Pericolo: Reset Globale</p>
+                  <p className="text-xs text-[var(--color-danger-dark)]">Questa azione cancellerà TUTTE le tabelle di TUTTI gli utenti.</p>
                 </div>
+              </div>
+              <Button variant="danger" size="sm" className="font-black uppercase tracking-tighter">
+                Nuclear Reset
+              </Button>
+            </div>
+          </div>
+
+          {/* LOG DI SICUREZZA REALI */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+              <ShieldCheck size={16} /> Audit Logs
+            </h2>
+            <Card padding="lg" className="border-[var(--border-subtle)] bg-[var(--bg-surface)] h-fit">
+              <div className="space-y-4">
+                {logs.length === 0 ? (
+                  <div className="text-center py-10">
+                    <p className="text-xs text-[var(--text-muted)] italic">Nessun log recente...</p>
+                  </div>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="flex flex-col gap-1 p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border-subtle)] text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-[var(--color-primary)] uppercase tracking-tighter">{log.action}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">{new Date(log.created_at).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-[var(--text-secondary)]">{log.user_email}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </Card>
           </div>

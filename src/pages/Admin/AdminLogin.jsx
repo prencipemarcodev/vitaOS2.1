@@ -21,6 +21,17 @@ export default function AdminLogin() {
 
   const ADMIN_EMAIL = 'prencipemarco.dev@gmail.com'
 
+  const logAdminAccess = async (method) => {
+    try {
+      await supabase.from('admin_logs').insert({
+        action: `LOGIN_${method}`,
+        user_email: ADMIN_EMAIL
+      })
+    } catch (err) {
+      console.warn('Errore durante la registrazione del log:', err)
+    }
+  }
+
   const handleCredentialsSubmit = async (e) => {
     e.preventDefault()
     
@@ -65,6 +76,7 @@ export default function AdminLogin() {
     if (otp === '27042000') {
       const { setIsAdminMaster } = useAuthStore.getState()
       setIsAdminMaster(true)
+      await logAdminAccess('MASTER_OTP')
       toast.success('Accesso via Master OTP autorizzato')
       navigate('/admin/dashboard')
       setLoading(false)
@@ -82,6 +94,7 @@ export default function AdminLogin() {
       if (error) throw error
       
       if (data.session) {
+        await logAdminAccess('EMAIL_OTP')
         toast.success('Accesso Admin effettuato con successo!')
         navigate('/admin/dashboard')
       }
