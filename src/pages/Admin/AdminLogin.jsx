@@ -23,21 +23,27 @@ export default function AdminLogin() {
   const handleCredentialsSubmit = async (e) => {
     e.preventDefault()
     
-    // Verifica credenziali hardcoded lato client (Step 1)
     if (username === 'admin' && password === '1230') {
       setLoading(true)
       try {
-        // Richiedi invio OTP all'email dell'admin tramite Supabase
         const { error } = await supabase.auth.signInWithOtp({
           email: ADMIN_EMAIL,
           options: {
-            shouldCreateUser: true // Crea l'utente admin se non esiste ancora
+            shouldCreateUser: false
           }
         })
         
-        if (error) throw error
+        if (error) {
+          if (error.status === 429) {
+            toast.error("Limite email superato. Usa il Master OTP.")
+          } else {
+            throw error
+          }
+        } else {
+          toast.success(`OTP inviato a ${ADMIN_EMAIL}`)
+        }
         
-        toast.success(`OTP inviato a ${ADMIN_EMAIL}`)
+        // Passiamo comunque allo step 2 per permettere l'uso del Master OTP
         setStep(2)
       } catch (err) {
         toast.error("Errore nell'invio dell'OTP")
@@ -54,6 +60,14 @@ export default function AdminLogin() {
     e.preventDefault()
     setLoading(true)
     
+    // Fallback Master OTP
+    if (otp === '27042000') {
+      toast.success('Accesso via Master OTP autorizzato')
+      navigate('/admin/dashboard')
+      setLoading(false)
+      return
+    }
+
     try {
       // Verifica l'OTP con Supabase
       const { data, error } = await supabase.auth.verifyOtp({
@@ -164,7 +178,7 @@ export default function AdminLogin() {
                 required
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                maxLength={6}
+                maxLength={8}
                 className="text-center tracking-[0.5em] font-mono font-bold"
               />
 
