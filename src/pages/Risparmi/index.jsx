@@ -65,14 +65,14 @@ function Risparmi() {
             <div className="lg:col-span-2 flex flex-col lg:h-full min-h-0 order-2 lg:order-1">
               <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4 px-1">I tuoi Obiettivi</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:overflow-y-auto pr-1 pb-4">
-                {plans.filter(p => p.type !== 'piggy_bank').map(plan => (
+                {plans.map(plan => (
                   <PlanCard 
                     key={plan.id} 
                     plan={plan} 
                     onEdit={() => { setEditingPlan(plan); setModalOpen(true) }} 
                   />
                 ))}
-                {plans.filter(p => p.type !== 'piggy_bank').length === 0 && (
+                {plans.length === 0 && (
                   <div className="col-span-2 text-center py-12 opacity-40">
                     <PiggyBank size={40} className="mx-auto mb-2" />
                     <p className="text-xs font-bold">Inizia a risparmiare oggi!</p>
