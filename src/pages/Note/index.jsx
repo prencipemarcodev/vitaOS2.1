@@ -83,10 +83,30 @@ function Note() {
               <p className="text-sm font-bold uppercase tracking-widest">Nessuna nota trovata</p>
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-              {filteredNotes.map(note => (
-                <NoteCard key={note.id} note={note} onEdit={handleEdit} />
-              ))}
+            <div className="space-y-8">
+              {/* Note Pinnate */}
+              {filteredNotes.some(n => n.is_pinned) && (
+                <div>
+                  <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4 ml-1">In evidenza</h3>
+                  <div className="columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+                    {filteredNotes.filter(n => n.is_pinned).map(note => (
+                      <NoteCard key={note.id} note={note} onEdit={handleEdit} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Altre Note */}
+              <div>
+                {filteredNotes.some(n => n.is_pinned) && (
+                  <h3 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4 ml-1">Altre</h3>
+                )}
+                <div className="columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+                  {filteredNotes.filter(n => !n.is_pinned).map(note => (
+                    <NoteCard key={note.id} note={note} onEdit={handleEdit} />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
