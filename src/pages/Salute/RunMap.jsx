@@ -73,7 +73,7 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
     // Forza ricalcolo dopo un attimo per sicurezza
     setTimeout(() => {
       mapRef.current?.invalidateSize()
-    }, 500)
+    }, 100)
 
     return () => {
       mapRef.current?.remove()
@@ -81,19 +81,20 @@ export function RunMap({ polyline = [], isLive = false, height = 300 }) {
     }
   }, [])
 
-  // Fix per mappa grigia (forza ricalcolo dimensioni ogni volta che cambia lo stato di visibilità)
+  // Fix definitivo per mappa grigia: monitora i cambi di dimensione del contenitore
   useEffect(() => {
-    const handleResize = () => {
+    if (!containerRef.current || !mapRef.current) return
+
+    const resizeObserver = new ResizeObserver(() => {
       if (mapRef.current) {
         mapRef.current.invalidateSize()
       }
-    }
-    
-    // Forza ricalcolo all'avvio e dopo ogni possibile transizione
-    const timers = [100, 500, 1000].map(ms => setTimeout(handleResize, ms))
-    
-    return () => timers.forEach(t => clearTimeout(t))
-  }, [isLive, polyline.length])
+    })
+
+    resizeObserver.observe(containerRef.current)
+
+    return () => resizeObserver.disconnect()
+  }, [])
 
   // Aggiorna polyline e posizione
   useEffect(() => {
