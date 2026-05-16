@@ -4,17 +4,20 @@ import { useAppStore } from '@/store/useAppStore'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Button from '@/components/ui/Button'
-import { Plus } from 'lucide-react'
+import { Plus, Timer } from 'lucide-react'
 import WorkStats from './WorkStats'
 import WorkChart from './WorkChart'
 import WorkLog from './WorkLog'
 import SessionForm from './SessionForm'
+import WorkTimer from './WorkTimer'
+import { AnimatePresence } from 'framer-motion'
 
 function Firme() {
   const { sessions, loading } = useFirmeStore()
   const { userConfig } = useAppStore()
   const [formOpen, setFormOpen] = useState(false)
   const [editingSession, setEditingSession] = useState(null)
+  const [timerOpen, setTimerOpen] = useState(false)
 
   const handleEdit = (session) => {
     setEditingSession(session)
@@ -33,17 +36,29 @@ function Firme() {
         showMonth 
         showNotification 
         actions={
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            icon={Plus} 
-            onClick={handleNew}
-            className="font-bold !text-sm"
-            style={{ fontFamily: 'var(--font-display)' }}
-            hideTextMobile
-          >
-            Nuova Sessione
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Timer}
+              onClick={() => setTimerOpen(true)}
+              className="!rounded-full font-bold shadow-lg"
+              hideTextMobile
+            >
+              Timbra
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              icon={Plus} 
+              onClick={handleNew}
+              className="font-bold !text-sm"
+              style={{ fontFamily: 'var(--font-display)' }}
+              hideTextMobile
+            >
+              Manuale
+            </Button>
+          </div>
         }
       />
       
@@ -69,6 +84,12 @@ function Firme() {
         onClose={() => setFormOpen(false)} 
         sessionToEdit={editingSession} 
       />
+
+      <AnimatePresence>
+        {timerOpen && (
+          <WorkTimer onClose={() => setTimerOpen(false)} />
+        )}
+      </AnimatePresence>
     </>
   )
 }
