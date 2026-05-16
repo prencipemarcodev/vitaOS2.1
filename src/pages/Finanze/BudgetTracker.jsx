@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import Card from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/formatters'
-import { Target, AlertTriangle, CheckCircle, Edit3, X, Check } from 'lucide-react'
+import { Target, AlertTriangle, Edit3, X, Check, ChevronLeft, ChevronRight, PieChart as PieIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import clsx from 'clsx'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts'
 
 const EXPENSE_COLORS = [
   '#ff851b', '#e05252', '#ff4136', '#ffdc00', '#85144b',
@@ -19,7 +20,7 @@ function BudgetBar({ spent, limit, color }) {
   const isWarning = pct >= 80 && !isOver
 
   return (
-    <div className="w-full h-1.5 bg-[var(--bg-base)] rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
@@ -33,109 +34,42 @@ function BudgetBar({ spent, limit, color }) {
   )
 }
 
-function BudgetRow({ item, color, onEdit }) {
-  const { spent, limit, name, categoryId } = item
-  const hasLimit = limit > 0
-  const pct = hasLimit ? Math.min((spent / limit) * 100, 100) : 0
-  const isOver = hasLimit && spent > limit
-  const isWarning = hasLimit && pct >= 80 && !isOver
-
-  return (
-    <div className="group flex flex-col justify-between p-3.5 rounded-2xl bg-[var(--bg-base)] border border-[var(--border-subtle)] hover:border-[var(--color-primary-ghost)] hover:bg-[var(--bg-elevated)] transition-all relative overflow-hidden">
-      {/* Background Glow on Hover */}
-      <div className="absolute -right-4 -top-4 w-12 h-12 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none" style={{ backgroundColor: color }} />
-
-      <div className="flex items-center justify-between gap-2 mb-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: color }} />
-          <span className="text-xs font-bold text-[var(--text-primary)] truncate uppercase tracking-tight leading-none">{name}</span>
-        </div>
-        <button
-          onClick={() => onEdit(categoryId, limit)}
-          className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/50 transition-all shadow-sm bg-white/20 backdrop-blur-sm"
-        >
-          <Edit3 size={12} className="text-[var(--text-muted)]" />
-        </button>
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between">
-          <p className={clsx("text-sm font-black font-num tabular-nums", isOver ? 'text-[#e05252]' : 'text-[var(--text-primary)]')}>
-            {formatCurrency(spent)}
-          </p>
-          {hasLimit && (
-            <p className={clsx("text-[9px] font-bold uppercase tracking-wider", isOver ? 'text-[#e05252]' : isWarning ? 'text-[#ff851b]' : 'text-[var(--text-muted)]')}>
-              {isOver ? `+${(spent - limit).toFixed(0)}€` : `${pct.toFixed(0)}%`}
-            </p>
-          )}
-        </div>
-
-        {hasLimit ? (
-          <div className="space-y-1">
-            <BudgetBar spent={spent} limit={limit} color={color} />
-            <div className="flex justify-between items-center px-0.5">
-              <span className="text-[9px] text-[var(--text-muted)] font-medium">Budget: {formatCurrency(limit)}</span>
-              {isOver && <AlertTriangle size={10} className="text-[#e05252]" />}
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => onEdit(categoryId, 0)}
-            className="w-full py-1.5 border border-dashed border-[var(--border-subtle)] rounded-lg text-[9px] font-bold text-[var(--text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary-ghost)] hover:bg-[var(--color-primary-ghost)] transition-all"
-          >
-            + IMPOSTA BUDGET
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
 function BudgetEditPopover({ categoryId, currentLimit, onSave, onClose }) {
   const [value, setValue] = useState(currentLimit > 0 ? currentLimit.toString() : '')
-
-  const handleSave = async () => {
-    const limit = parseFloat(value) || 0
-    onSave(categoryId, limit)
-  }
+  const handleSave = () => onSave(categoryId, parseFloat(value) || 0)
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      className="absolute inset-x-0 top-0 z-10 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl p-4"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="absolute inset-0 z-50 bg-white/80 backdrop-blur-md flex items-center justify-center p-6 rounded-3xl"
     >
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-bold text-[var(--text-primary)]">Imposta limite mensile</p>
-        <button onClick={onClose} className="p-1 hover:bg-[var(--bg-base)] rounded-lg">
-          <X size={14} className="text-[var(--text-muted)]" />
-        </button>
-      </div>
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-muted)]">€</span>
+      <div className="bg-white shadow-2xl border border-black/5 p-6 rounded-3xl w-full max-w-[280px]">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-black text-[var(--text-primary)]">Limite Budget</p>
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="relative mb-4">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">€</span>
           <input
             type="number"
-            min="0"
-            step="10"
             value={value}
             onChange={e => setValue(e.target.value)}
             placeholder="0"
             autoFocus
-            className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+            className="w-full pl-8 pr-4 py-3 bg-gray-50 border-none rounded-2xl font-bold text-lg focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
           />
         </div>
         <button
           onClick={handleSave}
-          className="px-3 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:opacity-90 transition-opacity"
+          className="w-full py-3 bg-[var(--color-primary)] text-white font-bold rounded-2xl shadow-lg shadow-[var(--color-primary-ghost)] active:scale-95 transition-all"
         >
-          <Check size={16} />
+          Salva Limite
         </button>
       </div>
-      {parseFloat(value) === 0 && value !== '' && (
-        <p className="text-[9px] text-[var(--text-muted)] mt-2">Inserire 0 rimuoverà il limite di budget</p>
-      )}
     </motion.div>
   )
 }
@@ -143,6 +77,7 @@ function BudgetEditPopover({ categoryId, currentLimit, onSave, onClose }) {
 function BudgetTracker({ transactions, categories }) {
   const { setCategories } = useFinanceStore()
   const [editing, setEditing] = useState(null)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   const budgetData = useMemo(() => {
     const expenseCategories = categories.filter(c => c.type === 'expense')
@@ -159,17 +94,19 @@ function BudgetTracker({ transactions, categories }) {
       spent: spentMap[cat.id?.toString()] || 0,
       limit: parseFloat(cat.budget_limit || 0),
       color: EXPENSE_COLORS[i % EXPENSE_COLORS.length]
-    })).sort((a, b) => b.spent - a.spent)
+    })).sort((a, b) => (b.limit > 0 ? 1 : -1) - (a.limit > 0 ? 1 : -1) || b.spent - a.spent)
   }, [transactions, categories])
 
-  const summary = useMemo(() => {
+  const chartData = useMemo(() => {
     const withLimit = budgetData.filter(d => d.limit > 0)
-    const totalBudget = withLimit.reduce((s, d) => s + d.limit, 0)
-    const totalSpent = withLimit.reduce((s, d) => s + d.spent, 0)
-    const overCount = withLimit.filter(d => d.spent > d.limit).length
-    const warningCount = withLimit.filter(d => d.limit > 0 && (d.spent / d.limit) >= 0.8 && d.spent <= d.limit).length
-    return { totalBudget, totalSpent, overCount, warningCount, hasAny: withLimit.length > 0 }
+    return withLimit.map(d => ({
+      name: d.name,
+      value: d.limit,
+      color: d.color
+    }))
   }, [budgetData])
+
+  const totalBudget = useMemo(() => chartData.reduce((s, d) => s + d.value, 0), [chartData])
 
   const handleSaveBudget = async (categoryId, limit) => {
     try {
@@ -180,74 +117,177 @@ function BudgetTracker({ transactions, categories }) {
       if (error) throw error
       setCategories(categories.map(c => c.id === categoryId ? { ...c, budget_limit: limit } : c))
       setEditing(null)
-      toast.success(limit > 0 ? `Budget impostato: ${formatCurrency(limit)}/mese` : 'Budget rimosso')
+      toast.success('Budget aggiornato')
     } catch (err) {
       toast.error('Errore salvataggio')
-      console.error(err)
     }
   }
+
+  const currentItem = budgetData[activeIndex]
+
+  const next = () => setActiveIndex((prev) => (prev + 1) % budgetData.length)
+  const prev = () => setActiveIndex((prev) => (prev - 1 + budgetData.length) % budgetData.length)
 
   if (budgetData.length === 0) return null
 
   return (
-    <Card padding="lg" className="flex flex-col gap-4">
-      {/* Header compact */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-ghost)] flex items-center justify-center">
-            <Target size={16} className="text-[var(--color-primary)]" />
+    <Card padding="none" className="overflow-hidden bg-[var(--bg-surface)] border-none shadow-xl">
+      <div className="flex flex-col lg:flex-row min-h-[360px]">
+        
+        {/* LEFT: Chart & Total */}
+        <div className="lg:w-[45%] p-8 bg-gray-50/50 border-r border-black/5 flex flex-col items-center justify-center relative">
+          <div className="absolute top-6 left-6 flex items-center gap-2">
+            <div className="p-2 bg-white rounded-xl shadow-sm border border-black/5">
+              <PieIcon size={16} className="text-[var(--color-primary)]" />
+            </div>
+            <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Ripartizione</h3>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[var(--text-primary)] leading-none">Budget Mensile</h3>
-            {summary.hasAny && (
-              <p className="text-[10px] text-[var(--text-muted)] mt-1 font-medium">
-                Gestisci i limiti di spesa per categoria
-              </p>
+
+          <div className="w-full h-64 relative">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    innerRadius={75}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                    animationBegin={0}
+                    animationDuration={1200}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-center p-8">
+                <p className="text-xs font-bold text-gray-400 italic">Nessun budget impostato per visualizzare il grafico</p>
+              </div>
             )}
+            
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Totale</p>
+              <p className="text-2xl font-black text-[var(--text-primary)] tabular-nums leading-tight">
+                {formatCurrency(totalBudget)}
+              </p>
+            </div>
+          </div>
+
+          {totalBudget > 0 && (
+             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
+               {chartData.slice(0, 4).map(d => (
+                 <div key={d.name} className="flex items-center gap-1.5">
+                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.color }} />
+                   <span className="text-[9px] font-bold text-gray-500 uppercase">{d.name}</span>
+                 </div>
+               ))}
+               {chartData.length > 4 && <span className="text-[9px] font-bold text-gray-400">+ altri</span>}
+             </div>
+          )}
+        </div>
+
+        {/* RIGHT: Carousel Deck */}
+        <div className="flex-1 p-8 flex flex-col justify-center relative">
+          <div className="absolute top-6 right-8 flex gap-1">
+            <button onClick={prev} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><ChevronLeft size={20} /></button>
+            <button onClick={next} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={20} /></button>
+          </div>
+
+          <div className="relative h-48 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentItem.categoryId}
+                initial={{ x: 50, opacity: 0, scale: 0.9 }}
+                animate={{ x: 0, opacity: 1, scale: 1 }}
+                exit={{ x: -50, opacity: 0, scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="w-full max-w-[320px] p-6 rounded-[2.5rem] bg-white border border-black/[0.03] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] relative"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div 
+                    className="w-4 h-4 rounded-full shadow-inner" 
+                    style={{ backgroundColor: currentItem.color }} 
+                  />
+                  <h4 className="text-base font-black text-[var(--text-primary)] uppercase tracking-tight truncate">
+                    {currentItem.name}
+                  </h4>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Spesa Attuale</p>
+                      <p className={clsx("text-2xl font-black tabular-nums leading-none", currentItem.spent > currentItem.limit && currentItem.limit > 0 ? 'text-[#e05252]' : 'text-[var(--text-primary)]')}>
+                        {formatCurrency(currentItem.spent)}
+                      </p>
+                    </div>
+                    {currentItem.limit > 0 && (
+                      <div className="text-right">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Budget</p>
+                        <p className="text-sm font-bold text-gray-600 leading-none">{formatCurrency(currentItem.limit)}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {currentItem.limit > 0 ? (
+                    <div className="space-y-2">
+                      <BudgetBar spent={currentItem.spent} limit={currentItem.limit} color={currentItem.color} />
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-tight">
+                        <span className="text-gray-400">
+                          {Math.min(100, Math.round((currentItem.spent / currentItem.limit) * 100))}% Utilizzato
+                        </span>
+                        {currentItem.spent > currentItem.limit && (
+                          <span className="text-[#e05252]">Sforato di {formatCurrency(currentItem.spent - currentItem.limit)}</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-4 px-6 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center gap-2">
+                       <p className="text-[10px] font-bold text-gray-400 text-center uppercase">Nessun limite impostato per questa categoria</p>
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={() => setEditing(currentItem)}
+                    className="w-full mt-2 py-3 border border-gray-100 rounded-2xl text-[10px] font-black text-gray-500 hover:bg-gray-50 hover:text-[var(--text-primary)] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Edit3 size={12} />
+                    GESTISCI BUDGET
+                  </button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Dots Indicator */}
+          <div className="flex justify-center gap-1.5 mt-8">
+            {budgetData.map((_, i) => (
+              <div 
+                key={i} 
+                className={clsx(
+                  "h-1 rounded-full transition-all duration-300",
+                  i === activeIndex ? "w-6 bg-[var(--color-primary)]" : "w-1 bg-gray-200"
+                )} 
+              />
+            ))}
           </div>
         </div>
-        {summary.hasAny && (
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-[var(--text-primary)]">
-                {formatCurrency(summary.totalSpent)} <span className="font-medium text-[var(--text-muted)]">/ {formatCurrency(summary.totalBudget)}</span>
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-               {summary.overCount > 0 && (
-                <span className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 bg-red-100 text-red-600 rounded-md">
-                  {summary.overCount} Sforat{summary.overCount > 1 ? 'e' : 'a'}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Grid Layout */}
-      <div className="relative">
+        {/* Floating Edit Popover */}
         <AnimatePresence>
           {editing && (
             <BudgetEditPopover
-              key="edit-popover"
               categoryId={editing.categoryId}
-              currentLimit={editing.currentLimit}
+              currentLimit={editing.limit}
               onSave={handleSaveBudget}
               onClose={() => setEditing(null)}
             />
           )}
         </AnimatePresence>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
-          {budgetData.map((item, i) => (
-            <BudgetRow
-              key={item.categoryId}
-              item={item}
-              color={EXPENSE_COLORS[i % EXPENSE_COLORS.length]}
-              onEdit={(categoryId, currentLimit) => setEditing({ categoryId, currentLimit })}
-            />
-          ))}
-        </div>
       </div>
     </Card>
   )
