@@ -12,6 +12,11 @@ import { startOfMonth, endOfMonth, format } from 'date-fns'
 /**
  * useSupabaseSync — carica i dati iniziali da Supabase e li sincronizza negli store.
  * Viene montato una volta in App.jsx.
+ *
+ * SICUREZZA: ogni query è filtrata per user_id in modo da garantire
+ * che ogni utente veda SOLO i propri dati.
+ * La protezione definitiva è l'RLS abilitato su Supabase (lato database),
+ * questo filtro client-side è un ulteriore strato di sicurezza.
  */
 export function useSupabaseSync() {
   const { selectedMonth, setUserConfig, setOnboardingCompleted } = useAppStore()
@@ -26,10 +31,19 @@ export function useSupabaseSync() {
   const monthStart = format(startOfMonth(monthDate), 'yyyy-MM-dd')
   const monthEnd = format(endOfMonth(monthDate), 'yyyy-MM-dd')
 
+  /**
+   * Helper: restituisce l'utente autenticato corrente.
+   * Se non c'è sessione attiva, ritorna null.
+   */
+  const getAuthUser = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    return user ?? null
+  }, [])
+
   // ── Load user config ──
   const loadUserConfig = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (!user) return
 
       let { data, error } = await supabase
@@ -61,140 +75,168 @@ export function useSupabaseSync() {
     } catch (err) {
       console.error('Errore critico durante sync config:', err)
     }
-  }, [setUserConfig, setOnboardingCompleted])
+  }, [getAuthUser, setUserConfig, setOnboardingCompleted])
 
   // ── Load calendar events for the month ──
   const loadCalendar = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     setCalLoading(true)
     const [eventsRes, absencesRes, recurringRes] = await Promise.all([
       supabase
         .from('calendar_events')
         .select('*')
+        .eq('user_id', user.id)
         .gte('date', monthStart)
         .lte('date', monthEnd)
         .order('date'),
       supabase
         .from('absences')
         .select('*')
+        .eq('user_id', user.id)
         .or(`start_date.lte.${monthEnd},end_date.gte.${monthStart}`)
         .order('start_date'),
       supabase
         .from('recurring_events')
         .select('*')
+        .eq('user_id', user.id)
         .order('month,day'),
     ])
     if (eventsRes.data) setEvents(eventsRes.data)
     if (absencesRes.data) setAbsences(absencesRes.data)
     if (recurringRes.data) setRecurringEvents(recurringRes.data)
     setCalLoading(false)
-  }, [monthStart, monthEnd, setEvents, setAbsences, setRecurringEvents, setCalLoading])
+  }, [getAuthUser, monthStart, monthEnd, setEvents, setAbsences, setRecurringEvents, setCalLoading])
 
   // ── Load finance data for the month ──
   const loadFinance = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     setFinLoading(true)
     const [txRes, catRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('*')
+        .eq('user_id', user.id)
         .gte('date', monthStart)
         .lte('date', monthEnd)
         .order('date', { ascending: false }),
       supabase
         .from('finance_categories')
         .select('*')
+        .eq('user_id', user.id)
         .order('is_default', { ascending: false }),
     ])
     if (txRes.data) setTransactions(txRes.data)
     if (catRes.data) setCategories(catRes.data)
     setFinLoading(false)
-  }, [monthStart, monthEnd, setTransactions, setCategories, setFinLoading])
+  }, [getAuthUser, monthStart, monthEnd, setTransactions, setCategories, setFinLoading])
 
   // ── Load work sessions for the month ──
   const loadFirme = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     setFirmeLoading(true)
     const { data } = await supabase
       .from('work_sessions')
       .select('*')
+      .eq('user_id', user.id)
       .gte('date', monthStart)
       .lte('date', monthEnd)
       .order('date', { ascending: false })
     if (data) setSessions(data)
     setFirmeLoading(false)
-  }, [monthStart, monthEnd, setSessions, setFirmeLoading])
+  }, [getAuthUser, monthStart, monthEnd, setSessions, setFirmeLoading])
 
   // ── Load health data ──
   const loadHealth = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     setHealthLoading(true)
     const [workoutsRes, weightRes, gymRes] = await Promise.all([
       supabase
         .from('workout_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(100),
       supabase
         .from('weight_log')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(90),
       supabase
         .from('gym_schedules')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at'),
     ])
     if (workoutsRes.data) setWorkoutSessions(workoutsRes.data)
     if (weightRes.data) setWeightLog(weightRes.data)
     if (gymRes.data) setGymSchedules(gymRes.data)
     setHealthLoading(false)
-  }, [setWorkoutSessions, setWeightLog, setGymSchedules, setHealthLoading])
+  }, [getAuthUser, setWorkoutSessions, setWeightLog, setGymSchedules, setHealthLoading])
 
   // ── Load sleep & water logs ──
   const loadSleepWater = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     const [sleepRes, waterRes] = await Promise.all([
       supabase
         .from('sleep_log')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(30),
       supabase
         .from('water_log')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(30),
     ])
     if (sleepRes.data) setSleepLog(sleepRes.data)
     if (waterRes.data) setWaterLog(waterRes.data)
-  }, [setSleepLog, setWaterLog])
+  }, [getAuthUser, setSleepLog, setWaterLog])
 
   // ── Load notes ──
   const loadNotes = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     setNoteLoading(true)
     const { data } = await supabase
       .from('notes')
       .select('*')
+      .eq('user_id', user.id)
       .order('is_pinned', { ascending: false })
       .order('updated_at', { ascending: false })
     if (data) setNotes(data)
     setNoteLoading(false)
-  }, [setNotes, setNoteLoading])
+  }, [getAuthUser, setNotes, setNoteLoading])
 
   // ── Load savings ──
   const loadSavings = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
     setSavLoading(true)
     const [plansRes, movsRes] = await Promise.all([
       supabase
         .from('saving_plans')
         .select('*')
+        .eq('user_id', user.id)
         .order('priority', { ascending: false }),
       supabase
         .from('saving_movements')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(200),
     ])
     if (plansRes.data) setPlans(plansRes.data)
     if (movsRes.data) setMovements(movsRes.data)
     setSavLoading(false)
-  }, [setPlans, setMovements, setSavLoading])
+  }, [getAuthUser, setPlans, setMovements, setSavLoading])
 
   // ── Initial load ──
   useEffect(() => {

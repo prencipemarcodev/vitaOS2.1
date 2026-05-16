@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import clsx from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { useSavingsStore } from '@/store/useSavingsStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -13,6 +14,7 @@ import { getIcon } from '@/lib/icons'
 function PlanModal({ isOpen, onClose, planToEdit = null }) {
   const { addPlan, updatePlan } = useSavingsStore()
   const { pushError } = useNotifications()
+  const { user } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [showIconPicker, setShowIconPicker] = useState(false)
   
@@ -73,7 +75,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
         updatePlan(planToEdit.id, data)
         toast.success('Piano aggiornato')
       } else {
-        const { data, error } = await supabase.from('saving_plans').insert(payload).select().single()
+        const { data, error } = await supabase.from('saving_plans').insert({ ...payload, user_id: user?.id }).select().single()
         if (error) throw error
         addPlan(data)
         toast.success('Piano creato')

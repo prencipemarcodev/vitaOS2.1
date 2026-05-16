@@ -5,6 +5,7 @@ import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useSavingsStore } from '@/store/useSavingsStore'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useAuthStore } from '@/store/useAuthStore'
 import { toast } from 'sonner'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -24,6 +25,7 @@ function PlanCard({ plan, onEdit }) {
   const { userConfig } = useAppStore()
   const { addNotification } = useNotificationStore()
   const { pushError } = useNotifications()
+  const { user } = useAuthStore()
 
   // Filtra movimenti per questo piano
   const planMovements = useMemo(() => 
@@ -100,6 +102,7 @@ function PlanCard({ plan, onEdit }) {
       const { data: movement } = await supabase
         .from('saving_movements')
         .insert({
+          user_id: user?.id,
           plan_id: plan.id,
           amount: adjustment,
           type: type,
@@ -115,6 +118,7 @@ function PlanCard({ plan, onEdit }) {
       const { data: tx } = await supabase
         .from('transactions')
         .insert({
+          user_id: user?.id,
           amount: amount,
           type: type === 'deposit' ? 'expense' : 'income',
           category: savingsCategory?.name || 'Risparmio',

@@ -114,7 +114,9 @@ function Onboarding() {
     if (stepIndex === 5 && formData.first_plan) {
       const plan = formData.first_plan
       if (plan.name && plan.target_amount) {
+        const { data: { user } } = await supabase.auth.getUser()
         await supabase.from('saving_plans').insert({
+          user_id: user?.id,
           name: plan.name,
           target_amount: parseFloat(plan.target_amount) || 0,
           target_date: plan.target_date || null,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useFirmeStore } from '@/store/useFirmeStore'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -11,6 +12,7 @@ import { format, parseISO } from 'date-fns'
 function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
   const { addSession, updateSession } = useFirmeStore()
   const { pushError } = useNotifications()
+  const { user } = useAuthStore()
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -53,6 +55,7 @@ function SessionForm({ isOpen, onClose, sessionToEdit = null }) {
     }
 
     const payload = {
+      user_id: user?.id,
       date: formData.date,
       check_in: formData.start_time,
       check_out: formData.end_time,

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase } from 'lucide-react'
 import { useFirmeStore } from '@/store/useFirmeStore'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -78,6 +79,7 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
 
 function WorkTimer({ onClose }) {
   const { addSession } = useFirmeStore()
+  const { user } = useAuthStore()
   const {
     isRunning, isPaused, checkIn, checkInDate,
     elapsed, pauseElapsed,
@@ -139,7 +141,7 @@ function WorkTimer({ onClose }) {
     try {
       const { data, error } = await supabase
         .from('work_sessions')
-        .insert({ date: checkInDate, check_in: checkIn, check_out: checkOut, duration_minutes: duration, notes: notes || null, is_manual: false })
+        .insert({ user_id: user?.id, date: checkInDate, check_in: checkIn, check_out: checkOut, duration_minutes: duration, notes: notes || null, is_manual: false })
         .select().single()
       if (error) throw error
       addSession(data)
