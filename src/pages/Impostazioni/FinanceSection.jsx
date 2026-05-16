@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, X, RefreshCw } from 'lucide-react'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -16,6 +17,7 @@ import BudgetConfig from './BudgetConfig'
 function FinanceSection() {
   const { categories, addCategory, removeCategory } = useFinanceStore()
   const { userConfig, setUserConfig } = useAppStore()
+  const { user } = useAuthStore()
   const [showAdd, setShowAdd] = useState(false)
   const [newCat, setNewCat] = useState({ name: '', type: 'expense', icon: 'Clipboard', color: '#95a5a6', is_periodic: false, periodic_amount: '', periodic_day: 1 })
 
@@ -26,6 +28,7 @@ function FinanceSection() {
   const handleAdd = async () => {
     if (!newCat.name.trim()) return
     const { data, error } = await supabase.from('finance_categories').insert({
+      user_id: user?.id,
       name: newCat.name,
       type: newCat.type,
       icon: newCat.icon,

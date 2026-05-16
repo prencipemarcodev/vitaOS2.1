@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useNoteStore } from '@/store/useNoteStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -19,6 +20,7 @@ const COLORS = [
 function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
   const { addNote, updateNote } = useNoteStore()
   const { pushError, pushSuccess } = useNotifications()
+  const { user } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -56,7 +58,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
         pushSuccess(`Nota "${formData.title || 'Senza titolo'}" aggiornata`, 'edit-3')
         toast.success('Nota aggiornata')
       } else {
-        const { data, error } = await supabase.from('notes').insert(payload).select().single()
+        const { data, error } = await supabase.from('notes').insert({ ...payload, user_id: user?.id }).select().single()
         if (error) throw error
         addNote(data)
         pushSuccess(`Nota "${formData.title || 'Nuova nota'}" creata`, 'sticky-note')

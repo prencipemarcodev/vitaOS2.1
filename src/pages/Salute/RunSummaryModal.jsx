@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button'
 import { formatPace, formatDuration, calcAvgSpeed } from '@/lib/runCalculations'
 import RunMap from './RunMap'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useAppStore } from '@/store/useAppStore'
 import { toast } from 'sonner'
@@ -13,6 +14,7 @@ import { Map, Trophy, Timer, Flame, TrendingUp, Zap } from 'lucide-react'
 function RunSummaryModal({ isOpen, onClose, tracker }) {
   const { pushError } = useNotifications()
   const { userConfig, setUserConfig } = useAppStore()
+  const { user } = useAuthStore()
   const [saving, setSaving] = useState(false)
 
   if (!tracker) return null
@@ -21,6 +23,7 @@ function RunSummaryModal({ isOpen, onClose, tracker }) {
     setSaving(true)
     try {
       const payload = {
+        user_id: user?.id,
         date: new Date().toISOString().split('T')[0],
         type: 'corsa',
         duration_minutes: Math.round(tracker.elapsed / 60),

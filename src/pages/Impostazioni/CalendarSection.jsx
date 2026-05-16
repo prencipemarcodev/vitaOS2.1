@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Plus, X, Calendar, Edit2 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -15,6 +16,7 @@ const MONTHS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov
 function CalendarSection() {
   const { userConfig, setUserConfig } = useAppStore()
   const { recurringEvents, setRecurringEvents } = useCalendarStore()
+  const { user } = useAuthStore()
   const [showAdd, setShowAdd] = useState(false)
   const [showIconPicker, setShowIconPicker] = useState(false)
   const [newEvent, setNewEvent] = useState({ title: '', month: 1, day: 1, category: 'personale', icon: 'Gift', notify_days_before: 3 })
@@ -29,7 +31,7 @@ function CalendarSection() {
 
   const handleAdd = async () => {
     if (!newEvent.title.trim()) return
-    const { data } = await supabase.from('recurring_events').insert(newEvent).select().single()
+    const { data } = await supabase.from('recurring_events').insert({ ...newEvent, user_id: user?.id }).select().single()
     if (data) {
       setRecurringEvents([...recurringEvents, data])
       setNewEvent({ title: '', month: 1, day: 1, category: 'personale', icon: 'Gift', notify_days_before: 3 })

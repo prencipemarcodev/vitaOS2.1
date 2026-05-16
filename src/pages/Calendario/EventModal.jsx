@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useCalendarStore } from '@/store/useCalendarStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
@@ -14,6 +15,7 @@ const CATEGORIES = ['Generale', 'Lavoro', 'Studio', 'Palestra', 'Personale', 'Sa
 function EventModal({ isOpen, onClose, initialDate }) {
   const { events, addEvent, updateEvent } = useCalendarStore()
   const { pushError } = useNotifications()
+  const { user } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [conflicts, setConflicts] = useState([])
   const [formData, setFormData] = useState({
@@ -54,6 +56,7 @@ function EventModal({ isOpen, onClose, initialDate }) {
       const payload = {
         ...formData,
         ...overrides,
+        user_id: user?.id,
         start_time: formData.all_day ? null : (overrides.start_time || formData.start_time),
         end_time: formData.all_day ? null : (overrides.end_time || formData.end_time),
       }
