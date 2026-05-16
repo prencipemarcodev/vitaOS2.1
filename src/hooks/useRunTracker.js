@@ -3,11 +3,16 @@ import { haversineDistance, calcCalories, calcElevationGain } from '@/lib/runCal
 
 const GPS_OPTIONS = {
   enableHighAccuracy: true,
-  maximumAge: 0,
-  timeout: 10000,
+  maximumAge: 0,       // nessuna cache — sempre dal sensore fisico
+  timeout: 5000,       // fallisce entro 5s per ritentare subito
 }
 
-const MIN_DISTANCE_METERS = 6 // Filtro jitter GPS leggermente più conservativo
+// Su iOS Safari, watchPosition viene throttlato in background.
+// Un getCurrentPosition ogni 2s mantiene attivo il chip GPS.
+const IOS_KEEPALIVE_INTERVAL_MS = 2000
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+
+const MIN_DISTANCE_METERS = 3 // Ridotto da 6 a 3m per massima precisione
 
 export function useRunTracker() {
   const [status, setStatus] = useState('idle') // idle | waiting_gps | countdown | running | paused | finished
@@ -51,6 +56,7 @@ export function useRunTracker() {
   const splitStartRef = useRef(null)
   const wakeLockRef = useRef(null)
   const userWeightKg = useRef(75)
+  const iosKeepAliveRef = useRef(null) // intervallo keep-alive GPS per iOS Safari
   
   // Refs per evitare stale closures nel callback GPS (watchPosition)
   const statusRef = useRef(status)
@@ -230,6 +236,17 @@ export function useRunTracker() {
     setError(null)
     await acquireWakeLock()
     watchIdRef.current = navigator.geolocation.watchPosition(onPositionStable, onError, GPS_OPTIONS)
+
+    // Keep-alive GPS per iOS: previene il throttling di Safari in background
+    if (isIOS && !iosKeepAliveRef.current) {
+      iosKeepAliveRef.current = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          () => {}, // callback vuota — serve solo a tenere sveglio il chip
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 3000 }
+        )
+      }, IOS_KEEPALIVE_INTERVAL_MS)
+    }
   }, [acquireWakeLock, onPositionStable, onError])
 
   const pause = useCallback(() => {
@@ -247,6 +264,11 @@ export function useRunTracker() {
     setStatus('finished')
     stopTimer()
     releaseWakeLock()
+    // Ferma il keep-alive iOS
+    if (iosKeepAliveRef.current) {
+      clearInterval(iosKeepAliveRef.current)
+      iosKeepAliveRef.current = null
+    }
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current)
       watchIdRef.current = null
@@ -273,12 +295,18 @@ export function useRunTracker() {
     lastPointRef.current = null
     lastKmRef.current = 0
     splitStartRef.current = null
+    // Assicura che il keep-alive sia fermato anche in caso di reset
+    if (iosKeepAliveRef.current) {
+      clearInterval(iosKeepAliveRef.current)
+      iosKeepAliveRef.current = null
+    }
   }, [])
 
   useEffect(() => {
     return () => {
       stopTimer()
       releaseWakeLock()
+      if (iosKeepAliveRef.current) clearInterval(iosKeepAliveRef.current)
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current)
     }
   }, [stopTimer, releaseWakeLock])
