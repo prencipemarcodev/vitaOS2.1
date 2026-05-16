@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
 import Header from '@/components/layout/Header'
@@ -11,6 +11,9 @@ import TransactionList from './TransactionList'
 import TransactionModal from './TransactionModal'
 import BalanceChart from './BalanceChart'
 import FinanceDistribution from './FinanceDistribution'
+import BudgetTracker from './BudgetTracker'
+import { toast } from 'sonner'
+import { AlertTriangle } from 'lucide-react'
 
 function Finanze() {
   const { transactions, categories, loading } = useFinanceStore()
@@ -23,6 +26,34 @@ function Finanze() {
     const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
     return { income, expense, net: income - expense }
   }, [transactions])
+
+  // Alert budget quando si sfora l'80%
+  useEffect(() => {
+    const expenseCategories = categories.filter(c => c.type === 'expense' && parseFloat(c.budget_limit || 0) > 0)
+    const spentMap = transactions.filter(t => t.type === 'expense').reduce((acc, tx) => {
+      const key = tx.category?.toString()
+      acc[key] = (acc[key] || 0) + parseFloat(tx.amount || 0)
+      return acc
+    }, {})
+
+    expenseCategories.forEach(cat => {
+      const spent = spentMap[cat.id?.toString()] || 0
+      const limit = parseFloat(cat.budget_limit)
+      const pct = (spent / limit) * 100
+      if (pct >= 80 && pct < 100) {
+        toast(`Budget ${cat.name} quasi esaurito`, {
+          description: `Hai speso ${formatCurrency(spent)} su ${formatCurrency(limit)} (${pct.toFixed(0)}%)`,
+          icon: <AlertTriangle size={16} className="text-orange-500" />,
+          duration: 6000,
+        })
+      } else if (pct >= 100) {
+        toast.error(`Budget ${cat.name} superato!`, {
+          description: `Hai sforato di ${formatCurrency(spent - limit)}`,
+          duration: 8000,
+        })
+      }
+    })
+  }, [transactions.length, categories])
 
   const handleEdit = (tx) => {
     setEditingTx(tx)
@@ -88,6 +119,7 @@ function Finanze() {
           <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4">
             <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
               <BalanceChart transactions={transactions} userConfig={userConfig} />
+              <BudgetTracker transactions={transactions} categories={categories} />
               <FinanceDistribution transactions={transactions} categories={categories} />
             </div>
             <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
