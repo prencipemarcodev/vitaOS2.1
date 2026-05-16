@@ -38,10 +38,55 @@ function Overview() {
 
     // Prossimo evento (Smart)
     const now = new Date()
-    const todayStr = format(now, 'yyyy-MM-dd')
     const currentTimeStr = format(now, 'HH:mm')
     
-    const upcoming = events
+    // Generiamo eventi ricorrenti da userConfig per i prossimi 7 giorni
+    const recurringEvents = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      const dayKey = d.getDay().toString() // '0' = domenica, '1' = lunedì...
+      const dateStr = format(d, 'yyyy-MM-dd')
+
+      // Lavoro
+      const ws = userConfig?.work_schedule?.[dayKey]
+      if (ws?.enabled && ws.from) {
+        recurringEvents.push({
+          id: `work-${dateStr}`,
+          title: 'Lavoro',
+          date: dateStr,
+          start_time: ws.from,
+          category: 'lavoro'
+        })
+      }
+      // Studio
+      const ss = userConfig?.study_schedule?.[dayKey]
+      if (ss?.enabled && ss.from) {
+        recurringEvents.push({
+          id: `study-${dateStr}`,
+          title: 'Studio',
+          date: dateStr,
+          start_time: ss.from,
+          category: 'studio'
+        })
+      }
+      // Palestra
+      const gs = userConfig?.gym_schedule?.[dayKey]
+      if (gs?.enabled && gs.from) {
+        recurringEvents.push({
+          id: `gym-${dateStr}`,
+          title: 'Palestra',
+          date: dateStr,
+          start_time: gs.from,
+          category: 'palestra'
+        })
+      }
+    }
+
+    const allEvents = [...events, ...recurringEvents]
+    const todayStr = format(now, 'yyyy-MM-dd')
+
+    const upcoming = allEvents
       .filter(e => {
         if (e.date > todayStr) return true
         if (e.date === todayStr) {
@@ -54,6 +99,7 @@ function Overview() {
         if (a.date !== b.date) return a.date.localeCompare(b.date)
         return (a.start_time || '00:00').localeCompare(b.start_time || '00:00')
       })
+      .filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i) // Rimuovi duplicati rari
 
     // Risparmio attivo
     const activePlan = plans.find(p => p.is_active) || null

@@ -39,7 +39,9 @@ function UpcomingEvents({ events = [] }) {
                   {ev.start_time && ` · ${ev.start_time.slice(0, 5)}`}
                 </p>
               </div>
-              <Badge category={ev.category} size="sm" />
+              <Badge category={ev.category} size="sm" className="capitalize">
+                {ev.category || 'Evento'}
+              </Badge>
             </div>
           ))}
         </div>
