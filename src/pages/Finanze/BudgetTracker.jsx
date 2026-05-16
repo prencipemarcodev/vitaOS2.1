@@ -137,6 +137,7 @@ function BudgetEditPopover({ categoryId, currentLimit, onSave, onClose }) {
         <p className="text-[9px] text-[var(--text-muted)] mt-2">Inserire 0 rimuoverà il limite di budget</p>
       )}
     </motion.div>
+  )
 }
 
 function BudgetTracker({ transactions, categories }) {
