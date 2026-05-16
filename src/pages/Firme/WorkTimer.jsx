@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase, Clock } from 'lucide-react'
+import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase } from 'lucide-react'
 import { useFirmeStore } from '@/store/useFirmeStore'
+import { useWorkSessionStore } from '@/store/useWorkSessionStore'
 import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -34,7 +35,6 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
   }
 
   if (!isOpen) return null
-
   const checkOut = format(new Date(), 'HH:mm')
 
   return (
@@ -53,7 +53,6 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
         <p className="text-xs text-[var(--text-muted)] mb-5">
           {checkIn} → {checkOut} · <span className="font-bold text-[var(--text-primary)]">{formatHM(elapsed)}</span>
         </p>
-
         <div className="space-y-2 mb-5">
           <label className="text-xs font-bold text-[var(--text-secondary)]">Note (opzionale)</label>
           <textarea
@@ -64,19 +63,11 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
             className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
           />
         </div>
-
         <div className="flex gap-2">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-3 rounded-2xl border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-muted)]"
-          >
+          <button onClick={onCancel} className="flex-1 py-3 rounded-2xl border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-muted)]">
             Annulla
           </button>
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="flex-1 py-3 rounded-2xl bg-[var(--color-primary)] text-white text-sm font-black shadow-lg disabled:opacity-60"
-          >
+          <button onClick={handleSave} disabled={loading} className="flex-1 py-3 rounded-2xl bg-[var(--color-primary)] text-white text-sm font-black shadow-lg disabled:opacity-60">
             {loading ? 'Salvo...' : 'Salva Sessione'}
           </button>
         </div>
@@ -87,61 +78,49 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
 
 function WorkTimer({ onClose }) {
   const { addSession } = useFirmeStore()
+  const {
+    isRunning, isPaused, checkIn, checkInDate,
+    elapsed, pauseElapsed,
+    pauseSession, resumeSession, tickElapsed, tickPause, stopSession,
+  } = useWorkSessionStore()
 
-  const [status, setStatus] = useState('running') // running | paused
-  const [elapsed, setElapsed] = useState(0)
-  const [pauseElapsed, setPauseElapsed] = useState(0) // secondi in pausa totali
   const [showSave, setShowSave] = useState(false)
-  const [pauseStart, setPauseStart] = useState(null)
-
-  const checkInRef = useRef(format(new Date(), 'HH:mm'))
-  const checkInDateRef = useRef(format(new Date(), 'yyyy-MM-dd'))
   const timerRef = useRef(null)
   const pauseTimerRef = useRef(null)
 
-  // Timer attivo
   const startTicking = useCallback(() => {
     if (timerRef.current) return
-    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
-  }, [])
+    timerRef.current = setInterval(() => tickElapsed(), 1000)
+  }, [tickElapsed])
 
   const stopTicking = useCallback(() => {
     clearInterval(timerRef.current)
     timerRef.current = null
   }, [])
 
-  // Timer pausa
   const startPauseTicking = useCallback(() => {
     if (pauseTimerRef.current) return
-    const start = Date.now()
-    setPauseStart(start)
-    pauseTimerRef.current = setInterval(() => {
-      setPauseElapsed(prev => prev + 1)
-    }, 1000)
-  }, [])
+    pauseTimerRef.current = setInterval(() => tickPause(), 1000)
+  }, [tickPause])
 
   const stopPauseTicking = useCallback(() => {
     clearInterval(pauseTimerRef.current)
     pauseTimerRef.current = null
-    setPauseStart(null)
   }, [])
 
   useEffect(() => {
-    startTicking()
-    return () => {
-      stopTicking()
-      stopPauseTicking()
-    }
+    if (!isPaused) startTicking()
+    return () => { stopTicking(); stopPauseTicking() }
   }, [])
 
   const handlePause = () => {
-    setStatus('paused')
+    pauseSession()
     stopTicking()
     startPauseTicking()
   }
 
   const handleResume = () => {
-    setStatus('running')
+    resumeSession()
     stopPauseTicking()
     startTicking()
   }
@@ -154,27 +133,18 @@ function WorkTimer({ onClose }) {
 
   const handleSave = async (notes) => {
     const checkOut = format(new Date(), 'HH:mm')
-    const [h1, m1] = checkInRef.current.split(':').map(Number)
+    const [h1, m1] = checkIn.split(':').map(Number)
     const [h2, m2] = checkOut.split(':').map(Number)
     const duration = Math.max(1, (h2 * 60 + m2) - (h1 * 60 + m1))
-
     try {
-      const payload = {
-        date: checkInDateRef.current,
-        check_in: checkInRef.current,
-        check_out: checkOut,
-        duration_minutes: duration,
-        notes: notes || null,
-        is_manual: false,
-      }
       const { data, error } = await supabase
         .from('work_sessions')
-        .insert(payload)
-        .select()
-        .single()
+        .insert({ date: checkInDate, check_in: checkIn, check_out: checkOut, duration_minutes: duration, notes: notes || null, is_manual: false })
+        .select().single()
       if (error) throw error
       addSession(data)
       toast.success(`Sessione salvata — ${formatHM(elapsed)}`)
+      stopSession()
       onClose()
     } catch (err) {
       toast.error('Errore nel salvataggio')
@@ -182,9 +152,6 @@ function WorkTimer({ onClose }) {
     }
   }
 
-  const isPaused = status === 'paused'
-
-  // Colori in base allo stato
   const primaryColor = isPaused ? '#ff851b' : 'var(--color-primary)'
   const bgClass = isPaused ? 'bg-orange-50' : 'bg-[var(--color-primary-ghost)]'
 
@@ -198,20 +165,13 @@ function WorkTimer({ onClose }) {
         className="fixed inset-0 z-[9999] bg-[var(--bg-base)] flex flex-col"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]"
-          >
+          <button onClick={onClose} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
             <ChevronLeft size={16} />
             Indietro
           </button>
           <div className="flex items-center gap-2">
-            <div className={clsx(
-              'w-2 h-2 rounded-full',
-              isPaused ? 'bg-orange-500' : 'bg-green-500 animate-pulse'
-            )} />
+            <div className={clsx('w-2 h-2 rounded-full', isPaused ? 'bg-orange-500' : 'bg-green-500 animate-pulse')} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
               {isPaused ? 'In pausa' : 'Sessione attiva'}
             </span>
@@ -219,9 +179,7 @@ function WorkTimer({ onClose }) {
           <div className="w-20" />
         </div>
 
-        {/* Body */}
         <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          {/* Icona centrale */}
           <motion.div
             animate={{ scale: isPaused ? [1, 1.02, 1] : [1, 1.04, 1] }}
             transition={{ repeat: Infinity, duration: isPaused ? 2 : 1.5, ease: 'easeInOut' }}
@@ -233,23 +191,20 @@ function WorkTimer({ onClose }) {
             }
           </motion.div>
 
-          {/* Cronometro */}
           <div className="text-center">
             <motion.p
               key={Math.floor(elapsed / 60)}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-7xl font-black tabular-nums tracking-tight leading-none"
-              style={{ fontVariantNumeric: 'tabular-nums' }}
             >
               {formatTime(elapsed)}
             </motion.p>
             <p className="text-xs text-[var(--text-muted)] font-bold mt-2 uppercase tracking-widest">
-              Iniziato alle {checkInRef.current}
+              Iniziato alle {checkIn}
             </p>
           </div>
 
-          {/* Stats row */}
           <div className="flex gap-6">
             <div className="text-center">
               <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Tempo attivo</p>
@@ -268,21 +223,11 @@ function WorkTimer({ onClose }) {
           </div>
         </div>
 
-        {/* Footer controls */}
         <div className="px-8 pb-10 flex items-center justify-center gap-6 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] pt-6">
           <AnimatePresence mode="wait">
             {!isPaused ? (
-              <motion.div
-                key="running"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center gap-6"
-              >
-                <button
-                  onClick={handlePause}
-                  className="w-16 h-16 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-500 active:scale-90 transition-transform"
-                >
+              <motion.div key="running" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-6">
+                <button onClick={handlePause} className="w-16 h-16 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-500 active:scale-90 transition-transform">
                   <Pause size={24} />
                 </button>
                 <button
@@ -295,24 +240,12 @@ function WorkTimer({ onClose }) {
                 <div className="w-16" />
               </motion.div>
             ) : (
-              <motion.div
-                key="paused"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center gap-4"
-              >
-                <button
-                  onClick={handleStop}
-                  className="px-6 py-3.5 rounded-2xl border-2 border-red-400 text-red-500 font-black text-sm flex items-center gap-2 active:scale-95 transition-transform"
-                >
+              <motion.div key="paused" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-4">
+                <button onClick={handleStop} className="px-6 py-3.5 rounded-2xl border-2 border-red-400 text-red-500 font-black text-sm flex items-center gap-2 active:scale-95 transition-transform">
                   <Square size={16} fill="currentColor" />
                   Termina
                 </button>
-                <button
-                  onClick={handleResume}
-                  className="px-8 py-3.5 rounded-2xl bg-[var(--color-primary)] text-white font-black text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-transform"
-                >
+                <button onClick={handleResume} className="px-8 py-3.5 rounded-2xl bg-[var(--color-primary)] text-white font-black text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-transform">
                   <Play size={16} fill="currentColor" />
                   Riprendi
                 </button>
@@ -325,12 +258,12 @@ function WorkTimer({ onClose }) {
       <SaveModal
         isOpen={showSave}
         elapsed={elapsed}
-        checkIn={checkInRef.current}
+        checkIn={checkIn}
         onSave={handleSave}
         onCancel={() => {
           setShowSave(false)
           startTicking()
-          setStatus('running')
+          resumeSession()
         }}
       />
     </>,

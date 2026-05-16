@@ -7,6 +7,8 @@ import {
 import clsx from 'clsx'
 import { useAuthStore } from '@/store/useAuthStore'
 import Logo from './Logo'
+import { useWorkSessionStore } from '@/store/useWorkSessionStore'
+
 
 const NAV_ITEMS = [
   { to: '/',             icon: LayoutDashboard, label: 'Overview',      id: '1' },
@@ -21,6 +23,7 @@ const NAV_ITEMS = [
 
 function Sidebar() {
   const location = useLocation()
+  const { isRunning } = useWorkSessionStore()
 
   return (
     <nav
@@ -53,6 +56,7 @@ function Sidebar() {
               <NavItem 
                 item={item} 
                 isActive={location.pathname.startsWith(item.to)} 
+                showBadge={item.to === '/firme' && isRunning}
               />
             </li>
           ))}
@@ -91,7 +95,7 @@ function LogoutButton() {
 
 
 
-function NavItem({ item, isActive }) {
+function NavItem({ item, isActive, showBadge }) {
   if (!item) return null
   return (
     <NavLink
@@ -105,9 +109,12 @@ function NavItem({ item, isActive }) {
       )}
     >
       <item.icon size={18} className={clsx('shrink-0 transition-transform', isActive && 'scale-110')} />
-      <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden">
+      <span className="text-[13px] font-medium whitespace-nowrap overflow-hidden flex-1">
         {item.label}
       </span>
+      {showBadge && (
+        <span className="flex h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+      )}
       {isActive && (
         <motion.div 
           layoutId="active-pill"

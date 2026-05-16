@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useFirmeStore } from '@/store/useFirmeStore'
 import { useAppStore } from '@/store/useAppStore'
+import { useWorkSessionStore } from '@/store/useWorkSessionStore'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Button from '@/components/ui/Button'
@@ -11,10 +12,12 @@ import WorkLog from './WorkLog'
 import SessionForm from './SessionForm'
 import WorkTimer from './WorkTimer'
 import { AnimatePresence } from 'framer-motion'
+import { format } from 'date-fns'
 
 function Firme() {
   const { sessions, loading } = useFirmeStore()
   const { userConfig } = useAppStore()
+  const { isRunning, startSession } = useWorkSessionStore()
   const [formOpen, setFormOpen] = useState(false)
   const [editingSession, setEditingSession] = useState(null)
   const [timerOpen, setTimerOpen] = useState(false)
@@ -29,28 +32,35 @@ function Firme() {
     setFormOpen(true)
   }
 
+  const handleStartTimer = () => {
+    if (!isRunning) {
+      startSession(format(new Date(), 'HH:mm'), format(new Date(), 'yyyy-MM-dd'))
+    }
+    setTimerOpen(true)
+  }
+
   return (
     <>
-      <Header 
-        title="Firme" 
-        showMonth 
-        showNotification 
+      <Header
+        title="Firme"
+        showMonth
+        showNotification
         actions={
           <div className="flex items-center gap-2">
             <Button
               variant="primary"
               size="sm"
               icon={Timer}
-              onClick={() => setTimerOpen(true)}
+              onClick={handleStartTimer}
               className="!rounded-full font-bold shadow-lg"
               hideTextMobile
             >
-              Timbra
+              {isRunning ? 'Sessione attiva' : 'Timbra'}
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              icon={Plus} 
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Plus}
               onClick={handleNew}
               className="font-bold !text-sm"
               style={{ fontFamily: 'var(--font-display)' }}
@@ -61,28 +71,18 @@ function Firme() {
           </div>
         }
       />
-      
       <PageWrapper>
-        <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 lg:h-full lg:overflow-hidden">
-          {/* Colonna Sinistra: KPI + Chart */}
-          <div className="lg:col-span-2 space-y-4 flex flex-col lg:h-full lg:overflow-hidden">
-            <WorkStats sessions={sessions} userConfig={userConfig} />
-            <div className="flex-1 min-h-0">
-              <WorkChart sessions={sessions} userConfig={userConfig} />
-            </div>
-          </div>
-
-          {/* Colonna Destra: Log */}
-          <div className="lg:h-full lg:overflow-y-auto pr-1">
-            <WorkLog sessions={sessions} onEdit={handleEdit} userConfig={userConfig} />
-          </div>
+        <div className="space-y-4">
+          <WorkStats sessions={sessions} userConfig={userConfig} />
+          <WorkChart sessions={sessions} userConfig={userConfig} />
+          <WorkLog sessions={sessions} onEdit={handleEdit} />
         </div>
       </PageWrapper>
 
-      <SessionForm 
-        isOpen={formOpen} 
-        onClose={() => setFormOpen(false)} 
-        sessionToEdit={editingSession} 
+      <SessionForm
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        sessionToEdit={editingSession}
       />
 
       <AnimatePresence>

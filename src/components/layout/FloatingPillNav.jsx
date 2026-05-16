@@ -9,6 +9,7 @@ import {
   PiggyBank, Heart, StickyNote, Settings
 } from 'lucide-react'
 import clsx from 'clsx'
+import { useWorkSessionStore } from '@/store/useWorkSessionStore'
 
 const MAIN_NAV = [
   { to: '/',           icon: LayoutDashboard, label: 'Home' },
@@ -32,6 +33,7 @@ function FloatingPillNav() {
   const [moreOpen, setMoreOpen] = useState(false)
   const location = useLocation()
   const scrollRef = useRef(null)
+  const { isRunning } = useWorkSessionStore()
 
   // Quando si apre, scrolla all'inizio per sicurezza
   useEffect(() => {
@@ -104,7 +106,12 @@ function FloatingPillNav() {
                     className="shrink-0"
                   >
                     <NavLink to={item.to} onClick={() => setMoreOpen(false)}>
-                      <PillButton icon={item.icon} isActive={isActive} label={item.label} />
+                      <PillButton 
+                        icon={item.icon} 
+                        isActive={isActive} 
+                        label={item.label} 
+                        showBadge={item.to === '/firme' && isRunning}
+                      />
                     </NavLink>
                   </motion.div>
                 )
@@ -133,20 +140,23 @@ function FloatingPillNav() {
   )
 }
 
-function PillButton({ icon: Icon, isActive, onClick, label }) {
+function PillButton({ icon: Icon, isActive, onClick, label, showBadge }) {
   return (
     <motion.button
       whileTap={{ scale: 0.85 }}
       whileHover={{ scale: 1.05 }}
       onClick={onClick}
       className={clsx(
-        'w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-300',
+        'w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all duration-300 relative',
         isActive
           ? 'text-[var(--color-primary)] bg-[var(--color-primary-ghost)]'
           : 'text-[var(--text-muted)] hover:bg-black/[0.03]'
       )}
     >
       <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+      {showBadge && (
+        <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white animate-pulse" />
+      )}
     </motion.button>
   )
 }

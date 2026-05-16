@@ -262,7 +262,9 @@ function WaterTracker({ waterLog }) {
     else if (todayEntry) updateWaterEntry(todayEntry.id, { amount_ml: newAmount })
 
     try {
-      if (todayEntry) {
+      const isTemp = todayEntry?.id?.toString().startsWith('temp-')
+
+      if (todayEntry && !isTemp) {
         const { data, error } = await supabase
           .from('water_log')
           .update({ amount_ml: newAmount })
@@ -270,7 +272,7 @@ function WaterTracker({ waterLog }) {
           .select().single()
         if (error) throw error
         updateWaterEntry(todayEntry.id, data)
-      } else {
+      } else if (!todayEntry) {
         if (delta < 0) { setLoading(false); return }
         const { data, error } = await supabase
           .from('water_log')
