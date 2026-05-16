@@ -11,6 +11,8 @@ import Modal from '@/components/ui/Modal'
 import clsx from 'clsx'
 import { ICON_OPTIONS, getIcon } from '@/lib/icons'
 
+import BudgetConfig from './BudgetConfig'
+
 function FinanceSection() {
   const { categories, addCategory, removeCategory } = useFinanceStore()
   const { userConfig, setUserConfig } = useAppStore()
@@ -19,6 +21,7 @@ function FinanceSection() {
 
   const incomeCategories = categories.filter((c) => c.type === 'income')
   const expenseCategories = categories.filter((c) => c.type === 'expense')
+
 
   const handleAdd = async () => {
     if (!newCat.name.trim()) return
@@ -58,9 +61,11 @@ function FinanceSection() {
           Finanze
         </h3>
         <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          Categorie personalizzate, periodici e saldi iniziali
+          Categorie personalizzate, periodici e budget mensili
         </p>
       </div>
+
+      <BudgetConfig />
 
       {/* Saldi iniziali */}
       <Card padding="lg" className="space-y-3">
