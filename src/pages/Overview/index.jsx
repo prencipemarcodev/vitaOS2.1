@@ -11,7 +11,7 @@ import KpiRow from './KpiRow'
 import QuickActions from './QuickActions'
 import FinancePreview from './FinancePreview'
 import WorkWeekPreview from './WorkWeekPreview'
-import UpcomingEvents from './UpcomingEvents'
+import WellnessPreview from './WellnessPreview'
 import HealthPreview from './HealthPreview'
 import { format } from 'date-fns'
 import { formatCurrency } from '@/lib/formatters'
@@ -131,9 +131,9 @@ function Overview() {
             </div>
           </div>
 
-          {/* Riga 4: Eventi & Salute */}
+          {/* Riga 4: Benessere & Salute */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:shrink-0">
-            <UpcomingEvents events={kpis.upcoming} />
+            <WellnessPreview />
             <HealthPreview workouts={workoutSessions} userConfig={userConfig} />
           </div>
         </div>
