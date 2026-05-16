@@ -56,14 +56,6 @@ function FinanceSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-base font-medium text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-          Finanze
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          Categorie personalizzate, periodici e budget mensili
-        </p>
-      </div>
 
       <BudgetConfig />
 

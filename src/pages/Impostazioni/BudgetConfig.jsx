@@ -65,10 +65,6 @@ function BudgetConfig() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Target size={18} className="text-[var(--color-primary)]" />
-        <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Gestione Budget</h3>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Chart View */}
