@@ -145,40 +145,43 @@ function BudgetTracker({ transactions, categories }) {
 
           <div className="w-full h-64 relative">
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    innerRadius={75}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                    animationBegin={0}
-                    animationDuration={1200}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      innerRadius={75}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                      animationBegin={0}
+                      animationDuration={1200}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Totale</p>
+                  <p className="text-2xl font-black text-[var(--text-primary)] tabular-nums leading-tight">
+                    {formatCurrency(totalBudget)}
+                  </p>
+                </div>
+              </>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-center p-8">
-                <p className="text-xs font-bold text-gray-400 italic">Nessun budget impostato per visualizzare il grafico</p>
+              <div className="absolute inset-0 flex items-center justify-center text-center p-12">
+                <p className="text-xs font-bold text-gray-300 italic leading-relaxed">
+                  Configura un limite di spesa per vedere la ripartizione del tuo budget
+                </p>
               </div>
             )}
-            
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Totale</p>
-              <p className="text-2xl font-black text-[var(--text-primary)] tabular-nums leading-tight">
-                {formatCurrency(totalBudget)}
-              </p>
-            </div>
           </div>
 
           {totalBudget > 0 && (
-             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
+             <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-6">
                {chartData.slice(0, 4).map(d => (
                  <div key={d.name} className="flex items-center gap-1.5">
                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.color }} />
@@ -191,21 +194,31 @@ function BudgetTracker({ transactions, categories }) {
         </div>
 
         {/* RIGHT: Carousel Deck */}
-        <div className="flex-1 p-8 flex flex-col justify-center relative">
-          <div className="absolute top-6 right-8 flex gap-1">
-            <button onClick={prev} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><ChevronLeft size={20} /></button>
-            <button onClick={next} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><ChevronRight size={20} /></button>
+        <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center relative bg-white">
+          <div className="absolute top-8 right-8 flex gap-2 z-10">
+            <button 
+              onClick={prev} 
+              className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-[var(--text-primary)] rounded-full transition-all border border-black/5"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button 
+              onClick={next} 
+              className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-[var(--text-primary)] rounded-full transition-all border border-black/5"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
 
-          <div className="relative h-48 flex items-center justify-center">
+          <div className="relative h-64 flex items-center justify-center">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentItem.categoryId}
-                initial={{ x: 50, opacity: 0, scale: 0.9 }}
+                initial={{ x: 20, opacity: 0, scale: 0.95 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
-                exit={{ x: -50, opacity: 0, scale: 0.9 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="w-full max-w-[320px] p-6 rounded-[2.5rem] bg-white border border-black/[0.03] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] relative"
+                exit={{ x: -20, opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="w-full max-w-[340px] p-8 rounded-[2.5rem] bg-white border border-black/[0.03] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.08)] relative"
               >
                 <div className="flex items-center gap-3 mb-6">
                   <div 
