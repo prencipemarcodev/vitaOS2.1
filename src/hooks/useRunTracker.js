@@ -93,8 +93,15 @@ export function useRunTracker() {
     }
   }, [])
 
-  // Geolocation Callback
-  const onPosition = useCallback((position) => {
+  // Geolocation Callback — usato un ref pattern per evitare stale closure
+  // onPositionRef punta sempre alla funzione più aggiornata
+  // onPositionStable è stabile e viene passata a watchPosition una sola volta
+  const onPositionRef = useRef(null)
+  const onPositionStable = useRef((position) => {
+    if (onPositionRef.current) onPositionRef.current(position)
+  }).current
+
+  onPositionRef.current = (position) => {
     const { latitude, longitude, altitude, speed, accuracy: acc } = position.coords
     setAccuracy(acc)
     
@@ -113,7 +120,11 @@ export function useRunTracker() {
           latitude, longitude
         )
 
-        if (dist < MIN_DISTANCE_METERS || dist > 150) return
+        // Filtro jitter: ignora punti troppo vicini o salti anomali
+        if (dist < MIN_DISTANCE_METERS || dist > 150) {
+          lastPointRef.current = newPoint
+          return
+        }
 
         setDistanceM(prev => {
           const newDist = prev + dist
@@ -132,26 +143,27 @@ export function useRunTracker() {
           return newDist
         })
 
-        const speedMs = speed ?? (dist / ((ts - lastPointRef.current.ts) / 1000))
-        setCurrentSpeed(speedMs)
+        const dt = (ts - lastPointRef.current.ts) / 1000
+        const speedMs = (speed != null && speed > 0) ? speed : (dt > 0 ? dist / dt : 0)
         
-        // Update max speed safely
+        setCurrentSpeed(speedMs)
         setMaxSpeed(prev => {
           const speedKmh = speedMs * 3.6
           return speedKmh > prev ? speedKmh : prev
         })
-        
-        if (speedMs > 0.6) {
+        if (speedMs > 0.5) {
           setCurrentPace(1000 / speedMs)
         }
       }
-    }
 
-    lastPointRef.current = newPoint
-    if (currentStatus === 'running') {
+      lastPointRef.current = newPoint
       setPolyline(prev => [...prev, newPoint])
+    } else {
+      // Anche quando non stiamo registrando, aggiorniamo il last point
+      // così non calcola distanze errate al riavvio
+      lastPointRef.current = newPoint
     }
-  }, [])
+  }
 
   const onError = useCallback((err) => {
     console.error('GPS Error:', err)
@@ -217,8 +229,8 @@ export function useRunTracker() {
     setStatus('waiting_gps')
     setError(null)
     await acquireWakeLock()
-    watchIdRef.current = navigator.geolocation.watchPosition(onPosition, onError, GPS_OPTIONS)
-  }, [acquireWakeLock, onPosition, onError])
+    watchIdRef.current = navigator.geolocation.watchPosition(onPositionStable, onError, GPS_OPTIONS)
+  }, [acquireWakeLock, onPositionStable, onError])
 
   const pause = useCallback(() => {
     setStatus('paused')
