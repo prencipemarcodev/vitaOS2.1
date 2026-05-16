@@ -45,14 +45,6 @@ function CalendarSection() {
   return (
     <div className="space-y-6">
       {/* ... header e patrono ... */}
-      <div>
-        <h3 className="text-base font-medium text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-          Calendario
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          Ricorrenze annuali, patrono e ferie
-        </p>
-      </div>
 
       <Card padding="lg" className="space-y-3">
         <div className="flex items-center gap-2">

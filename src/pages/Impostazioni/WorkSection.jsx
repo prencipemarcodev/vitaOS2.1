@@ -15,14 +15,6 @@ function WorkSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-base font-medium text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-          Orari lavorativi e attività
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          Configura i tuoi orari settimanali per lavoro, studio e palestra
-        </p>
-      </div>
 
       {/* Lavoro */}
       <Card padding="lg" className="space-y-3">

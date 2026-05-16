@@ -222,14 +222,6 @@ function HealthSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-base font-medium text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-          Salute
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          Obiettivi di allenamento, corsa e impostazioni GPS
-        </p>
-      </div>
 
       {/* Obiettivi settimanali */}
       <Card padding="lg" className="space-y-4">

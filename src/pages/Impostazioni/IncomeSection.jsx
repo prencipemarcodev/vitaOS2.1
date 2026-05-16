@@ -28,14 +28,6 @@ function IncomeSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-base font-medium text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-          Reddito
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mt-0.5">
-          Stipendio, mensilità aggiuntive e obiettivo risparmio
-        </p>
-      </div>
 
       {/* Stipendio */}
       <Card padding="lg">

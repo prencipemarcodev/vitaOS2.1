@@ -21,12 +21,7 @@ function AppearanceSection() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-base font-medium text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
-          Aspetto
-        </h3>
-        <p className="text-sm text-[var(--text-muted)] mt-0.5">Scegli il tema dell'interfaccia</p>
-      </div>
+      
 
       <div className="grid grid-cols-2 gap-3">
         {options.map((opt) => (
