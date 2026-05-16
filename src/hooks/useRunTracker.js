@@ -51,6 +51,14 @@ export function useRunTracker() {
   const splitStartRef = useRef(null)
   const wakeLockRef = useRef(null)
   const userWeightKg = useRef(75)
+  
+  // Refs per evitare stale closures nel callback GPS (watchPosition)
+  const statusRef = useRef(status)
+  const elapsedRef = useRef(elapsed)
+
+  useEffect(() => { statusRef.current = status }, [status])
+  useEffect(() => { elapsedRef.current = elapsed }, [elapsed])
+
 
   // Timer
   const startTimer = useCallback(() => {
@@ -96,12 +104,9 @@ export function useRunTracker() {
     // Aggiorniamo sempre la posizione live per la mappa
     setLivePosition({ lat: latitude, lng: longitude })
 
-    if (status === 'waiting_gps') {
-      // Restiamo in waiting_gps finché l'utente non preme "Inizia Corsa" o triggeriamo il countdown dalla UI
-      // La UI monitorerà la precisione (acc) per suggerire l'avvio
-    }
+    const currentStatus = statusRef.current
 
-    if (status === 'running') {
+    if (currentStatus === 'running') {
       if (lastPointRef.current) {
         const dist = haversineDistance(
           lastPointRef.current.lat, lastPointRef.current.lng,
@@ -119,7 +124,7 @@ export function useRunTracker() {
             setSplits(s => [...s, {
               km: currentKm,
               pace_sec: Math.round(splitElapsed),
-              elapsed_sec: Math.round(elapsed)
+              elapsed_sec: Math.round(elapsedRef.current)
             }])
             lastKmRef.current = currentKm
             splitStartRef.current = ts
@@ -129,7 +134,12 @@ export function useRunTracker() {
 
         const speedMs = speed ?? (dist / ((ts - lastPointRef.current.ts) / 1000))
         setCurrentSpeed(speedMs)
-        if (speedMs * 3.6 > maxSpeed) setMaxSpeed(speedMs * 3.6)
+        
+        // Update max speed safely
+        setMaxSpeed(prev => {
+          const speedKmh = speedMs * 3.6
+          return speedKmh > prev ? speedKmh : prev
+        })
         
         if (speedMs > 0.6) {
           setCurrentPace(1000 / speedMs)
@@ -138,10 +148,10 @@ export function useRunTracker() {
     }
 
     lastPointRef.current = newPoint
-    if (status === 'running') {
+    if (currentStatus === 'running') {
       setPolyline(prev => [...prev, newPoint])
     }
-  }, [status, elapsed, maxSpeed])
+  }, [])
 
   const onError = useCallback((err) => {
     console.error('GPS Error:', err)
