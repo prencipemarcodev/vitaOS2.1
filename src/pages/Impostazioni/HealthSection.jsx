@@ -76,18 +76,17 @@ function GpsSection({ userConfig, save, saveMultiple }) {
             <button
               key={preset.id}
               onClick={() => applyPreset(preset)}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-all text-center active:scale-95"
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-all text-center active:opacity-70"
               style={{
-                border: `2px solid ${isActive ? preset.color : 'var(--border-subtle)'}`,
-                backgroundColor: isActive ? `${preset.color}18` : 'var(--bg-base)',
-                transform: isActive ? 'scale(1.02)' : 'scale(1)',
-                boxShadow: isActive ? `0 4px 16px -4px ${preset.color}40` : 'none',
+                border: `${isActive ? 3 : 1.5}px solid ${isActive ? preset.color : 'var(--border-subtle)'}`,
+                backgroundColor: isActive ? `${preset.color}15` : 'var(--bg-base)',
+                boxShadow: isActive ? `0 4px 20px -6px ${preset.color}60` : 'none',
               }}
             >
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
                 style={{
-                  backgroundColor: isActive ? `${preset.color}25` : `${preset.color}15`,
+                  backgroundColor: isActive ? `${preset.color}25` : `${preset.color}12`,
                   color: preset.color,
                 }}
               >
@@ -100,7 +99,10 @@ function GpsSection({ userConfig, save, saveMultiple }) {
                 >
                   {preset.label}
                 </p>
-                <p className="text-[9px] leading-tight mt-0.5" style={{ color: isActive ? `${preset.color}cc` : 'var(--text-muted)' }}>
+                <p
+                  className="text-[9px] leading-tight mt-0.5"
+                  style={{ color: isActive ? `${preset.color}bb` : 'var(--text-muted)' }}
+                >
                   {preset.description}
                 </p>
               </div>
