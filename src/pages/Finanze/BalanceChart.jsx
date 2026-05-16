@@ -19,7 +19,7 @@ function BalanceChart({ transactions, userConfig }) {
 
     return days.map(day => {
       const dayTxs = transactions.filter(t => isSameDay(new Date(t.date), day))
-      const net = dayTxs.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
+      const net = dayTxs.reduce((sum, t) => sum + (t.type === 'income' ? parseFloat(t.amount || 0) : -parseFloat(t.amount || 0)), 0)
       
       if (isBefore(day, addDays(today, 1))) {
         currentTotal += net
@@ -58,7 +58,8 @@ function BalanceChart({ transactions, userConfig }) {
               axisLine={false} 
               tickLine={false} 
               tick={{ fontSize: 10, fill: 'var(--text-muted)' }} 
-              domain={['dataMin - 100', 'dataMax + 100']}
+              domain={['auto', 'auto']}
+              padding={{ top: 10, bottom: 10 }}
             />
             <Tooltip 
               content={({ active, payload }) => {
