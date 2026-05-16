@@ -158,8 +158,8 @@ function GpsSection({ userConfig, save, saveMultiple }) {
             )}
           >
             <span className={clsx(
-              'absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform',
-              keepalive ? 'translate-x-5' : 'translate-x-0.5'
+              'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform',
+              keepalive ? 'translate-x-[22px]' : 'translate-x-0'
             )} />
           </button>
         </div>
