@@ -42,17 +42,20 @@ const GPS_PRESETS = [
   },
 ]
 
-function GpsSection({ userConfig, save }) {
+function GpsSection({ userConfig, save, saveMultiple }) {
   const currentPreset = userConfig?.gps_preset || 'balanced'
   const jitter = userConfig?.gps_jitter_meters ?? 6
   const keepalive = userConfig?.gps_keepalive ?? false
   const keepaliveInterval = userConfig?.gps_keepalive_interval_ms ?? 2000
 
   const applyPreset = (preset) => {
-    save('gps_preset', preset.id)
-    save('gps_jitter_meters', preset.jitter)
-    save('gps_keepalive', preset.keepalive)
-    save('gps_keepalive_interval_ms', preset.keepalive_interval)
+    // Unico update atomico — evita stale closure da chiamate multiple
+    saveMultiple({
+      gps_preset: preset.id,
+      gps_jitter_meters: preset.jitter,
+      gps_keepalive: preset.keepalive,
+      gps_keepalive_interval_ms: preset.keepalive_interval,
+    })
   }
 
   return (
@@ -190,11 +193,19 @@ function GpsSection({ userConfig, save }) {
 function HealthSection() {
   const { userConfig, setUserConfig } = useAppStore()
 
+  // Salva un singolo campo — usa updater funzionale per evitare stale closure
   const save = useCallback(async (field, value) => {
     if (!userConfig?.id) return
-    setUserConfig({ ...userConfig, [field]: value })
+    setUserConfig(prev => ({ ...prev, [field]: value }))
     await supabase.from('user_config').update({ [field]: value }).eq('id', userConfig.id)
-  }, [userConfig, setUserConfig])
+  }, [userConfig?.id, setUserConfig])
+
+  // Salva più campi in un unico update atomico (evita race condition)
+  const saveMultiple = useCallback(async (updates) => {
+    if (!userConfig?.id) return
+    setUserConfig(prev => ({ ...prev, ...updates }))
+    await supabase.from('user_config').update(updates).eq('id', userConfig.id)
+  }, [userConfig?.id, setUserConfig])
 
   const [localWeight, setLocalWeight] = useState(userConfig?.weight_kg?.toString() || '')
 
@@ -241,7 +252,7 @@ function HealthSection() {
       </Card>
 
       {/* GPS Settings */}
-      <GpsSection userConfig={userConfig} save={save} />
+      <GpsSection userConfig={userConfig} save={save} saveMultiple={saveMultiple} />
 
       {/* Storico totale */}
       <Card padding="lg" className="space-y-3">
