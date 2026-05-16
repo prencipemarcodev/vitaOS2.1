@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import Card from '@/components/ui/Card'
+import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import { formatCurrency } from '@/lib/formatters'
-import { Target, Edit3, X, Check, PieChart as PieIcon } from 'lucide-react'
+import { Target, Edit3, PieChart as PieIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import clsx from 'clsx'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
 const EXPENSE_COLORS = [
@@ -14,46 +16,10 @@ const EXPENSE_COLORS = [
   '#f012be', '#0074d9', '#9b59b6', '#3d9970', '#2ecc40'
 ]
 
-function BudgetEditPopover({ categoryId, currentLimit, onSave, onClose }) {
-  const [value, setValue] = useState(currentLimit > 0 ? currentLimit.toString() : '')
-  const handleSave = () => onSave(categoryId, parseFloat(value) || 0)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="absolute inset-0 z-50 bg-[var(--bg-surface)]/90 backdrop-blur-sm flex items-center justify-center p-4 rounded-2xl"
-    >
-      <div className="bg-white shadow-2xl border border-[var(--border-subtle)] p-5 rounded-2xl w-full max-w-[240px]">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-bold text-[var(--text-primary)]">Imposta Limite</p>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X size={14} /></button>
-        </div>
-        <div className="relative mb-3">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">€</span>
-          <input
-            type="number"
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            autoFocus
-            className="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
-          />
-        </div>
-        <button
-          onClick={handleSave}
-          className="w-full py-2 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl active:scale-95 transition-transform"
-        >
-          Salva
-        </button>
-      </div>
-    </motion.div>
-  )
-}
-
 function BudgetConfig() {
   const { categories, setCategories } = useFinanceStore()
   const [editing, setEditing] = useState(null)
+  const [editValue, setEditValue] = useState('')
 
   const expenseCategories = useMemo(() => 
     categories.filter(c => c.type === 'expense')
@@ -75,14 +41,21 @@ function BudgetConfig() {
 
   const totalBudget = useMemo(() => chartData.reduce((s, d) => s + d.value, 0), [chartData])
 
-  const handleSaveBudget = async (categoryId, limit) => {
+  const handleOpenEdit = (cat) => {
+    setEditing(cat)
+    setEditValue(cat.budget_limit > 0 ? cat.budget_limit.toString() : '')
+  }
+
+  const handleSaveBudget = async () => {
+    if (!editing) return
+    const limit = parseFloat(editValue) || 0
     try {
       const { error } = await supabase
         .from('finance_categories')
         .update({ budget_limit: limit })
-        .eq('id', categoryId)
+        .eq('id', editing.id)
       if (error) throw error
-      setCategories(categories.map(c => c.id === categoryId ? { ...c, budget_limit: limit } : c))
+      setCategories(categories.map(c => c.id === editing.id ? { ...c, budget_limit: limit } : c))
       setEditing(null)
       toast.success('Budget salvato')
     } catch (err) {
@@ -112,6 +85,8 @@ function BudgetConfig() {
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
+                      animationBegin={0}
+                      animationDuration={1000}
                     >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -150,7 +125,7 @@ function BudgetConfig() {
                   <span className="text-[11px] font-bold text-[var(--text-primary)] uppercase truncate">{cat.name}</span>
                 </div>
                 <button 
-                  onClick={() => setEditing(cat)}
+                  onClick={() => handleOpenEdit(cat)}
                   className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
                 >
                   <Edit3 size={12} className="text-gray-400" />
@@ -167,21 +142,37 @@ function BudgetConfig() {
                   </span>
                 )}
               </div>
-
-              <AnimatePresence>
-                {editing?.id === cat.id && (
-                  <BudgetEditPopover
-                    categoryId={cat.id}
-                    currentLimit={parseFloat(cat.budget_limit || 0)}
-                    onSave={handleSaveBudget}
-                    onClose={() => setEditing(null)}
-                  />
-                )}
-              </AnimatePresence>
             </div>
           ))}
         </div>
       </div>
+
+      <Modal 
+        isOpen={!!editing} 
+        onClose={() => setEditing(null)} 
+        title={`Budget ${editing?.name}`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Annulla</Button>
+            <Button variant="primary" onClick={handleSaveBudget}>Salva Limite</Button>
+          </>
+        }
+      >
+        <div className="py-2">
+          <Input 
+            label="Limite Mensile"
+            type="number"
+            prefix="€"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder="0"
+            autoFocus
+          />
+          <p className="text-[10px] text-[var(--text-muted)] mt-2">
+            Imposta 0 per rimuovere il limite di budget per questa categoria.
+          </p>
+        </div>
+      </Modal>
     </div>
   )
 }
