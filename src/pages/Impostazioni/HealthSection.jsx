@@ -198,19 +198,19 @@ function GpsSection({ userConfig, save, saveMultiple }) {
 function HealthSection() {
   const { userConfig, setUserConfig } = useAppStore()
 
-  // Salva un singolo campo — usa updater funzionale per evitare stale closure
+  // Salva un singolo campo
   const save = useCallback(async (field, value) => {
     if (!userConfig?.id) return
-    setUserConfig(prev => ({ ...prev, [field]: value }))
+    setUserConfig({ ...userConfig, [field]: value })
     await supabase.from('user_config').update({ [field]: value }).eq('id', userConfig.id)
-  }, [userConfig?.id, setUserConfig])
+  }, [userConfig, setUserConfig])
 
-  // Salva più campi in un unico update atomico (evita race condition)
+  // Salva più campi in un unico update atomico
   const saveMultiple = useCallback(async (updates) => {
     if (!userConfig?.id) return
-    setUserConfig(prev => ({ ...prev, ...updates }))
+    setUserConfig({ ...userConfig, ...updates })
     await supabase.from('user_config').update(updates).eq('id', userConfig.id)
-  }, [userConfig?.id, setUserConfig])
+  }, [userConfig, setUserConfig])
 
   const [localWeight, setLocalWeight] = useState(userConfig?.weight_kg?.toString() || '')
 

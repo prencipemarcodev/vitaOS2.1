@@ -31,7 +31,10 @@ export const useAppStore = create(
 
       // User config (mirror from Supabase user_config row)
       userConfig: null,
-      setUserConfig: (config) => set({ userConfig: config }),
+      // Supporta sia oggetto diretto che updater funzionale
+      setUserConfig: (configOrFn) => set(state => ({
+        userConfig: typeof configOrFn === 'function' ? configOrFn(state.userConfig) : configOrFn
+      })),
 
       // Global modal state (for keyboard shortcuts)
       openModal: null,
