@@ -82,6 +82,19 @@ function AppInner() {
   // 3. Load all data from Supabase into Zustand stores
   useSupabaseSync()
 
+  // Safety timeout: se userConfig rimane null per più di 8s (PWA stale cache),
+  // forza un ricaricamento della pagina
+  useEffect(() => {
+    if (!session) return
+    const t = setTimeout(() => {
+      if (!useAppStore.getState().userConfig) {
+        console.warn('[VitaOS] userConfig timeout — forcing reload')
+        window.location.reload()
+      }
+    }, 8000)
+    return () => clearTimeout(t)
+  }, [session])
+
   // Se l'autenticazione sta caricando o la sessione è in fase di recupero
   if (authLoading) {
     return (
@@ -159,20 +172,21 @@ function App() {
 
       {/* Toast notifications */}
       <Toaster
-        position={isMobile ? "top-center" : "bottom-right"}
+        position={isMobile ? 'top-center' : 'bottom-right'}
         toastOptions={{
           style: {
-            // Su mobile: Sotto l'header (Safe Area + Header Height + 12px gap)
-            // Su desktop: Attaccato alla pillola in basso
             top: isMobile ? 'calc(env(safe-area-inset-top, 0px) + var(--header-height) + 2px)' : 'auto',
             bottom: isMobile ? 'auto' : '0px',
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
             border: '1px solid var(--border-default)',
             borderRadius: 'var(--radius-md)',
-            fontSize: '0.875rem',
-            width: isMobile ? 'calc(100vw - 32px)' : 'auto',
-            maxWidth: isMobile ? '400px' : 'none'
+            fontSize: '0.813rem',
+            fontWeight: '500',
+            width: isMobile ? 'calc(100vw - 32px)' : '340px',
+            maxWidth: isMobile ? '400px' : '340px',
+            minWidth: 'unset',
+            boxShadow: '0 4px 24px -4px rgba(0,0,0,0.12)',
           },
         }}
       />

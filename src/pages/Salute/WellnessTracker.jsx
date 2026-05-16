@@ -250,7 +250,17 @@ function WaterTracker({ waterLog }) {
 
   const handleAdd = async (delta) => {
     const newAmount = Math.max(0, Math.min(5000, currentMl + delta))
+    if (newAmount === currentMl) return
     setLoading(true)
+
+    // Ottimismo UI — aggiorna immediatamente la visualizzazione
+    const tempEntry = todayEntry
+      ? { ...todayEntry, amount_ml: newAmount }
+      : { id: 'temp-' + Date.now(), date: TODAY, amount_ml: newAmount }
+
+    if (!todayEntry && delta > 0) addWaterEntry(tempEntry)
+    else if (todayEntry) updateWaterEntry(todayEntry.id, { amount_ml: newAmount })
+
     try {
       if (todayEntry) {
         const { data, error } = await supabase
@@ -261,20 +271,24 @@ function WaterTracker({ waterLog }) {
         if (error) throw error
         updateWaterEntry(todayEntry.id, data)
       } else {
-        if (delta < 0) return // non creare entry a 0
+        if (delta < 0) { setLoading(false); return }
         const { data, error } = await supabase
           .from('water_log')
           .insert({ date: TODAY, amount_ml: newAmount })
           .select().single()
         if (error) throw error
-        addWaterEntry(data)
+        // Sostituisce l'entry temporanea con quella reale
+        updateWaterEntry(tempEntry.id, data)
       }
       if (newAmount >= WATER_GOAL_ML && currentMl < WATER_GOAL_ML) {
         toast.success('🎉 Obiettivo idratazione raggiunto!')
       }
     } catch (err) {
-      toast.error('Errore nel salvataggio')
-      console.error(err)
+      console.error('[WaterTracker] Errore Supabase:', err)
+      const msg = err?.code === '42P01'
+        ? 'Tabella water_log mancante — esegui la migration SQL'
+        : `Errore: ${err?.message || 'salvataggio fallito'}`
+      toast.error(msg, { duration: 5000 })
     } finally {
       setLoading(false)
     }

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Check, SkipForward } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
+import { useSupabaseSync } from '@/hooks/useSupabaseSync'
 import Button from '@/components/ui/Button'
 import Logo from '@/components/layout/Logo'
 import StepIdentita from './StepIdentita'
@@ -25,6 +26,7 @@ const STEPS = [
 
 function Onboarding() {
   const { setOnboardingCompleted, userConfig, setShowOnboardingForce } = useAppStore()
+  const { reload } = useSupabaseSync()
   const [currentStep, setCurrentStep] = useState(userConfig?.onboarding_step || 0)
   const [direction, setDirection] = useState(1)
   const [formData, setFormData] = useState({
@@ -152,6 +154,8 @@ function Onboarding() {
     }
     setShowOnboardingForce(false)
     setOnboardingCompleted(true)
+    // Ricarica tutti i dati dopo il completamento dell'onboarding
+    setTimeout(() => reload.all(), 300)
   }
 
   const handleFinish = async () => {
@@ -161,6 +165,8 @@ function Onboarding() {
     }
     setShowOnboardingForce(false)
     setOnboardingCompleted(true)
+    // Ricarica tutti i dati dopo il completamento dell'onboarding
+    setTimeout(() => reload.all(), 300)
   }
 
   const StepComponent = STEPS[currentStep].component
