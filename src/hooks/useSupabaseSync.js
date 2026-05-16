@@ -18,7 +18,7 @@ export function useSupabaseSync() {
   const { setEvents, setAbsences, setRecurringEvents, setLoading: setCalLoading } = useCalendarStore()
   const { setTransactions, setCategories, setLoading: setFinLoading } = useFinanceStore()
   const { setSessions, setLoading: setFirmeLoading } = useFirmeStore()
-  const { setWorkoutSessions, setWeightLog, setGymSchedules, setLoading: setHealthLoading } = useHealthStore()
+  const { setWorkoutSessions, setWeightLog, setGymSchedules, setSleepLog, setWaterLog, setLoading: setHealthLoading } = useHealthStore()
   const { setNotes, setLoading: setNoteLoading } = useNoteStore()
   const { setPlans, setMovements, setLoading: setSavLoading } = useSavingsStore()
 
@@ -147,6 +147,24 @@ export function useSupabaseSync() {
     setHealthLoading(false)
   }, [setWorkoutSessions, setWeightLog, setGymSchedules, setHealthLoading])
 
+  // ── Load sleep & water logs ──
+  const loadSleepWater = useCallback(async () => {
+    const [sleepRes, waterRes] = await Promise.all([
+      supabase
+        .from('sleep_log')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(30),
+      supabase
+        .from('water_log')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(30),
+    ])
+    if (sleepRes.data) setSleepLog(sleepRes.data)
+    if (waterRes.data) setWaterLog(waterRes.data)
+  }, [setSleepLog, setWaterLog])
+
   // ── Load notes ──
   const loadNotes = useCallback(async () => {
     setNoteLoading(true)
@@ -184,6 +202,7 @@ export function useSupabaseSync() {
     loadNotes()
     loadSavings()
     loadHealth()
+    loadSleepWater()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reload month-dependent data when month changes ──
@@ -200,6 +219,7 @@ export function useSupabaseSync() {
       finance: loadFinance,
       firme: loadFirme,
       health: loadHealth,
+      sleepWater: loadSleepWater,
       notes: loadNotes,
       savings: loadSavings,
       all: () => {
@@ -208,6 +228,7 @@ export function useSupabaseSync() {
         loadFinance()
         loadFirme()
         loadHealth()
+        loadSleepWater()
         loadNotes()
         loadSavings()
       },

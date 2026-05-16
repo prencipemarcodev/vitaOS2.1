@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge'
 import GlobeProgress from './GlobeProgress'
 import WorkoutHeatmap from './WorkoutHeatmap'
 import RunStats from './RunStats'
+import WellnessTracker from './WellnessTracker'
 import { Activity, Dumbbell, Ruler, Flame, Play } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import RunTrackingScreen from './RunTrackingScreen'
@@ -69,6 +70,7 @@ function Salute() {
             {/* Right: Charts & Heatmap */}
             <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
               <WorkoutHeatmap sessions={workoutSessions} />
+              <WellnessTracker />
               <RunStats sessions={workoutSessions} />
               
               <Card padding="md" className="flex flex-col gap-2">
