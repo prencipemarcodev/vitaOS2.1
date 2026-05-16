@@ -66,6 +66,9 @@ function SleepTracker({ sleepLog }) {
   const handleSave = async () => {
     setLoading(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utente non autenticato')
+
       if (todayEntry) {
         const { data, error } = await supabase
           .from('sleep_log')
@@ -77,7 +80,7 @@ function SleepTracker({ sleepLog }) {
       } else {
         const { data, error } = await supabase
           .from('sleep_log')
-          .insert({ date: TODAY, bedtime, wakeup })
+          .insert({ user_id: user.id, date: TODAY, bedtime, wakeup })
           .select().single()
         if (error) throw error
         addSleepEntry(data)
@@ -262,6 +265,9 @@ function WaterTracker({ waterLog }) {
     else if (todayEntry) updateWaterEntry(todayEntry.id, { amount_ml: newAmount })
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utente non autenticato')
+
       const isTemp = todayEntry?.id?.toString().startsWith('temp-')
 
       if (todayEntry && !isTemp) {
@@ -276,7 +282,7 @@ function WaterTracker({ waterLog }) {
         if (delta < 0) { setLoading(false); return }
         const { data, error } = await supabase
           .from('water_log')
-          .insert({ date: TODAY, amount_ml: newAmount })
+          .insert({ user_id: user.id, date: TODAY, amount_ml: newAmount })
           .select().single()
         if (error) throw error
         // Sostituisce l'entry temporanea con quella reale
