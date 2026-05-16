@@ -76,28 +76,31 @@ function GpsSection({ userConfig, save, saveMultiple }) {
             <button
               key={preset.id}
               onClick={() => applyPreset(preset)}
-              className={clsx(
-                'flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all text-center',
-                isActive
-                  ? 'shadow-md scale-[1.02]'
-                  : 'border-[var(--border-subtle)] bg-[var(--bg-base)] hover:border-[var(--border-default)]'
-              )}
-              style={isActive ? {
-                borderColor: preset.color,
-                backgroundColor: `${preset.color}10`,
-              } : {}}
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-all text-center active:scale-95"
+              style={{
+                border: `2px solid ${isActive ? preset.color : 'var(--border-subtle)'}`,
+                backgroundColor: isActive ? `${preset.color}18` : 'var(--bg-base)',
+                transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                boxShadow: isActive ? `0 4px 16px -4px ${preset.color}40` : 'none',
+              }}
             >
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: `${preset.color}20`, color: preset.color }}
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{
+                  backgroundColor: isActive ? `${preset.color}25` : `${preset.color}15`,
+                  color: preset.color,
+                }}
               >
-                <preset.icon size={16} />
+                <preset.icon size={18} />
               </div>
               <div>
-                <p className="text-[11px] font-black" style={{ color: isActive ? preset.color : 'var(--text-primary)' }}>
+                <p
+                  className="text-[11px] font-black"
+                  style={{ color: isActive ? preset.color : 'var(--text-primary)' }}
+                >
                   {preset.label}
                 </p>
-                <p className="text-[9px] text-[var(--text-muted)] leading-tight mt-0.5">
+                <p className="text-[9px] leading-tight mt-0.5" style={{ color: isActive ? `${preset.color}cc` : 'var(--text-muted)' }}>
                   {preset.description}
                 </p>
               </div>
