@@ -91,7 +91,53 @@ function BudgetRow({ item, color, onEdit }) {
   )
 }
 
-// ... BudgetEditPopover non cambia ...
+function BudgetEditPopover({ categoryId, currentLimit, onSave, onClose }) {
+  const [value, setValue] = useState(currentLimit > 0 ? currentLimit.toString() : '')
+
+  const handleSave = async () => {
+    const limit = parseFloat(value) || 0
+    onSave(categoryId, limit)
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="absolute inset-x-0 top-0 z-10 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-2xl shadow-2xl p-4"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-bold text-[var(--text-primary)]">Imposta limite mensile</p>
+        <button onClick={onClose} className="p-1 hover:bg-[var(--bg-base)] rounded-lg">
+          <X size={14} className="text-[var(--text-muted)]" />
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-muted)]">€</span>
+          <input
+            type="number"
+            min="0"
+            step="10"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            placeholder="0"
+            autoFocus
+            className="w-full pl-7 pr-3 py-2 text-sm font-bold bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+          />
+        </div>
+        <button
+          onClick={handleSave}
+          className="px-3 py-2 bg-[var(--color-primary)] text-white rounded-xl hover:opacity-90 transition-opacity"
+        >
+          <Check size={16} />
+        </button>
+      </div>
+      {parseFloat(value) === 0 && value !== '' && (
+        <p className="text-[9px] text-[var(--text-muted)] mt-2">Inserire 0 rimuoverà il limite di budget</p>
+      )}
+    </motion.div>
+}
 
 function BudgetTracker({ transactions, categories }) {
   const { setCategories } = useFinanceStore()
