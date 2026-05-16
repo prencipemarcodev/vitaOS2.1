@@ -1,20 +1,34 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { haversineDistance, calcCalories, calcElevationGain } from '@/lib/runCalculations'
+import { useAppStore } from '@/store/useAppStore'
 
-const GPS_OPTIONS = {
+// Defaults usati se l'utente non ha ancora configurato le preferenze GPS
+const DEFAULT_GPS_OPTIONS = {
   enableHighAccuracy: true,
-  maximumAge: 0,       // nessuna cache — sempre dal sensore fisico
-  timeout: 5000,       // fallisce entro 5s per ritentare subito
+  maximumAge: 0,
+  timeout: 5000,
 }
+const DEFAULT_JITTER_M = 3
+const DEFAULT_KEEPALIVE_MS = 2000
 
 // Su iOS Safari, watchPosition viene throttlato in background.
-// Un getCurrentPosition ogni 2s mantiene attivo il chip GPS.
-const IOS_KEEPALIVE_INTERVAL_MS = 2000
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 
-const MIN_DISTANCE_METERS = 3 // Ridotto da 6 a 3m per massima precisione
 
 export function useRunTracker() {
+  const { userConfig } = useAppStore()
+
+  // Legge le preferenze GPS dall'utente (con fallback ai default)
+  const gpsJitterM = userConfig?.gps_jitter_meters ?? DEFAULT_JITTER_M
+  const gpsKeepalive = userConfig?.gps_keepalive ?? false
+  const gpsKeepaliveMs = userConfig?.gps_keepalive_interval_ms ?? DEFAULT_KEEPALIVE_MS
+  const gpsTimeout = userConfig?.gps_timeout_ms ?? DEFAULT_GPS_OPTIONS.timeout
+
+  const gpsOptions = {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: gpsTimeout,
+  }
   const [status, setStatus] = useState('idle') // idle | waiting_gps | countdown | running | paused | finished
   const [permissionStatus, setPermissionStatus] = useState('prompt') // prompt | granted | denied
   const [accuracy, setAccuracy] = useState(null)
@@ -57,6 +71,7 @@ export function useRunTracker() {
   const wakeLockRef = useRef(null)
   const userWeightKg = useRef(75)
   const iosKeepAliveRef = useRef(null) // intervallo keep-alive GPS per iOS Safari
+  const gpsJitterMRef = useRef(DEFAULT_JITTER_M) // ref per leggere il jitter nel callback GPS
   
   // Refs per evitare stale closures nel callback GPS (watchPosition)
   const statusRef = useRef(status)
@@ -64,6 +79,8 @@ export function useRunTracker() {
 
   useEffect(() => { statusRef.current = status }, [status])
   useEffect(() => { elapsedRef.current = elapsed }, [elapsed])
+  // Sincronizza il jitter nel ref ogni volta che userConfig cambia
+  useEffect(() => { gpsJitterMRef.current = gpsJitterM }, [gpsJitterM])
 
 
   // Timer
@@ -126,8 +143,8 @@ export function useRunTracker() {
           latitude, longitude
         )
 
-        // Filtro jitter: ignora punti troppo vicini o salti anomali
-        if (dist < MIN_DISTANCE_METERS || dist > 150) {
+        // Filtro jitter: ignora punti troppo vicini o salti anomali (usa preferenze utente)
+        if (dist < gpsJitterMRef.current || dist > 150) {
           lastPointRef.current = newPoint
           return
         }
@@ -235,19 +252,19 @@ export function useRunTracker() {
     setStatus('waiting_gps')
     setError(null)
     await acquireWakeLock()
-    watchIdRef.current = navigator.geolocation.watchPosition(onPositionStable, onError, GPS_OPTIONS)
+    watchIdRef.current = navigator.geolocation.watchPosition(onPositionStable, onError, gpsOptions)
 
-    // Keep-alive GPS per iOS: previene il throttling di Safari in background
-    if (isIOS && !iosKeepAliveRef.current) {
+    // Keep-alive GPS: configurabile dall'utente, attivo solo su iOS
+    if (isIOS && gpsKeepalive && !iosKeepAliveRef.current) {
       iosKeepAliveRef.current = setInterval(() => {
         navigator.geolocation.getCurrentPosition(
-          () => {}, // callback vuota — serve solo a tenere sveglio il chip
+          () => {},
           () => {},
           { enableHighAccuracy: true, maximumAge: 0, timeout: 3000 }
         )
-      }, IOS_KEEPALIVE_INTERVAL_MS)
+      }, gpsKeepaliveMs)
     }
-  }, [acquireWakeLock, onPositionStable, onError])
+  }, [acquireWakeLock, onPositionStable, onError, gpsOptions, gpsKeepalive, gpsKeepaliveMs])
 
   const pause = useCallback(() => {
     setStatus('paused')
