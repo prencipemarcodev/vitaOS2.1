@@ -24,7 +24,7 @@ function EventModal({ isOpen, onClose, initialDate }) {
     start_time: '09:00',
     end_time: '10:00',
     all_day: false,
-    category: 'Generale',
+    category: 'Generale', 
     location: '',
   })
 
