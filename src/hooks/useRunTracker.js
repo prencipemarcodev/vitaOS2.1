@@ -143,9 +143,20 @@ export function useRunTracker() {
           latitude, longitude
         )
 
-        // Filtro jitter: ignora punti troppo vicini o salti anomali (usa preferenze utente)
-        if (dist < gpsJitterMRef.current || dist > 150) {
+        // Filtro per salti anomali
+        if (dist > 150) {
           lastPointRef.current = newPoint
+          return
+        }
+
+        // Filtro jitter: se lo spostamento è minimo, attendiamo che si accumuli
+        if (dist < gpsJitterMRef.current) {
+          // Aggiorniamo comunque la velocità se il dispositivo la fornisce
+          if (speed != null && speed >= 0) {
+            setCurrentSpeed(speed)
+            if (speed > 0.5) setCurrentPace(1000 / speed)
+            else setCurrentPace(null)
+          }
           return
         }
 
@@ -176,6 +187,8 @@ export function useRunTracker() {
         })
         if (speedMs > 0.5) {
           setCurrentPace(1000 / speedMs)
+        } else {
+          setCurrentPace(null)
         }
       }
 

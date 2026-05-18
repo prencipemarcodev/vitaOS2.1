@@ -7,7 +7,7 @@ import Card from '@/components/ui/Card'
 import { format, subDays, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { BarChart, Bar, ResponsiveContainer, XAxis, Tooltip, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts'
 
 const TODAY = format(new Date(), 'yyyy-MM-dd')
 const WATER_GOAL_ML = 2000
@@ -437,14 +437,100 @@ function WaterTracker({ waterLog }) {
   )
 }
 
-// ─── Exported wrapper ──────────────────────────────────────────────────────────
-function WellnessTracker() {
-  const { sleepLog, waterLog } = useHealthStore()
+// ─── Weight Section ────────────────────────────────────────────────────────────
+function WeightTracker({ weightLog }) {
+  const chartData = useMemo(() => {
+    if (!weightLog || weightLog.length === 0) return []
+    // Prendi gli ultimi 7 inserimenti e invertili (ordine cronologico per il grafico)
+    return [...weightLog].slice(0, 7).reverse().map(e => ({
+      date: format(parseISO(e.date), 'dd MMM', { locale: it }),
+      weight: e.weight
+    }))
+  }, [weightLog])
+
+  const currentWeight = weightLog[0]?.weight || '--'
+
+  // Calcolo trend rispetto alla registrazione precedente
+  const trend = useMemo(() => {
+    if (weightLog.length < 2) return null
+    const diff = weightLog[0].weight - weightLog[1].weight
+    return diff
+  }, [weightLog])
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <Card padding="lg" className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
+            <TrendingUp size={16} className="text-orange-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">Andamento Peso</h3>
+            <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-wider">
+              Storico Recente
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main stat */}
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <div className="flex items-baseline gap-1 mb-1.5">
+            <span className="text-4xl font-black tabular-nums text-[var(--color-primary)]">
+              {currentWeight}
+            </span>
+            <span className="text-sm font-bold text-[var(--text-muted)]">kg</span>
+            {trend !== null && (
+              <span className={`ml-auto text-[10px] font-black uppercase tracking-wider ${trend > 0 ? 'text-red-500' : trend < 0 ? 'text-green-500' : 'text-gray-500'}`}>
+                {trend > 0 ? '+' : ''}{trend > 0 ? trend.toFixed(1) : trend < 0 ? trend.toFixed(1) : '='} kg
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mini chart */}
+      {chartData.length > 0 ? (
+        <div className="h-20 mt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
+              <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'var(--text-muted)', fontWeight: 700 }} axisLine={false} tickLine={false} />
+              <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 9, fill: 'var(--text-muted)', fontWeight: 700 }} axisLine={false} tickLine={false} width={40} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload?.length) {
+                    return (
+                      <div className="bg-white border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
+                        {payload[0].value} kg
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Line type="monotone" dataKey="weight" stroke="#ff851b" strokeWidth={3} dot={{ r: 3, fill: '#ff851b', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 5 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <p className="text-xs text-[var(--text-muted)] italic">Nessun dato registrato. Aggiungi il tuo peso dalle Impostazioni.</p>
+      )}
+    </Card>
+  )
+}
+
+// ─── Exported wrapper ──────────────────────────────────────────────────────────
+function WellnessTracker() {
+  const { sleepLog, waterLog, weightLog } = useHealthStore()
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
       <SleepTracker sleepLog={sleepLog} />
       <WaterTracker waterLog={waterLog} />
+      <WeightTracker weightLog={weightLog} />
     </div>
   )
 }

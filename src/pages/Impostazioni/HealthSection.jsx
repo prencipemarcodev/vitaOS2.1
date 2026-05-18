@@ -3,8 +3,10 @@ import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
-import { Zap, Battery, Navigation, Info } from 'lucide-react'
+import { Zap, Battery, Navigation, Info, Save } from 'lucide-react'
 import clsx from 'clsx'
+import { toast } from 'sonner'
+import { useHealthStore } from '@/store/useHealthStore'
 
 const GPS_PRESETS = [
   {
@@ -213,11 +215,36 @@ function HealthSection() {
   }, [userConfig, setUserConfig])
 
   const [localWeight, setLocalWeight] = useState(userConfig?.weight_kg?.toString() || '')
+  const [isSavingWeight, setIsSavingWeight] = useState(false)
 
-  const handleWeightBlur = () => {
-    const v = parseFloat(localWeight) || null
-    save('weight_kg', v)
-    save('weight_updated_at', new Date().toISOString().split('T')[0])
+  const handleSaveWeight = async () => {
+    const v = parseFloat(localWeight)
+    if (!v) return
+    setIsSavingWeight(true)
+    try {
+      // 1. Aggiorna user_config
+      await save('weight_kg', v)
+      await save('weight_updated_at', new Date().toISOString().split('T')[0])
+      
+      // 2. Aggiungi a weight_log per lo storico
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data, error } = await supabase
+          .from('weight_log')
+          .insert({ user_id: user.id, date: new Date().toISOString().split('T')[0], weight: v })
+          .select().single()
+        
+        if (data) {
+          useHealthStore.getState().addWeightEntry(data)
+        }
+        if (error) console.error('Errore log peso:', error)
+      }
+      toast.success('Peso salvato ✨')
+    } catch (err) {
+      toast.error('Errore salvataggio peso')
+    } finally {
+      setIsSavingWeight(false)
+    }
   }
 
   return (
@@ -267,15 +294,25 @@ function HealthSection() {
       {/* Peso attuale */}
       <Card padding="lg" className="space-y-3">
         <p className="text-sm font-medium text-[var(--text-primary)]">Peso attuale</p>
-        <Input
-          label="Peso (kg)"
-          type="number"
-          step="0.1"
-          suffix="kg"
-          value={localWeight}
-          onChange={(e) => setLocalWeight(e.target.value)}
-          onBlur={handleWeightBlur}
-        />
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input
+              label="Peso (kg)"
+              type="number"
+              step="0.1"
+              suffix="kg"
+              value={localWeight}
+              onChange={(e) => setLocalWeight(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={handleSaveWeight}
+            disabled={isSavingWeight || !localWeight || parseFloat(localWeight) === userConfig?.weight_kg}
+            className="mt-6 flex h-10 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 text-xs font-bold text-white shadow-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingWeight ? '...' : <><Save size={14} /> Salva</>}
+          </button>
+        </div>
       </Card>
     </div>
   )
