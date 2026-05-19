@@ -129,20 +129,20 @@ function Finanze() {
                   : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
-              Panoramica & Budget
+              Panoramica
               {activeTab === 'panoramica' && (
                 <span className="absolute bottom-[-9px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
               )}
             </button>
             <button
               onClick={() => setActiveTab('abbonamenti')}
-              className={`text-sm font-bold pb-1 transition-all relative flex items-center gap-1.5 ${
+              className={`text-sm font-bold pb-1 transition-all relative ${
                 activeTab === 'abbonamenti' 
                   ? 'text-[var(--text-primary)]' 
                   : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
-              🔁 Abbonamenti
+              Abbonamenti
               {activeTab === 'abbonamenti' && (
                 <span className="absolute bottom-[-9px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
               )}
