@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { haversineDistance, calcCalories, calcElevationGain } from '@/lib/runCalculations'
+import { haversineDistance, calcCalories, calcElevationData } from '@/lib/runCalculations'
 import { useAppStore } from '@/store/useAppStore'
 
 // Defaults usati se l'utente non ha ancora configurato le preferenze GPS
@@ -345,11 +345,11 @@ export function useRunTracker() {
   const distanceKm = distanceM / 1000
   const avgPace = distanceKm > 0 ? elapsed / distanceKm : null
   const calories = calcCalories(userWeightKg.current, elapsed)
-  const elevationGain = calcElevationGain(polyline)
+  const { gain: elevationGain, loss: elevationLoss } = calcElevationData(polyline)
 
   return {
     status, error, elapsed, distanceKm,
-    currentPace, currentSpeed, maxSpeed, avgPace, calories, elevationGain,
+    currentPace, currentSpeed, maxSpeed, avgPace, calories, elevationGain, elevationLoss,
     polyline, splits, permissionStatus, accuracy, livePosition,
     start, pause, resume, finish, reset, requestPermission, forceStart
   }

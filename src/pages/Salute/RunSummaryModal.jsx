@@ -59,7 +59,7 @@ function RunSummaryModal({ isOpen, onClose, tracker }) {
     { label: 'Tempo', value: formatDuration(tracker.elapsed), unit: 'mm:ss', icon: Timer },
     { label: 'Pace Med.', value: formatPace(tracker.avgPace), unit: '/km', icon: Trophy, highlight: true },
     { label: 'Calorie', value: tracker.calories, unit: 'kcal', icon: Flame },
-    { label: 'Dislivello', value: `+${tracker.elevationGain}`, unit: 'm', icon: TrendingUp },
+    { label: 'Dislivello', value: tracker.elevationLoss > 0 ? `+${tracker.elevationGain} / -${tracker.elevationLoss}` : `+${tracker.elevationGain}`, unit: 'm', icon: TrendingUp },
     { label: 'Max Speed', value: tracker.maxSpeed.toFixed(1), unit: 'km/h', icon: Zap },
   ]
 

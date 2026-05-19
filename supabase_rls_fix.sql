@@ -57,7 +57,7 @@ CREATE POLICY "user_isolation" ON public.transactions
   USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "user_isolation" ON public.finance_categories
-  USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+  USING (user_id = auth.uid() OR user_id IS NULL) WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "user_isolation" ON public.work_sessions
   USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());

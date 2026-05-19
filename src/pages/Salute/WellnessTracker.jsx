@@ -444,18 +444,48 @@ function WeightTracker({ weightLog }) {
     // Prendi gli ultimi 7 inserimenti e invertili (ordine cronologico per il grafico)
     return [...weightLog].slice(0, 7).reverse().map(e => ({
       date: format(parseISO(e.date), 'dd MMM', { locale: it }),
-      weight: e.weight
+      weight: e.weight_kg
     }))
   }, [weightLog])
 
-  const currentWeight = weightLog[0]?.weight || '--'
+  const currentWeight = weightLog[0]?.weight_kg || '--'
 
   // Calcolo trend rispetto alla registrazione precedente
   const trend = useMemo(() => {
     if (weightLog.length < 2) return null
-    const diff = weightLog[0].weight - weightLog[1].weight
+    const diff = weightLog[0].weight_kg - weightLog[1].weight_kg
     return diff
   }, [weightLog])
+
+  const { addWeightEntry } = useHealthStore()
+  const [showInput, setShowInput] = useState(false)
+  const [newWeight, setNewWeight] = useState(currentWeight !== '--' ? currentWeight : '')
+  const [loading, setLoading] = useState(false)
+
+  const handleSave = async () => {
+    if (!newWeight) return
+    setLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Utente non autenticato')
+      const { data, error } = await supabase
+        .from('weight_log')
+        .insert({ user_id: user.id, date: TODAY, weight_kg: parseFloat(newWeight) })
+        .select().single()
+      if (error) throw error
+      addWeightEntry(data)
+      setShowInput(false)
+      toast.success('Peso registrato ⚖️')
+      
+      // Aggiorna anche user_config
+      await supabase.from('user_config').update({ weight_kg: parseFloat(newWeight), weight_updated_at: TODAY }).eq('user_id', user.id)
+    } catch (err) {
+      toast.error('Errore nel salvataggio')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <Card padding="lg" className="flex flex-col gap-4">
@@ -472,6 +502,13 @@ function WeightTracker({ weightLog }) {
             </p>
           </div>
         </div>
+        <button
+          onClick={() => setShowInput(!showInput)}
+          className="flex items-center gap-1 text-[10px] font-bold text-[var(--color-primary)] hover:opacity-80 transition-opacity"
+        >
+          + Registra
+          <ChevronDown size={12} className={`transition-transform ${showInput ? 'rotate-180' : ''}`} />
+        </button>
       </div>
 
       {/* Main stat */}
@@ -490,6 +527,41 @@ function WeightTracker({ weightLog }) {
           </div>
         </div>
       </div>
+
+      {/* Input form */}
+      <AnimatePresence>
+        {showInput && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 border-t border-[var(--border-subtle)] flex gap-3">
+              <div className="flex-1 space-y-1">
+                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Peso (kg)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newWeight}
+                  onChange={e => setNewWeight(e.target.value)}
+                  className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  placeholder="es. 70.5"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleSave}
+                  disabled={loading || !newWeight}
+                  className="h-[38px] px-4 bg-orange-500 text-white rounded-xl text-xs font-black disabled:opacity-60 hover:bg-orange-600 transition-colors"
+                >
+                  {loading ? '...' : 'Salva'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mini chart */}
       {chartData.length > 0 ? (

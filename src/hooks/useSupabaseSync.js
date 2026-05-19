@@ -124,7 +124,7 @@ export function useSupabaseSync() {
       supabase
         .from('finance_categories')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},user_id.is.null`)
         .order('is_default', { ascending: false }),
     ])
     if (txRes.data) setTransactions(txRes.data)

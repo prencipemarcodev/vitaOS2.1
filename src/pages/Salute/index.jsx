@@ -22,7 +22,7 @@ function Salute() {
 
   const stats = useMemo(() => {
     const totalKm = workoutSessions.filter(s => s.type === 'corsa').reduce((s, sess) => s + (sess.run_distance_km || 0), 0)
-    const lastWeight = weightLog[0]?.weight || '--'
+    const lastWeight = weightLog[0]?.weight_kg || '--'
     const totalWorkouts = workoutSessions.length
     return { totalKm, lastWeight, totalWorkouts }
   }, [workoutSessions, weightLog])

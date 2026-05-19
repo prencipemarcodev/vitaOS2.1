@@ -50,19 +50,19 @@ export function calcCalories(weightKg, durationSec, met = 8.0) {
   return Math.round(met * weightKg * durationH)
 }
 
-/**
- * Calcola il dislivello positivo (Elevation Gain) accumulato
- */
-export function calcElevationGain(polyline) {
-  if (!polyline || polyline.length < 2) return 0
+export function calcElevationData(polyline) {
+  if (!polyline || polyline.length < 2) return { gain: 0, loss: 0 }
   let gain = 0
+  let loss = 0
   for (let i = 1; i < polyline.length; i++) {
     const diff = (polyline[i].alt || 0) - (polyline[i - 1].alt || 0)
-    if (diff > 0.5) { // Filtro rumore GPS barometrico
+    if (diff > 2.0) { // Filtro rumore GPS
       gain += diff
+    } else if (diff < -2.0) {
+      loss += Math.abs(diff)
     }
   }
-  return Math.round(gain)
+  return { gain: Math.round(gain), loss: Math.round(loss) }
 }
 
 /**

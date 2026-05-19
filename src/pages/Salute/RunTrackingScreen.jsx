@@ -75,7 +75,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   const tracker = useRunTracker()
   const { 
     status, error, elapsed, distanceKm, 
-    currentPace, currentSpeed, calories, elevationGain,
+    currentPace, currentSpeed, calories, elevationGain, elevationLoss,
     polyline, splits, permissionStatus, accuracy,
     start, pause, resume, finish, reset, requestPermission, forceStart
   } = tracker
@@ -276,7 +276,10 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                   </Card>
                   <Card padding="md">
                     <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mb-1">Dislivello</p>
-                    <p className="text-xl font-black tabular-nums text-green-600">+{elevationGain} <span className="text-xs font-bold text-[var(--text-muted)]">m</span></p>
+                    <p className="text-xl font-black tabular-nums">
+                      <span className="text-green-600">+{elevationGain}</span><span className="text-xs font-bold text-[var(--text-muted)]">m</span>
+                      {elevationLoss > 0 && <><span className="text-[var(--text-muted)] mx-1">/</span><span className="text-red-500">-{elevationLoss}</span><span className="text-xs font-bold text-[var(--text-muted)]">m</span></>}
+                    </p>
                   </Card>
                 </div>
                 <div className="h-64 rounded-3xl overflow-hidden border border-[var(--border-subtle)] shadow-sm">
@@ -298,8 +301,12 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                       <p className="text-[10px] font-bold text-[var(--text-primary)]">{splits.length} KM completati</p>
                     </div>
                     <Card padding="sm" className="bg-white/50">
-                      {splits.length > 0 ? (
-                        <PaceChart data={splits} />
+                      {splits.length > 0 || distanceKm >= 0.1 ? (
+                        <PaceChart data={
+                          distanceKm % 1 > 0.1 
+                            ? [...splits, { km: splits.length + 1, pace_sec: tracker.avgPace || 0 }] 
+                            : splits.length > 0 ? splits : [{ km: 1, pace_sec: tracker.avgPace || 0 }]
+                        } />
                       ) : (
                         <div className="h-24 flex items-center justify-center text-[10px] text-[var(--text-muted)] font-bold italic">Nessun dato disponibile</div>
                       )}
@@ -310,7 +317,10 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                   <div>
                     <div className="flex items-center justify-between px-1 mb-1">
                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Altimetria (Dislivello)</p>
-                      <p className="text-[10px] font-bold text-green-600">+{elevationGain}m guadagnati</p>
+                      <p className="text-[10px] font-bold">
+                        <span className="text-green-600">+{elevationGain}m</span>
+                        {elevationLoss > 0 && <span className="text-red-500 ml-1">-{elevationLoss}m</span>}
+                      </p>
                     </div>
                     <Card padding="sm" className="bg-white/50">
                       {polyline.length > 5 ? (
