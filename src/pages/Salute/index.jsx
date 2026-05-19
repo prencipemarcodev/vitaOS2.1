@@ -13,12 +13,15 @@ import { Activity, Dumbbell, Ruler, Flame, Play } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import RunTrackingScreen from './RunTrackingScreen'
 import RunSummaryModal from './RunSummaryModal'
+import RunHistoryCard from './RunHistoryCard'
+import RunDetailsModal from './RunDetailsModal'
 
 function Salute() {
   const { workoutSessions, weightLog, gymSchedules, loading } = useHealthStore()
   const [isTracking, setIsTracking] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [lastTracker, setLastTracker] = useState(null)
+  const [selectedSession, setSelectedSession] = useState(null)
 
   const stats = useMemo(() => {
     const totalKm = workoutSessions.filter(s => s.type === 'corsa').reduce((s, sess) => s + (sess.run_distance_km || 0), 0)
@@ -72,6 +75,7 @@ function Salute() {
               <WorkoutHeatmap sessions={workoutSessions} />
               <WellnessTracker />
               <RunStats sessions={workoutSessions} />
+              <RunHistoryCard sessions={workoutSessions} onSelectSession={setSelectedSession} />
               
               <Card padding="md" className="flex flex-col gap-2">
                 <h3 className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Schede Palestra</h3>
@@ -106,6 +110,13 @@ function Salute() {
         isOpen={showSummary} 
         onClose={() => setShowSummary(false)} 
         tracker={lastTracker} 
+      />
+
+      {/* Details Modal */}
+      <RunDetailsModal 
+        isOpen={selectedSession !== null} 
+        onClose={() => setSelectedSession(null)} 
+        session={selectedSession} 
       />
     </>
   )

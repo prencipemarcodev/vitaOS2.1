@@ -120,7 +120,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   if (status === 'idle' && permissionStatus !== 'granted' && countdown === null) {
     content = (
       <div className="flex flex-col h-full">
-        <header className="h-[var(--header-height)] px-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0">
+        <header className="px-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
           <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
             <ChevronLeft size={16} />
             Torna a Salute
@@ -180,7 +180,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   else if (status === 'waiting_gps' || (status === 'idle' && permissionStatus === 'granted')) {
     content = (
       <div className="flex flex-col h-full">
-        <header className="h-[var(--header-height)] px-4 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0">
+        <header className="px-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
           <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
             <ChevronLeft size={16} />
             Torna a Salute
