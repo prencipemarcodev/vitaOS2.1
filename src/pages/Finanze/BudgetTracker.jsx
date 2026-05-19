@@ -108,8 +108,7 @@ function BudgetTracker({ transactions, categories }) {
             <Target size={16} className="text-[var(--color-primary)]" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[var(--text-primary)] leading-none">Andamento Budget</h3>
-            <p className="text-[10px] text-[var(--text-muted)] mt-1 font-medium">Monitoraggio spese mensili</p>
+            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] leading-none">Budget</h3>
           </div>
         </div>
         <button 

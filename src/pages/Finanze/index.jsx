@@ -15,6 +15,7 @@ import BudgetTracker from './BudgetTracker'
 import SubscriptionManager from './SubscriptionManager'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 function Finanze() {
   const { transactions, categories, loading } = useFinanceStore()
@@ -148,27 +149,43 @@ function Finanze() {
             </button>
           </div>
 
-          {activeTab === 'panoramica' ? (
-            <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4">
-              <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
-                <BalanceChart userConfig={userConfig} />
-                <BudgetTracker transactions={transactions} categories={categories} />
-                <FinanceDistribution transactions={transactions} categories={categories} />
-              </div>
-              <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <h3 className="text-sm font-bold text-[var(--text-primary)]">Movimenti</h3>
+          <AnimatePresence mode="wait">
+            {activeTab === 'panoramica' ? (
+              <motion.div
+                key="panoramica"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4"
+              >
+                <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
+                  <BalanceChart userConfig={userConfig} />
+                  <BudgetTracker transactions={transactions} categories={categories} />
+                  <FinanceDistribution transactions={transactions} categories={categories} />
                 </div>
-                <div className="flex-1 lg:overflow-y-auto pr-1 pb-4">
-                  <TransactionList transactions={transactions} categories={categories} onEdit={handleEdit} />
+                <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">Transazioni</h3>
+                  </div>
+                  <div className="flex-1 lg:overflow-y-auto pr-1 pb-4">
+                    <TransactionList transactions={transactions} categories={categories} onEdit={handleEdit} />
+                  </div>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto pr-1 pb-4">
-              <SubscriptionManager />
-            </div>
-          )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="abbonamenti"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 overflow-y-auto pr-1 pb-4"
+              >
+                <SubscriptionManager />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </PageWrapper>
 

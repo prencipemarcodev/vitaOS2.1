@@ -99,7 +99,7 @@ function FinanceDistribution({ transactions, categories }) {
   return (
     <Card padding="lg" className="flex flex-col">
       <div className="flex items-center justify-between mb-8">
-        <h3 className="text-sm font-bold text-[var(--text-primary)]">Ripartizione Mensile</h3>
+        <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">Distribuzione</h3>
         <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase bg-[var(--bg-base)] px-2 py-1 rounded-lg border border-[var(--border-subtle)]">Analisi Categorie</span>
       </div>
       

@@ -50,7 +50,7 @@ function BalanceChart({ userConfig }) {
 
   return (
     <Card padding="md" className="h-[240px] flex flex-col">
-      <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Andamento Saldo</h3>
+      <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-4">Saldo</h3>
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>

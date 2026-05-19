@@ -347,7 +347,7 @@ function SubscriptionManager() {
         {/* Right Side: Tabella / Lista degli Abbonamenti */}
         <div className="md:col-span-2">
           <Card padding="md">
-            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-4 font-mono">Abbonamenti Registrati</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-4">Abbonamenti</h3>
             
             {loading ? (
               <div className="flex flex-col items-center justify-center py-10 gap-2">
