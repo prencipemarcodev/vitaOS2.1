@@ -12,6 +12,7 @@ import TransactionModal from './TransactionModal'
 import BalanceChart from './BalanceChart'
 import FinanceDistribution from './FinanceDistribution'
 import BudgetTracker from './BudgetTracker'
+import SubscriptionManager from './SubscriptionManager'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
 
@@ -20,6 +21,7 @@ function Finanze() {
   const { userConfig } = useAppStore()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
+  const [activeTab, setActiveTab] = useState('panoramica') // 'panoramica' | 'abbonamenti'
 
   const kpis = useMemo(() => {
     const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
@@ -116,21 +118,57 @@ function Finanze() {
             </Card>
           </div>
 
-          <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4">
-            <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
-              <BalanceChart transactions={transactions} userConfig={userConfig} />
-              <BudgetTracker transactions={transactions} categories={categories} />
-              <FinanceDistribution transactions={transactions} categories={categories} />
-            </div>
-            <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
-              <div className="flex items-center justify-between mb-2 px-1">
-                <h3 className="text-sm font-bold text-[var(--text-primary)]">Movimenti</h3>
-              </div>
-              <div className="flex-1 lg:overflow-y-auto pr-1 pb-4">
-                <TransactionList transactions={transactions} categories={categories} onEdit={handleEdit} />
-              </div>
-            </div>
+          {/* Tab Switcher */}
+          <div className="flex justify-start border-b border-[var(--border-subtle)] pb-2 shrink-0 gap-4">
+            <button
+              onClick={() => setActiveTab('panoramica')}
+              className={`text-sm font-bold pb-1 transition-all relative ${
+                activeTab === 'panoramica' 
+                  ? 'text-[var(--text-primary)]' 
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              Panoramica & Budget
+              {activeTab === 'panoramica' && (
+                <span className="absolute bottom-[-9px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('abbonamenti')}
+              className={`text-sm font-bold pb-1 transition-all relative flex items-center gap-1.5 ${
+                activeTab === 'abbonamenti' 
+                  ? 'text-[var(--text-primary)]' 
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              🔁 Abbonamenti
+              {activeTab === 'abbonamenti' && (
+                <span className="absolute bottom-[-9px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
+              )}
+            </button>
           </div>
+
+          {activeTab === 'panoramica' ? (
+            <div className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4">
+              <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
+                <BalanceChart userConfig={userConfig} />
+                <BudgetTracker transactions={transactions} categories={categories} />
+                <FinanceDistribution transactions={transactions} categories={categories} />
+              </div>
+              <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <h3 className="text-sm font-bold text-[var(--text-primary)]">Movimenti</h3>
+                </div>
+                <div className="flex-1 lg:overflow-y-auto pr-1 pb-4">
+                  <TransactionList transactions={transactions} categories={categories} onEdit={handleEdit} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto pr-1 pb-4">
+              <SubscriptionManager />
+            </div>
+          )}
         </div>
       </PageWrapper>
 

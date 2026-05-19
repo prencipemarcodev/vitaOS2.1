@@ -11,17 +11,10 @@ import { motion } from 'framer-motion'
 
 function SmartAdvicePanel() {
   const { plans } = useSavingsStore()
-  const { transactions } = useFinanceStore()
+  const { transactions, cumulativeBalance } = useFinanceStore()
   const { userConfig, selectedMonth } = useAppStore()
 
-  const totalBalance = useMemo(() => {
-    const bank = parseFloat(userConfig?.initial_bank_balance || 0)
-    const cash = parseFloat(userConfig?.initial_cash_balance || 0)
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
-    const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
-    // Sottraiamo anche i risparmi già effettuati (transazioni verso saving_plans)
-    return bank + cash + income - expenses
-  }, [userConfig, transactions])
+  const totalBalance = cumulativeBalance
 
   const advice = useMemo(() => {
     return calculateSmartAdvice({ 

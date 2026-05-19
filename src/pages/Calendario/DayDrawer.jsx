@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Calendar as CalIcon, MapPin, Clock, Trash2 } from 'lucide-react'
+import { X, Plus, Calendar as CalIcon, MapPin, Clock, Trash2, Circle, Check } from 'lucide-react'
 import { format, isSameDay } from 'date-fns'
 import { it } from 'date-fns/locale'
 import Button from '@/components/ui/Button'
@@ -8,13 +8,20 @@ import { supabase } from '@/lib/supabase'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useAppStore } from '@/store/useAppStore'
+import { useTaskStore } from '@/store/useTaskStore'
 import { Briefcase, GraduationCap, Dumbbell, Star } from 'lucide-react'
 import { isHoliday } from '@/lib/italianCalendar'
+import { useState } from 'react'
 
 function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = [], onAddEvent }) {
   const { removeEvent, removeAbsence } = useCalendarStore()
   const { pushError } = useNotifications()
   const { userConfig } = useAppStore()
+  const { tasks, addTask, updateTask, removeTask } = useTaskStore()
+
+  const [addingTask, setAddingTask] = useState(false)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskPriority, setNewTaskPriority] = useState('medium')
 
   const dayEvents = events.filter(e => isSameDay(new Date(e.date), date))
   const dayRecurring = recurringEvents.filter(re => date.getDate() === re.day && (date.getMonth() + 1) === re.month)
@@ -23,6 +30,7 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
     const e = new Date(a.end_date)
     return date >= d && date <= e
   })
+  const dayTasks = tasks.filter(t => isSameDay(new Date(t.date), date))
 
   // Programma del giorno (Work, Study, Gym)
   const getSchedule = (type) => {
@@ -55,6 +63,58 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
       pushError('Errore nell\'eliminazione')
     } else {
       removeAbsence(id)
+    }
+  }
+
+  const handleAddTask = async (e) => {
+    e.preventDefault()
+    if (!newTaskTitle.trim()) return
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const payload = {
+        user_id: user.id,
+        title: newTaskTitle,
+        date: format(date, 'yyyy-MM-dd'),
+        priority: newTaskPriority,
+        completed: false
+      }
+
+      const { data, error } = await supabase.from('tasks').insert(payload).select().single()
+      if (error) throw error
+      if (data) {
+        addTask(data)
+        setNewTaskTitle('')
+        setAddingTask(false)
+      }
+    } catch (err) {
+      console.error(err)
+      pushError('Errore nella creazione del task')
+    }
+  }
+
+  const handleToggleTask = async (task) => {
+    const updated = !task.completed
+    try {
+      const { error } = await supabase.from('tasks').update({ completed: updated }).eq('id', task.id)
+      if (error) throw error
+      updateTask(task.id, { completed: updated })
+    } catch (err) {
+      console.error(err)
+      pushError('Errore nell\'aggiornamento del task')
+    }
+  }
+
+  const handleDeleteTask = async (id) => {
+    try {
+      const { error } = await supabase.from('tasks').delete().eq('id', id)
+      if (error) throw error
+      removeTask(id)
+    } catch (err) {
+      console.error(err)
+      pushError('Errore nell\'eliminazione del task')
     }
   }
 
@@ -147,6 +207,129 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
                   </div>
                 </section>
               )}
+              {/* Sezione Attività / Tasks */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Attività del Giorno</h3>
+                  <Button variant="ghost" size="xs" icon={Plus} onClick={() => setAddingTask(true)}>Aggiungi</Button>
+                </div>
+
+                <AnimatePresence>
+                  {addingTask && (
+                    <motion.form 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      onSubmit={handleAddTask} 
+                      className="p-4 rounded-2xl border border-[var(--color-primary)]/20 bg-[var(--bg-base)] space-y-3 mb-4 shadow-sm"
+                    >
+                      <input 
+                        type="text" 
+                        value={newTaskTitle} 
+                        onChange={e => setNewTaskTitle(e.target.value)} 
+                        placeholder="Cosa devi fare oggi?" 
+                        className="w-full bg-transparent border-b border-[var(--border-subtle)] pb-1.5 text-sm focus:outline-none focus:border-[var(--color-primary)] text-[var(--text-primary)]"
+                        autoFocus
+                        required
+                      />
+                      <div className="flex justify-between items-center text-xs">
+                        <div className="flex gap-1">
+                          {['low', 'medium', 'high'].map(p => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => setNewTaskPriority(p)}
+                              className={`px-2 py-1 rounded-lg border text-[10px] font-bold capitalize transition-all ${
+                                newTaskPriority === p
+                                  ? p === 'high' 
+                                    ? 'bg-red-500/10 border-red-500/30 text-red-500 font-extrabold' 
+                                    : p === 'medium' 
+                                      ? 'bg-orange-500/10 border-orange-500/30 text-orange-500 font-extrabold' 
+                                      : 'bg-blue-500/10 border-blue-500/30 text-blue-500 font-extrabold'
+                                  : 'border-[var(--border-subtle)] text-[var(--text-muted)]'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="button" variant="ghost" size="xs" onClick={() => setAddingTask(false)} className="text-[var(--text-muted)] font-bold">Annulla</Button>
+                          <Button type="submit" variant="primary" size="xs" className="font-bold">Crea</Button>
+                        </div>
+                      </div>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
+
+                <div className="space-y-2">
+                  {dayTasks.map(task => {
+                    const isHigh = task.priority === 'high'
+                    const isMedium = task.priority === 'medium'
+                    const isLow = task.priority === 'low'
+                    
+                    return (
+                      <motion.div 
+                        key={task.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        className={`group p-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-base)] flex items-center justify-between transition-all ${
+                          task.completed ? 'opacity-55' : 'hover:border-[var(--color-primary-ghost)]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <button 
+                            type="button"
+                            onClick={() => handleToggleTask(task)} 
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              task.completed 
+                                ? 'bg-[var(--color-success)] border-[var(--color-success)] text-white' 
+                                : 'border-[var(--text-muted)] hover:border-[var(--color-primary)]'
+                            }`}
+                          >
+                            {task.completed && <Check size={12} strokeWidth={3} />}
+                          </button>
+                          
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-semibold text-[var(--text-primary)] transition-all truncate ${
+                              task.completed ? 'line-through text-[var(--text-muted)]' : ''
+                            }`}>
+                              {task.title}
+                            </p>
+                            <div className="flex gap-1.5 mt-1 items-center">
+                              <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded border ${
+                                isHigh 
+                                  ? 'bg-red-500/10 border-red-500/20 text-red-500' 
+                                  : isMedium 
+                                    ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' 
+                                    : 'bg-blue-500/10 border-blue-500/20 text-blue-500'
+                              }`}>
+                                {task.priority}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button 
+                          type="button"
+                          onClick={() => handleDeleteTask(task.id)} 
+                          className="p-1.5 text-[var(--text-muted)] hover:text-[var(--color-danger)] opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </motion.div>
+                    )
+                  })}
+
+                  {dayTasks.length === 0 && (
+                    <div className="text-center py-6 text-[var(--text-muted)] border border-dashed border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-base)]/30">
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Nessuna attività programmata</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
               {/* Eventi section */}
               <section>
                 <div className="flex items-center justify-between mb-4">

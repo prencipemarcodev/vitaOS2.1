@@ -83,7 +83,9 @@ function WorkTimer({ onClose }) {
   const {
     isRunning, isPaused, checkIn, checkInDate,
     elapsed, pauseElapsed,
+    mode, pomoPhase, pomoSecondsLeft, completedPomodoros,
     pauseSession, resumeSession, tickElapsed, tickPause, stopSession,
+    setMode, setPomoPhase, setPomoSecondsLeft, setCompletedPomodoros, tickPomo,
   } = useWorkSessionStore()
 
   const [showSave, setShowSave] = useState(false)
@@ -92,8 +94,44 @@ function WorkTimer({ onClose }) {
 
   const startTicking = useCallback(() => {
     if (timerRef.current) return
-    timerRef.current = setInterval(() => tickElapsed(), 1000)
-  }, [tickElapsed])
+    timerRef.current = setInterval(() => {
+      tickElapsed()
+      
+      const currentStore = useWorkSessionStore.getState()
+      if (currentStore.mode === 'pomodoro') {
+        const prevPhase = currentStore.pomoPhase
+        tickPomo()
+        
+        const nextStore = useWorkSessionStore.getState()
+        if (nextStore.pomoPhase !== prevPhase) {
+          // Fase cambiata!
+          if (nextStore.pomoPhase === 'break') {
+            toast.success("🍅 Pomodoro completato! Ora 5 minuti di pausa caffè.", { duration: 8000 })
+            try {
+              const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+              const osc = audioCtx.createOscillator()
+              osc.type = 'sine'
+              osc.frequency.setValueAtTime(880, audioCtx.currentTime) // La (A5)
+              osc.connect(audioCtx.destination)
+              osc.start()
+              osc.stop(audioCtx.currentTime + 0.3)
+            } catch (e) {}
+          } else {
+            toast.info("💼 Pausa terminata! Si ricomincia a lavorare.", { duration: 8000 })
+            try {
+              const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+              const osc = audioCtx.createOscillator()
+              osc.type = 'sine'
+              osc.frequency.setValueAtTime(660, audioCtx.currentTime) // Mi (E5)
+              osc.connect(audioCtx.destination)
+              osc.start()
+              osc.stop(audioCtx.currentTime + 0.3)
+            } catch (e) {}
+          }
+        }
+      }
+    }, 1000)
+  }, [tickElapsed, tickPomo])
 
   const stopTicking = useCallback(() => {
     clearInterval(timerRef.current)
@@ -111,9 +149,9 @@ function WorkTimer({ onClose }) {
   }, [])
 
   useEffect(() => {
-    if (!isPaused) startTicking()
+    if (isRunning && !isPaused) startTicking()
     return () => { stopTicking(); stopPauseTicking() }
-  }, [])
+  }, [isRunning, isPaused])
 
   const handlePause = () => {
     pauseSession()
@@ -138,10 +176,22 @@ function WorkTimer({ onClose }) {
     const [h1, m1] = checkIn.split(':').map(Number)
     const [h2, m2] = checkOut.split(':').map(Number)
     const duration = Math.max(1, (h2 * 60 + m2) - (h1 * 60 + m1))
+    
+    const noteSuffix = mode === 'pomodoro' ? `\n[🍅 Pomodoro completati: ${completedPomodoros}]` : ''
+    const finalNotes = (notes || '').trim() + noteSuffix
+
     try {
       const { data, error } = await supabase
         .from('work_sessions')
-        .insert({ user_id: user?.id, date: checkInDate, check_in: checkIn, check_out: checkOut, duration_minutes: duration, notes: notes || null, is_manual: false })
+        .insert({ 
+          user_id: user?.id, 
+          date: checkInDate, 
+          check_in: checkIn, 
+          check_out: checkOut, 
+          duration_minutes: duration, 
+          notes: finalNotes || null, 
+          is_manual: false 
+        })
         .select().single()
       if (error) throw error
       addSession(data)
@@ -154,8 +204,24 @@ function WorkTimer({ onClose }) {
     }
   }
 
-  const primaryColor = isPaused ? '#ff851b' : 'var(--color-primary)'
-  const bgClass = isPaused ? 'bg-orange-50' : 'bg-[var(--color-primary-ghost)]'
+  const isPomo = mode === 'pomodoro'
+  const isPomoBreak = isPomo && pomoPhase === 'break'
+  
+  const primaryColor = isPaused 
+    ? '#ff851b' 
+    : isPomoBreak 
+      ? 'var(--color-success)' 
+      : isPomo 
+        ? '#ef4444' 
+        : 'var(--color-primary)'
+        
+  const bgClass = isPaused 
+    ? 'bg-orange-50' 
+    : isPomoBreak 
+      ? 'bg-green-50' 
+      : isPomo 
+        ? 'bg-red-50' 
+        : 'bg-[var(--color-primary-ghost)]'
 
   return createPortal(
     <>
@@ -172,39 +238,109 @@ function WorkTimer({ onClose }) {
             <ChevronLeft size={16} />
             Indietro
           </button>
+          
           <div className="flex items-center gap-2">
-            <div className={clsx('w-2 h-2 rounded-full', isPaused ? 'bg-orange-500' : 'bg-green-500 animate-pulse')} />
+            <div className={clsx(
+              'w-2 h-2 rounded-full', 
+              isPaused ? 'bg-orange-500' : isPomoBreak ? 'bg-green-500 animate-pulse' : 'bg-green-500 animate-pulse'
+            )} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
-              {isPaused ? 'In pausa' : 'Sessione attiva'}
+              {isPaused 
+                ? 'In pausa' 
+                : isPomoBreak 
+                  ? 'Pausa Caffè' 
+                  : isPomo 
+                    ? 'Lavoro Focalizzato' 
+                    : 'Sessione attiva'
+              }
             </span>
           </div>
           <div className="w-20" />
         </div>
 
+        {/* Mode Switcher pill (only visible when session hasn't started) */}
+        {!isRunning && (
+          <div className="flex justify-center p-4 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]">
+            <div className="bg-[var(--bg-base)] p-1 rounded-2xl border border-[var(--border-subtle)] flex gap-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setMode('standard')}
+                className={clsx(
+                  'px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300',
+                  mode === 'standard'
+                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                )}
+              >
+                Timer Libero
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('pomodoro')}
+                className={clsx(
+                  'px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5',
+                  mode === 'pomodoro'
+                    ? 'bg-red-500 text-white shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                )}
+              >
+                🍅 Pomodoro
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Active Session Mode Label */}
+        {isRunning && (
+          <div className="flex justify-center pt-6">
+            <span className={clsx(
+              'text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border',
+              isPomo 
+                ? 'bg-red-500/10 border-red-500/20 text-red-500' 
+                : 'bg-[var(--color-primary-ghost)] border-[var(--color-primary)]/10 text-[var(--color-primary)]'
+            )}>
+              {isPomo ? 'Modalità Pomodoro' : 'Modalità Timer Libero'}
+            </span>
+          </div>
+        )}
+
         <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
           <motion.div
             animate={{ scale: isPaused ? [1, 1.02, 1] : [1, 1.04, 1] }}
             transition={{ repeat: Infinity, duration: isPaused ? 2 : 1.5, ease: 'easeInOut' }}
-            className={clsx('w-24 h-24 rounded-full flex items-center justify-center', bgClass)}
+            className={clsx('w-24 h-24 rounded-full flex items-center justify-center transition-colors duration-500', bgClass)}
           >
             {isPaused
               ? <Coffee size={40} style={{ color: '#ff851b' }} />
-              : <Briefcase size={40} style={{ color: primaryColor }} />
+              : isPomoBreak
+                ? <Coffee size={40} style={{ color: 'var(--color-success)' }} />
+                : isPomo
+                  ? <span className="text-4xl select-none">🍅</span>
+                  : <Briefcase size={40} style={{ color: primaryColor }} />
             }
           </motion.div>
 
           <div className="text-center">
             <motion.p
-              key={Math.floor(elapsed / 60)}
-              initial={{ opacity: 0.5 }}
-              animate={{ opacity: 1 }}
-              className="text-7xl font-black tabular-nums tracking-tight leading-none"
+              key={isPomo ? pomoSecondsLeft : elapsed}
+              initial={{ opacity: 0.8, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-7xl font-black tabular-nums tracking-tight leading-none text-[var(--text-primary)]"
             >
-              {formatTime(elapsed)}
+              {isPomo ? formatTime(pomoSecondsLeft) : formatTime(elapsed)}
             </motion.p>
-            <p className="text-xs text-[var(--text-muted)] font-bold mt-2 uppercase tracking-widest">
-              Iniziato alle {checkIn}
-            </p>
+            
+            {isPomo && (
+              <p className="text-sm font-extrabold text-red-500/80 mt-2 flex items-center justify-center gap-1.5">
+                <span>🍅</span> completati in questa sessione: <span className="text-base font-black text-red-500">{completedPomodoros}</span>
+              </p>
+            )}
+            
+            {isRunning && (
+              <p className="text-xs text-[var(--text-muted)] font-bold mt-3 uppercase tracking-widest">
+                Iniziato alle {checkIn}
+              </p>
+            )}
           </div>
 
           <div className="flex gap-6">
@@ -227,7 +363,27 @@ function WorkTimer({ onClose }) {
 
         <div className="px-8 pb-10 flex items-center justify-center gap-6 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] pt-6">
           <AnimatePresence mode="wait">
-            {!isPaused ? (
+            {!isRunning ? (
+              // Se la sessione non è ancora partita, mostriamo il tasto Start!
+              <motion.button
+                key="start"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                onClick={() => {
+                  const now = new Date()
+                  const timeStr = format(now, 'HH:mm')
+                  const dateStr = format(now, 'yyyy-MM-dd')
+                  useWorkSessionStore.getState().startSession(timeStr, dateStr)
+                }}
+                className={clsx(
+                  'px-12 py-4 rounded-3xl text-white font-black text-base shadow-xl active:scale-95 transition-all duration-300',
+                  isPomo ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]'
+                )}
+              >
+                Inizia Sessione
+              </motion.button>
+            ) : !isPaused ? (
               <motion.div key="running" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-6">
                 <button onClick={handlePause} className="w-16 h-16 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-500 active:scale-90 transition-transform">
                   <Pause size={24} />

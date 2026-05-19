@@ -7,6 +7,7 @@ import { useFirmeStore } from '@/store/useFirmeStore'
 import { useHealthStore } from '@/store/useHealthStore'
 import { useNoteStore } from '@/store/useNoteStore'
 import { useSavingsStore } from '@/store/useSavingsStore'
+import { useTaskStore } from '@/store/useTaskStore'
 import { startOfMonth, endOfMonth, format } from 'date-fns'
 
 /**
@@ -21,7 +22,8 @@ import { startOfMonth, endOfMonth, format } from 'date-fns'
 export function useSupabaseSync() {
   const { selectedMonth, setUserConfig, setOnboardingCompleted } = useAppStore()
   const { setEvents, setAbsences, setRecurringEvents, setLoading: setCalLoading } = useCalendarStore()
-  const { setTransactions, setCategories, setLoading: setFinLoading } = useFinanceStore()
+  const { setTasks } = useTaskStore()
+  const { setTransactions, setCategories, setCumulativeBalance, setHistoricalTransactions, addTransaction, setLoading: setFinLoading } = useFinanceStore()
   const { setSessions, setLoading: setFirmeLoading } = useFirmeStore()
   const { setWorkoutSessions, setWeightLog, setGymSchedules, setSleepLog, setWaterLog, setLoading: setHealthLoading } = useHealthStore()
   const { setNotes, setLoading: setNoteLoading } = useNoteStore()
@@ -82,7 +84,7 @@ export function useSupabaseSync() {
     const user = await getAuthUser()
     if (!user) return
     setCalLoading(true)
-    const [eventsRes, absencesRes, recurringRes] = await Promise.all([
+    const [eventsRes, absencesRes, recurringRes, tasksRes] = await Promise.all([
       supabase
         .from('calendar_events')
         .select('*')
@@ -101,19 +103,27 @@ export function useSupabaseSync() {
         .select('*')
         .eq('user_id', user.id)
         .order('month,day'),
+      supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', monthStart)
+        .lte('date', monthEnd)
+        .order('created_at', { ascending: false })
     ])
     if (eventsRes.data) setEvents(eventsRes.data)
     if (absencesRes.data) setAbsences(absencesRes.data)
     if (recurringRes.data) setRecurringEvents(recurringRes.data)
+    if (tasksRes.data) setTasks(tasksRes.data)
     setCalLoading(false)
-  }, [getAuthUser, monthStart, monthEnd, setEvents, setAbsences, setRecurringEvents, setCalLoading])
+  }, [getAuthUser, monthStart, monthEnd, setEvents, setAbsences, setRecurringEvents, setTasks, setCalLoading])
 
   // ── Load finance data for the month ──
   const loadFinance = useCallback(async () => {
     const user = await getAuthUser()
     if (!user) return
     setFinLoading(true)
-    const [txRes, catRes] = await Promise.all([
+    const [txRes, catRes, cumulativeRes] = await Promise.all([
       supabase
         .from('transactions')
         .select('*')
@@ -126,11 +136,79 @@ export function useSupabaseSync() {
         .select('*')
         .or(`user_id.eq.${user.id},user_id.is.null`)
         .order('is_default', { ascending: false }),
+      supabase
+        .from('transactions')
+        .select('amount, type, date')
+        .eq('user_id', user.id)
+        .lte('date', monthEnd)
     ])
+    
+    let currentTransactions = txRes.data || []
+    
     if (txRes.data) setTransactions(txRes.data)
     if (catRes.data) setCategories(catRes.data)
+    
+    // Generazione automatica transazioni periodiche
+    if (catRes.data && txRes.data) {
+      const periodicCats = catRes.data.filter(c => c.is_periodic && parseFloat(c.periodic_amount || 0) > 0)
+      const newTxs = []
+      
+      for (const cat of periodicCats) {
+        const alreadyExists = currentTransactions.some(t => t.category?.toString() === cat.id?.toString())
+        if (!alreadyExists) {
+          const lastDay = endOfMonth(monthDate).getDate()
+          const targetDay = Math.min(cat.periodic_day || 1, lastDay)
+          const txDate = format(new Date(monthDate.getFullYear(), monthDate.getMonth(), targetDay), 'yyyy-MM-dd')
+          
+          newTxs.push({
+            user_id: user.id,
+            date: txDate,
+            amount: parseFloat(cat.periodic_amount),
+            type: cat.type || 'expense',
+            category: cat.id,
+            description: `Rinnovo automatico ${cat.name}`,
+            is_planned: false,
+            is_recurring: true
+          })
+        }
+      }
+
+      if (newTxs.length > 0) {
+        const { data: inserted, error: insertErr } = await supabase.from('transactions').insert(newTxs).select()
+        if (!insertErr && inserted) {
+          inserted.forEach(tx => addTransaction(tx))
+          currentTransactions = [...inserted, ...currentTransactions]
+          
+          // Ricarica transazioni cumulative per aggiornare il saldo
+          const allTxsRes = await supabase
+            .from('transactions')
+            .select('amount, type, date')
+            .eq('user_id', user.id)
+            .lte('date', monthEnd)
+          if (allTxsRes.data) {
+            setHistoricalTransactions(allTxsRes.data)
+            const userConfig = useAppStore.getState().userConfig
+            const bank = parseFloat(userConfig?.initial_bank_balance || 0)
+            const cash = parseFloat(userConfig?.initial_cash_balance || 0)
+            const inc = allTxsRes.data.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+            const exp = allTxsRes.data.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+            setCumulativeBalance(bank + cash + inc - exp)
+          }
+        }
+      }
+    }
+
+    if (cumulativeRes.data && !newTxs?.length) {
+      setHistoricalTransactions(cumulativeRes.data)
+      const userConfig = useAppStore.getState().userConfig
+      const bank = parseFloat(userConfig?.initial_bank_balance || 0)
+      const cash = parseFloat(userConfig?.initial_cash_balance || 0)
+      const inc = cumulativeRes.data.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+      const exp = cumulativeRes.data.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+      setCumulativeBalance(bank + cash + inc - exp)
+    }
     setFinLoading(false)
-  }, [getAuthUser, monthStart, monthEnd, setTransactions, setCategories, setFinLoading])
+  }, [getAuthUser, monthStart, monthEnd, setTransactions, setCategories, setCumulativeBalance, setHistoricalTransactions, addTransaction, setFinLoading])
 
   // ── Load work sessions for the month ──
   const loadFirme = useCallback(async () => {
