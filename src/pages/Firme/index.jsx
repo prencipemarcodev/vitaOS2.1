@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useFirmeStore } from '@/store/useFirmeStore'
 import { useAppStore } from '@/store/useAppStore'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
+import { useLocation } from 'react-router-dom'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Button from '@/components/ui/Button'
@@ -18,9 +19,17 @@ function Firme() {
   const { sessions, loading } = useFirmeStore()
   const { userConfig } = useAppStore()
   const { isRunning, startSession } = useWorkSessionStore()
+  const location = useLocation()
   const [formOpen, setFormOpen] = useState(false)
   const [editingSession, setEditingSession] = useState(null)
   const [timerOpen, setTimerOpen] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'start-session') {
+      handleStartTimer()
+    }
+  }, [location.search])
 
   const handleEdit = (session) => {
     setEditingSession(session)

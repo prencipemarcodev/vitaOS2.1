@@ -9,6 +9,7 @@ import FloatingPillNav, { PILL_HEIGHT } from '@/components/layout/FloatingPillNa
 import AppRouter from '@/router'
 import Onboarding from '@/pages/Onboarding'
 import Logo from '@/components/layout/Logo'
+import { ReminderEngine } from '@/components/layout/ReminderEngine'
 
 import { useLocation } from 'react-router-dom'
 import AuthPage from '@/pages/AuthPage'
@@ -140,6 +141,7 @@ function AppInner() {
   return (
     <div className="h-[100dvh] w-full flex overflow-hidden bg-[var(--bg-base)]">
       <OnboardingReminder />
+      <ReminderEngine />
       {/* Desktop Sidebar */}
       <Sidebar />
 

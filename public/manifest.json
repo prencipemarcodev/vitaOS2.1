@@ -20,5 +20,28 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuova Spesa",
+      "short_name": "Nuova Spesa",
+      "description": "Registra una nuova transazione finanziaria",
+      "url": "/finanze?action=new-transaction",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Timbra Entrata",
+      "short_name": "Timbra",
+      "description": "Avvia una nuova sessione di lavoro",
+      "url": "/firme?action=start-session",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Inizia Corsa",
+      "short_name": "Corsa",
+      "description": "Inizia una sessione di allenamento corsa",
+      "url": "/salute?action=start-run",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

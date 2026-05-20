@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useHealthStore } from '@/store/useHealthStore'
+import { useLocation } from 'react-router-dom'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
@@ -18,10 +19,18 @@ import RunDetailsModal from './RunDetailsModal'
 
 function Salute() {
   const { workoutSessions, weightLog, gymSchedules, loading } = useHealthStore()
+  const location = useLocation()
   const [isTracking, setIsTracking] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [lastTracker, setLastTracker] = useState(null)
   const [selectedSession, setSelectedSession] = useState(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'start-run') {
+      setIsTracking(true)
+    }
+  }, [location.search])
 
   const stats = useMemo(() => {
     const totalKm = workoutSessions.filter(s => s.type === 'corsa').reduce((s, sess) => s + (sess.run_distance_km || 0), 0)

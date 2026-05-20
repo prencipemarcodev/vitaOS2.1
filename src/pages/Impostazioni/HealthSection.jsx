@@ -204,14 +204,28 @@ function HealthSection() {
   const save = useCallback(async (field, value) => {
     if (!userConfig?.id) return
     setUserConfig({ ...userConfig, [field]: value })
-    await supabase.from('user_config').update({ [field]: value }).eq('id', userConfig.id)
+    try {
+      const { error } = await supabase.from('user_config').update({ [field]: value }).eq('id', userConfig.id)
+      if (error) {
+        console.warn(`[Supabase] Update skipped/failed for ${field}:`, error.message)
+      }
+    } catch (e) {
+      console.warn(`[Supabase] Catch error saving ${field}:`, e)
+    }
   }, [userConfig, setUserConfig])
 
   // Salva più campi in un unico update atomico
   const saveMultiple = useCallback(async (updates) => {
     if (!userConfig?.id) return
     setUserConfig({ ...userConfig, ...updates })
-    await supabase.from('user_config').update(updates).eq('id', userConfig.id)
+    try {
+      const { error } = await supabase.from('user_config').update(updates).eq('id', userConfig.id)
+      if (error) {
+        console.warn(`[Supabase] Update failed for multiple fields:`, error.message)
+      }
+    } catch (e) {
+      console.warn('[Supabase] Catch error saving multiple fields:', e)
+    }
   }, [userConfig, setUserConfig])
 
   const [localWeight, setLocalWeight] = useState(userConfig?.weight_kg?.toString() || '')

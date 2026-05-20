@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Palette, Clock, Wallet, Tag, Calendar, Heart, Trash2, Download, Car
+  Palette, Clock, Wallet, Tag, Calendar, Heart, Trash2, Download, Car, Bell
 } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
@@ -12,6 +12,7 @@ import FinanceSection from './FinanceSection'
 import CalendarSection from './CalendarSection'
 import HealthSection from './HealthSection'
 import VehicleSection from './VehicleSection'
+import ReminderSection from './ReminderSection'
 import ResetSection from './ResetSection'
 import clsx from 'clsx'
 
@@ -23,6 +24,7 @@ const SECTIONS = [
   { id: 'veicolo',     label: 'Veicolo',      icon: Car },
   { id: 'calendario',  label: 'Calendario',   icon: Calendar },
   { id: 'salute',      label: 'Salute',       icon: Heart },
+  { id: 'notifiche',   label: 'Notifiche',    icon: Bell },
   { id: 'reset',       label: 'Reset',        icon: Trash2 },
 ]
 
@@ -34,6 +36,7 @@ const SECTION_COMPONENTS = {
   veicolo:    VehicleSection,
   calendario: CalendarSection,
   salute:     HealthSection,
+  notifiche:  ReminderSection,
   reset:      ResetSection,
 }
 

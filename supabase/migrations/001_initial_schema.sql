@@ -55,6 +55,10 @@ CREATE TABLE IF NOT EXISTS user_config (
   run_monthly_goal_km NUMERIC(6,2) DEFAULT 50,
   workout_weekly_goal INTEGER DEFAULT 4,
   total_run_km_ever NUMERIC(10,3) DEFAULT 0,
+  gps_preset TEXT DEFAULT 'balanced',
+  gps_jitter_meters INTEGER DEFAULT 6,
+  gps_keepalive BOOLEAN DEFAULT false,
+  gps_keepalive_interval_ms INTEGER DEFAULT 2000,
 
   -- Misc
   currency TEXT DEFAULT 'EUR',

@@ -148,6 +148,8 @@ export function useSupabaseSync() {
     if (txRes.data) setTransactions(txRes.data)
     if (catRes.data) setCategories(catRes.data)
     
+    let hasGeneratedTxs = false
+    
     // Generazione automatica transazioni periodiche
     if (catRes.data && txRes.data) {
       const periodicCats = catRes.data.filter(c => c.is_periodic && parseFloat(c.periodic_amount || 0) > 0)
@@ -176,6 +178,7 @@ export function useSupabaseSync() {
       if (newTxs.length > 0) {
         const { data: inserted, error: insertErr } = await supabase.from('transactions').insert(newTxs).select()
         if (!insertErr && inserted) {
+          hasGeneratedTxs = true
           inserted.forEach(tx => addTransaction(tx))
           currentTransactions = [...inserted, ...currentTransactions]
           
@@ -198,7 +201,7 @@ export function useSupabaseSync() {
       }
     }
 
-    if (cumulativeRes.data && !newTxs?.length) {
+    if (cumulativeRes.data && !hasGeneratedTxs) {
       setHistoricalTransactions(cumulativeRes.data)
       const userConfig = useAppStore.getState().userConfig
       const bank = parseFloat(userConfig?.initial_bank_balance || 0)

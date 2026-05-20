@@ -11,7 +11,9 @@ import { Plus } from 'lucide-react'
 
 function Calendario() {
   const { events, absences, recurringEvents, loading } = useCalendarStore()
-  const { selectedMonth } = useAppStore()
+  const { selectedMonth, userConfig } = useAppStore()
+  
+  const remainingLeave = (userConfig?.annual_leave_days || 0) - (userConfig?.leave_days_used || 0)
   
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -30,7 +32,14 @@ function Calendario() {
   return (
     <>
       <Header 
-        title="Calendario" 
+        title={
+          <span className="flex items-center gap-2">
+            <span>Calendario</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full">
+              {remainingLeave} Ferie Rimaste
+            </span>
+          </span>
+        }
         showMonth 
         showNotification 
         actions={

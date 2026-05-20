@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
+import { useLocation } from 'react-router-dom'
 import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Button from '@/components/ui/Button'
@@ -20,9 +21,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 function Finanze() {
   const { transactions, categories, loading } = useFinanceStore()
   const { userConfig } = useAppStore()
+  const location = useLocation()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTx, setEditingTx] = useState(null)
   const [activeTab, setActiveTab] = useState('panoramica') // 'panoramica' | 'abbonamenti'
+  const [showAddForm, setShowAddForm] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'new-transaction') {
+      setEditingTx(null)
+      setModalOpen(true)
+    }
+  }, [location.search])
 
   const kpis = useMemo(() => {
     const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
@@ -70,17 +81,31 @@ function Finanze() {
         showMonth 
         showNotification 
         actions={
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            icon={Plus} 
-            onClick={() => { setEditingTx(null); setModalOpen(true) }}
-            className="font-bold !text-sm"
-            style={{ fontFamily: 'var(--font-display)' }}
-            hideTextMobile
-          >
-            Nuovo Movimento
-          </Button>
+          activeTab === 'panoramica' ? (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              icon={Plus} 
+              onClick={() => { setEditingTx(null); setModalOpen(true) }}
+              className="font-bold !text-sm"
+              style={{ fontFamily: 'var(--font-display)' }}
+              hideTextMobile
+            >
+              Nuovo Movimento
+            </Button>
+          ) : (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              icon={Plus} 
+              onClick={() => setShowAddForm(true)}
+              className="font-bold !text-sm"
+              style={{ fontFamily: 'var(--font-display)' }}
+              hideTextMobile
+            >
+              Nuovo Abbonamento
+            </Button>
+          )
         }
       />
 
@@ -182,7 +207,7 @@ function Finanze() {
                 transition={{ duration: 0.2 }}
                 className="flex-1 overflow-y-auto pr-1 pb-4"
               >
-                <SubscriptionManager />
+                <SubscriptionManager showAddForm={showAddForm} setShowAddForm={setShowAddForm} />
               </motion.div>
             )}
           </AnimatePresence>
