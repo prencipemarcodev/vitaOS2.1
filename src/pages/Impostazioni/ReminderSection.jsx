@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useReminderStore } from '@/store/useReminderStore'
+import { useNotificationStore } from '@/store/useNotificationStore'
 import Card from '@/components/ui/Card'
-import { Bell, Moon, Droplets, Calendar, Volume2, VolumeX, Shield } from 'lucide-react'
+import { Bell, Moon, Droplets, Calendar, Volume2, VolumeX, Shield, Send } from 'lucide-react'
 import { toast } from 'sonner'
 
 function Toggle({ checked, onChange, label, description, icon: Icon, iconColor = 'text-[var(--color-primary)]' }) {
@@ -44,6 +45,8 @@ function ReminderSection() {
     setSetting
   } = useReminderStore()
 
+  const { addNotification } = useNotificationStore()
+
   const [permission, setPermission] = useState(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
   )
@@ -58,6 +61,33 @@ function ReminderSection() {
         toast.error('Permesso negato. Abilita le notifiche manualmente nelle impostazioni del browser.')
       }
     }
+  }
+
+  const handleTestNotification = () => {
+    // 1. Notifica di sistema (Native Push / OS Desktop)
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification("VitaOS 2.1 — Test Notifica", {
+          body: "Il tuo dispositivo è configurato correttamente per ricevere avvisi da VitaOS! 🚀",
+          icon: "/pwa-192x192.png",
+          tag: "vitaos-test"
+        })
+      } catch (e) {
+        console.warn("[System Notification] Fallback triggered due to error:", e)
+      }
+    }
+    
+    // 2. In-App Notification (Campanella / Drawer)
+    addNotification({
+      id: `test-${Date.now()}`,
+      type: 'success',
+      message: "Test notifica eseguito! Il sistema è pronto per i promemoria automatici.",
+      icon: 'bell',
+      category: 'Sistema'
+    })
+
+    // 3. Toast UI (Sonner)
+    toast.success("Notifica di test inviata! Controlla lo schermo o la campanella in alto.")
   }
 
   return (
@@ -104,14 +134,27 @@ function ReminderSection() {
           Configura e personalizza i promemoria intelligenti di VitaOS. Riceverai notifiche e avvisi visivi per aiutarti a mantenere le tue abitudini sane e non perdere i tuoi impegni giornalieri.
         </p>
 
-        <Toggle
-          checked={enabled}
-          onChange={(v) => setSetting('enabled', v)}
-          label="Notifiche VitaOS"
-          description="Abilita o disabilita globalmente tutti i promemoria e le notifiche automatiche dell'applicazione."
-          icon={Bell}
-          iconColor="text-[var(--color-primary)]"
-        />
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="flex-1">
+            <Toggle
+              checked={enabled}
+              onChange={(v) => setSetting('enabled', v)}
+              label="Notifiche VitaOS"
+              description="Abilita o disabilita globalmente tutti i promemoria e le notifiche automatiche dell'applicazione."
+              icon={Bell}
+              iconColor="text-[var(--color-primary)]"
+            />
+          </div>
+          {enabled && (
+            <button
+              onClick={handleTestNotification}
+              className="px-4 py-3 sm:py-2.5 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-bold rounded-2xl sm:rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 shrink-0"
+            >
+              <Send size={14} className="text-[var(--color-primary)]" />
+              Testa Notifica
+            </button>
+          )}
+        </div>
       </Card>
 
       {/* Dettaglio Abitudini */}
