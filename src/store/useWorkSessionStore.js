@@ -14,6 +14,9 @@ export const useWorkSessionStore = create(
       checkInDate: null,   // 'yyyy-MM-dd'
       elapsed: 0,          // secondi
       pauseElapsed: 0,     // secondi in pausa
+      startTime: null,     // timestamp
+      pauseStartTime: null, // timestamp
+      accumulatedPauseElapsed: 0, // secondi accumulati in pausa prima del ciclo corrente
       
       // Pomodoro Timer state
       mode: 'standard',    // 'standard' | 'pomodoro'
@@ -28,17 +31,47 @@ export const useWorkSessionStore = create(
         checkInDate,
         elapsed: 0,
         pauseElapsed: 0,
+        startTime: Date.now(),
+        pauseStartTime: null,
+        accumulatedPauseElapsed: 0,
         mode: get().mode || 'standard',
         pomoPhase: 'work',
         pomoSecondsLeft: 25 * 60,
         completedPomodoros: 0,
       }),
 
-      pauseSession: () => set({ isPaused: true }),
-      resumeSession: () => set({ isPaused: false }),
+      pauseSession: () => set({
+        isPaused: true,
+        pauseStartTime: Date.now(),
+        accumulatedPauseElapsed: get().pauseElapsed
+      }),
 
-      tickElapsed: () => set(s => ({ elapsed: s.elapsed + 1 })),
-      tickPause: () => set(s => ({ pauseElapsed: s.pauseElapsed + 1 })),
+      resumeSession: () => set({
+        isPaused: false,
+        pauseStartTime: null,
+        accumulatedPauseElapsed: get().pauseElapsed
+      }),
+
+      tickElapsed: () => {
+        const state = get()
+        if (state.isPaused) return
+        const now = Date.now()
+        const start = state.startTime || now
+        const calculatedElapsed = Math.floor((now - start) / 1000) - state.pauseElapsed
+        set({
+          elapsed: Math.max(0, calculatedElapsed)
+        })
+      },
+
+      tickPause: () => {
+        const state = get()
+        if (!state.isPaused || !state.pauseStartTime) return
+        const now = Date.now()
+        const diff = Math.floor((now - state.pauseStartTime) / 1000)
+        set({
+          pauseElapsed: state.accumulatedPauseElapsed + diff
+        })
+      },
       
       setMode: (mode) => set({ mode }),
       setPomoPhase: (pomoPhase) => set({ pomoPhase }),
@@ -66,6 +99,9 @@ export const useWorkSessionStore = create(
         checkInDate: null,
         elapsed: 0,
         pauseElapsed: 0,
+        startTime: null,
+        pauseStartTime: null,
+        accumulatedPauseElapsed: 0,
         pomoPhase: 'work',
         pomoSecondsLeft: 25 * 60,
         completedPomodoros: 0,

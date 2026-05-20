@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useReminderStore } from '@/store/useReminderStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import Card from '@/components/ui/Card'
-import { Bell, Moon, Droplets, Calendar, Volume2, VolumeX, Shield, Send } from 'lucide-react'
+import { Bell, Moon, Droplets, Calendar, Volume2, VolumeX, Shield, Send, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 function Toggle({ checked, onChange, label, description, icon: Icon, iconColor = 'text-[var(--color-primary)]' }) {
@@ -42,7 +42,11 @@ function ReminderSection() {
     waterReminder,
     calendarReminder,
     soundEnabled,
-    setSetting
+    reminderTimes = ['09:00'],
+    setSetting,
+    addReminderTime,
+    removeReminderTime,
+    updateReminderTime
   } = useReminderStore()
 
   const { addNotification } = useNotificationStore()
@@ -156,6 +160,51 @@ function ReminderSection() {
           )}
         </div>
       </Card>
+
+      {/* Orari dei Promemoria */}
+      {enabled && (
+        <Card padding="lg" className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">Pianificazione Giornaliera</h3>
+              <p className="text-[10px] text-[var(--text-muted)] font-medium leading-normal">
+                Imposta gli orari preferiti in cui desideri ricevere i riepiloghi sull'idratazione e le tue abitudini.
+              </p>
+            </div>
+            <button
+              onClick={() => addReminderTime('09:00')}
+              className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-[10px] font-bold rounded-xl transition-all shadow-md shrink-0 flex items-center gap-1"
+            >
+              <span>+</span> Aggiungi
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {reminderTimes.map((time, idx) => (
+              <div 
+                key={idx} 
+                className="flex items-center justify-between gap-2 p-2 px-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-[var(--color-primary)] transition-all"
+              >
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => updateReminderTime(idx, e.target.value)}
+                  className="bg-transparent text-xs font-bold text-[var(--text-primary)] focus:outline-none w-full cursor-pointer"
+                />
+                {reminderTimes.length > 1 && (
+                  <button
+                    onClick={() => removeReminderTime(idx)}
+                    className="p-1 hover:bg-black/5 dark:hover:bg-white/5 text-[var(--color-danger)] rounded-lg transition-colors shrink-0"
+                    title="Elimina orario"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Dettaglio Abitudini */}
       {enabled && (

@@ -17,6 +17,7 @@ export function ReminderEngine() {
     calendarReminder,
     soundEnabled,
     triggeredToday,
+    reminderTimes = ['09:00'],
     addTriggered,
     resetTriggered
   } = useReminderStore()
@@ -54,6 +55,20 @@ export function ReminderEngine() {
   useEffect(() => {
     if (!enabled) return
 
+    const sendSystemNotification = (title, body) => {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(title, {
+            body,
+            icon: "/pwa-192x192.png",
+            tag: "vitaos-reminder"
+          })
+        } catch (e) {
+          console.warn('[ReminderEngine] system notification failed:', e)
+        }
+      }
+    }
+
     const runChecks = () => {
       const now = new Date()
       const todayStr = format(now, 'yyyy-MM-dd')
@@ -79,12 +94,14 @@ export function ReminderEngine() {
           addTriggered(sleepKey)
           playChime()
           
-          toast('Registra il Sonno 😴', {
-            description: 'Non hai ancora registrato il sonno di stanotte. Mantieni traccia dei tuoi ritmi!',
+          const title = 'Registra il Sonno 😴'
+          const desc = 'Non hai ancora registrato il sonno di stanotte. Mantieni traccia dei tuoi ritmi!'
+
+          toast(title, {
+            description: desc,
             action: {
               label: 'Registra',
               onClick: () => {
-                // Navigate/scroll to health tab or page
                 const el = document.getElementById('main-content')
                 if (el) el.scrollTop = 0
               }
@@ -92,10 +109,12 @@ export function ReminderEngine() {
             duration: 8000
           })
 
+          sendSystemNotification(title, desc)
+
           addNotification({
             id: sleepKey,
             type: 'info',
-            message: '😴 Non hai ancora registrato il sonno di oggi! Traccia il tuo riposo nella sezione Salute.',
+            message: `😴 ${desc}`,
             icon: 'bell',
             category: 'Salute'
           })
@@ -121,15 +140,20 @@ export function ReminderEngine() {
               addTriggered(waterKey)
               playChime()
 
-              toast('Promemoria Acqua 💧', {
-                description: `${chk.msg} Attualmente: ${currentMl}ml.`,
+              const title = 'Promemoria Acqua 💧'
+              const body = `${chk.msg} Attualmente: ${currentMl}ml.`
+
+              toast(title, {
+                description: body,
                 duration: 8000
               })
+
+              sendSystemNotification(title, body)
 
               addNotification({
                 id: waterKey,
                 type: 'info',
-                message: `${chk.msg} Sei a ${currentMl}ml di acqua oggi.`,
+                message: body,
                 icon: 'bell',
                 category: 'Salute'
               })
@@ -153,15 +177,20 @@ export function ReminderEngine() {
               addTriggered(eventKey)
               playChime()
 
-              toast(`Impegno in arrivo 📅`, {
-                description: `"${ev.title}" sta per iniziare alle ore ${ev.start_time}!`,
+              const title = 'Impegno in arrivo 📅'
+              const body = `"${ev.title}" sta per iniziare alle ore ${ev.start_time}!`
+
+              toast(title, {
+                description: body,
                 duration: 8000
               })
+
+              sendSystemNotification(title, body)
 
               addNotification({
                 id: eventKey,
                 type: 'info',
-                message: `📅 Promemoria: l'impegno "${ev.title}" (${ev.category}) sta per iniziare alle ${ev.start_time}!`,
+                message: `📅 Promemoria: ${body}`,
                 icon: 'bell',
                 category: 'Calendario'
               })
@@ -169,6 +198,45 @@ export function ReminderEngine() {
           }
         })
       }
+
+      // 4. Custom Scheduled Reminders
+      const currentTimes = reminderTimes || ['09:00']
+      currentTimes.forEach((timeStr) => {
+        const [remH, remM] = timeStr.split(':').map(Number)
+        if (currentHour === remH && currentMin === remM) {
+          const customKey = `custom-${timeStr}-${todayStr}`
+          if (!triggeredToday[customKey]) {
+            addTriggered(customKey)
+            playChime()
+
+            const todayEntry = waterLog.find(e => e.date === todayStr)
+            const currentMl = todayEntry?.amount_ml ?? 0
+            
+            let msg = "Promemoria giornaliero VitaOS! Come sta andando la tua giornata?"
+            if (currentMl < 1000) {
+              msg = `💧 Non dimenticare di idratarti! Oggi hai bevuto solo ${currentMl}ml di acqua.`
+            } else {
+              msg = `🌟 Ottimo lavoro! Hai già bevuto ${currentMl}ml di acqua oggi.`
+            }
+
+            const title = "Promemoria VitaOS 🔔"
+            toast(title, {
+              description: msg,
+              duration: 8000
+            })
+
+            sendSystemNotification(title, msg)
+
+            addNotification({
+              id: customKey,
+              type: 'info',
+              message: msg,
+              icon: 'bell',
+              category: 'Salute'
+            })
+          }
+        }
+      })
     }
 
     // Esegui immediatamente e poi ogni 30 secondi
@@ -180,6 +248,7 @@ export function ReminderEngine() {
     sleepReminder,
     waterReminder,
     calendarReminder,
+    reminderTimes,
     sleepLog,
     waterLog,
     events,

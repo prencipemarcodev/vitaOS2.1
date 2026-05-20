@@ -10,12 +10,23 @@ export const useReminderStore = create(
       calendarReminder: true,
       soundEnabled: true,
       triggeredToday: {},
+      reminderTimes: ['09:00'],
 
       setSetting: (key, val) => set((state) => ({ [key]: val })),
       addTriggered: (key) => set((state) => ({
         triggeredToday: { ...state.triggeredToday, [key]: true }
       })),
-      resetTriggered: () => set({ triggeredToday: {} })
+      resetTriggered: () => set({ triggeredToday: {} }),
+      
+      addReminderTime: (time) => set((state) => ({
+        reminderTimes: [...(state.reminderTimes || []), time]
+      })),
+      removeReminderTime: (index) => set((state) => ({
+        reminderTimes: (state.reminderTimes || []).filter((_, i) => i !== index)
+      })),
+      updateReminderTime: (index, time) => set((state) => ({
+        reminderTimes: (state.reminderTimes || []).map((t, i) => i === index ? time : t)
+      }))
     }),
     {
       name: 'vitaos-reminders',
@@ -25,7 +36,8 @@ export const useReminderStore = create(
         waterReminder: s.waterReminder,
         calendarReminder: s.calendarReminder,
         soundEnabled: s.soundEnabled,
-        triggeredToday: s.triggeredToday
+        triggeredToday: s.triggeredToday,
+        reminderTimes: s.reminderTimes || ['09:00']
       })
     }
   )
