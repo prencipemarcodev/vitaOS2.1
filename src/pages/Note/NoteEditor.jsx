@@ -52,7 +52,7 @@ function NoteEditor({ isOpen, onClose, noteToEdit = null }) {
     try {
       const payload = { ...formData, updated_at: new Date().toISOString() }
       if (noteToEdit) {
-        const { data, error } = await supabase.from('notes').update(payload).eq('id', noteToEdit.id).select().single()
+        const { data, error } = await supabase.from('notes').update(payload).eq('id', noteToEdit.id).eq('user_id', user?.id).select().single()
         if (error) throw error
         updateNote(noteToEdit.id, data)
         pushSuccess(`Nota "${formData.title || 'Senza titolo'}" aggiornata`, 'edit-3')

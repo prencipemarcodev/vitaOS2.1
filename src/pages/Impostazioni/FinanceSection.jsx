@@ -54,7 +54,8 @@ function FinanceSection() {
   }
 
   const handleDelete = async (id) => {
-    await supabase.from('finance_categories').delete().eq('id', id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    await supabase.from('finance_categories').delete().eq('id', id).eq('user_id', user?.id)
     removeCategory(id)
   }
 

@@ -70,7 +70,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
       }
       
       if (planToEdit) {
-        const { data, error } = await supabase.from('saving_plans').update(payload).eq('id', planToEdit.id).select().single()
+        const { data, error } = await supabase.from('saving_plans').update(payload).eq('id', planToEdit.id).eq('user_id', user?.id).select().single()
         if (error) throw error
         updatePlan(planToEdit.id, data)
         toast.success('Piano aggiornato')

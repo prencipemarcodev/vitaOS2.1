@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useAppStore } from '@/store/useAppStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useTaskStore } from '@/store/useTaskStore'
 import { Briefcase, GraduationCap, Dumbbell, Star } from 'lucide-react'
 import { isHoliday } from '@/lib/italianCalendar'
@@ -17,6 +18,7 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
   const { removeEvent, removeAbsence } = useCalendarStore()
   const { pushError } = useNotifications()
   const { userConfig } = useAppStore()
+  const { user } = useAuthStore()
   const { tasks, addTask, updateTask, removeTask } = useTaskStore()
 
   const [addingTask, setAddingTask] = useState(false)
@@ -49,7 +51,8 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
   const hasProgram = workSched || studySched || gymSched
 
   const handleDeleteEvent = async (id) => {
-    const { error } = await supabase.from('calendar_events').delete().eq('id', id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    const { error } = await supabase.from('calendar_events').delete().eq('id', id).eq('user_id', user?.id)
     if (error) {
       pushError('Errore nell\'eliminazione')
     } else {
@@ -58,7 +61,8 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
   }
 
   const handleDeleteAbsence = async (id) => {
-    const { error } = await supabase.from('absences').delete().eq('id', id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    const { error } = await supabase.from('absences').delete().eq('id', id).eq('user_id', user?.id)
     if (error) {
       pushError('Errore nell\'eliminazione')
     } else {

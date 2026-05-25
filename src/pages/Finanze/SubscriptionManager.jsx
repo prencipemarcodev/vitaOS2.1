@@ -110,7 +110,10 @@ function SubscriptionManager({ showAddForm, setShowAddForm }) {
   const handleDelete = async (id) => {
     if (!confirm('Vuoi davvero eliminare questo abbonamento?')) return
     try {
-      const { error } = await supabase.from('subscriptions').delete().eq('id', id)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      // Filtro anche per user_id per prevenire IDOR (VUL-003)
+      const { error } = await supabase.from('subscriptions').delete().eq('id', id).eq('user_id', user.id)
       if (error) throw error
       toast.success('Abbonamento eliminato')
       fetchSubscriptions()
@@ -122,10 +125,14 @@ function SubscriptionManager({ showAddForm, setShowAddForm }) {
 
   const toggleActive = async (sub) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      // Filtro anche per user_id per prevenire IDOR (VUL-003)
       const { error } = await supabase
         .from('subscriptions')
         .update({ is_active: !sub.is_active })
         .eq('id', sub.id)
+        .eq('user_id', user.id)
 
       if (error) throw error
       toast.success(`Abbonamento ${!sub.is_active ? 'attivato' : 'disattivato'}`)

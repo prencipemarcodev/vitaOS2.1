@@ -1,99 +1,88 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Shield, Mail, Lock, User, ArrowRight, KeyRound } from 'lucide-react'
+import { Shield, Mail, ArrowRight, KeyRound } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/useAuthStore'
 
+// L'email admin è l'unico segreto "accettabile" qui (è comunque visibile nel DB)
+// Le credenziali hardcoded sono state RIMOSSE per motivi di sicurezza (VUL-001).
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || ''
+
 export default function AdminLogin() {
   const navigate = useNavigate()
-  const [step, setStep] = useState(1) // 1: Credenziali, 2: OTP
+  const [step, setStep] = useState(1) // 1: Email, 2: OTP
   const [loading, setLoading] = useState(false)
-  
-  // Form data
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(ADMIN_EMAIL)
   const [otp, setOtp] = useState('')
-
-  const ADMIN_EMAIL = 'prencipemarco.dev@gmail.com'
 
   const logAdminAccess = async (method) => {
     try {
       await supabase.from('admin_logs').insert({
         action: `LOGIN_${method}`,
-        user_email: ADMIN_EMAIL
+        user_email: email
       })
     } catch (err) {
       console.warn('Errore durante la registrazione del log:', err)
     }
   }
 
-  const handleCredentialsSubmit = async (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault()
-    
-    if (username === 'admin' && password === '1230') {
-      setLoading(true)
-      try {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: ADMIN_EMAIL,
-          options: {
-            shouldCreateUser: false
-          }
-        })
-        
-        if (error) {
-          if (error.status === 429) {
-            toast.error("Limite email superato. Usa il Master OTP.")
-          } else {
-            throw error
-          }
+    if (!email || !email.includes('@')) {
+      toast.error('Inserisci un indirizzo email valido')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false }
+      })
+
+      if (error) {
+        if (error.status === 429) {
+          toast.error('Limite email superato. Riprova tra qualche minuto.')
         } else {
-          toast.success(`OTP inviato a ${ADMIN_EMAIL}`)
+          throw error
         }
-        
-        // Passiamo comunque allo step 2 per permettere l'uso del Master OTP
+      } else {
+        toast.success(`Codice OTP inviato a ${email}`)
         setStep(2)
-      } catch (err) {
-        toast.error("Errore nell'invio dell'OTP")
-        console.error(err)
-      } finally {
-        setLoading(false)
       }
-    } else {
-      toast.error('Credenziali non valide')
+    } catch (err) {
+      toast.error("Errore nell'invio dell'OTP. Verifica l'email.")
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleOtpSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
-    // Fallback Master OTP
-    if (otp === '27042000') {
-      const { setIsAdminMaster } = useAuthStore.getState()
-      setIsAdminMaster(true)
-      await logAdminAccess('MASTER_OTP')
-      toast.success('Accesso via Master OTP autorizzato')
-      navigate('/admin/dashboard')
-      setLoading(false)
-      return
-    }
 
     try {
-      // Verifica l'OTP con Supabase
       const { data, error } = await supabase.auth.verifyOtp({
-        email: ADMIN_EMAIL,
+        email,
         token: otp,
         type: 'email'
       })
-      
+
       if (error) throw error
-      
+
       if (data.session) {
+        // Verifica che l'email sia quella admin — server-side (via JWT)
+        if (data.session.user.email !== ADMIN_EMAIL) {
+          await supabase.auth.signOut()
+          toast.error('Accesso non autorizzato.')
+          setLoading(false)
+          return
+        }
         await logAdminAccess('EMAIL_OTP')
         toast.success('Accesso Admin effettuato con successo!')
         navigate('/admin/dashboard')
@@ -127,7 +116,7 @@ export default function AdminLogin() {
         <div className="w-full max-w-sm z-10 relative overflow-hidden">
           {/* Progress bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-[var(--bg-elevated)]">
-            <motion.div 
+            <motion.div
               className="h-full bg-[var(--color-primary)]"
               initial={{ width: '50%' }}
               animate={{ width: step === 1 ? '50%' : '100%' }}
@@ -135,29 +124,27 @@ export default function AdminLogin() {
           </div>
 
           {step === 1 ? (
-            <motion.form 
+            <motion.form
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              onSubmit={handleCredentialsSubmit} 
+              onSubmit={handleEmailSubmit}
               className="space-y-4 pt-4"
             >
+              <div className="p-3 bg-[var(--color-primary-ghost)] rounded-xl border border-[var(--color-primary)]/20 flex items-start gap-3 mb-4">
+                <Shield className="text-[var(--color-primary)] mt-0.5 shrink-0" size={16} />
+                <p className="text-xs text-[var(--text-secondary)]">
+                  L'accesso admin è protetto tramite OTP inviato via email. Solo l'account admin registrato può accedere.
+                </p>
+              </div>
+
               <Input
-                label="Username"
-                type="text"
-                placeholder="Inserisci username"
-                icon={User}
+                label="Email Admin"
+                type="email"
+                placeholder="admin@esempio.com"
+                icon={Mail}
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <Input
-                label="Password"
-                type="password"
-                placeholder="••••••••"
-                icon={Lock}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
 
               <Button
@@ -168,21 +155,21 @@ export default function AdminLogin() {
                 className="w-full mt-2"
                 iconRight={ArrowRight}
               >
-                Verifica Identità
+                Invia Codice OTP
               </Button>
             </motion.form>
           ) : (
-            <motion.form 
+            <motion.form
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              onSubmit={handleOtpSubmit} 
+              onSubmit={handleOtpSubmit}
               className="space-y-4 pt-4"
             >
               <div className="text-center mb-6">
                 <Mail className="mx-auto text-[var(--color-primary)] mb-2" size={24} />
                 <p className="text-sm text-[var(--text-secondary)]">
                   Abbiamo inviato un codice OTP a<br/>
-                  <strong className="text-[var(--text-primary)]">{ADMIN_EMAIL}</strong>
+                  <strong className="text-[var(--text-primary)]">{email}</strong>
                 </p>
               </div>
 
@@ -194,7 +181,7 @@ export default function AdminLogin() {
                 required
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                maxLength={8}
+                maxLength={6}
                 className="text-center tracking-[0.5em] font-mono font-bold"
               />
 
@@ -203,10 +190,10 @@ export default function AdminLogin() {
                   type="button"
                   variant="subtle"
                   size="lg"
-                  onClick={() => setStep(1)}
+                  onClick={() => { setStep(1); setOtp('') }}
                   className="flex-1"
                 >
-                  Annulla
+                  Indietro
                 </Button>
                 <Button
                   type="submit"

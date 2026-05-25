@@ -59,7 +59,7 @@ function OnboardingReminder() {
 
 function AppInner() {
   const { theme, onboardingCompleted, userConfig, showOnboardingForce } = useAppStore()
-  const { session, setSession, loading: authLoading, isAdminMaster } = useAuthStore()
+  const { session, setSession, loading: authLoading } = useAuthStore()
   const location = useLocation()
 
   // 1. Listen for Auth Changes
@@ -109,8 +109,10 @@ function AppInner() {
   }
 
   // 4. Gestione Rotte Admin (Isolate dal resto dell'app)
+  // La verifica dell'email admin avviene nell'AdminDashboard stesso.
+  // Non usiamo isAdminMaster (bypassabile via console) — solo session reale.
   if (location.pathname.startsWith('/admin')) {
-    if (!session && !isAdminMaster) {
+    if (!session) {
       return <AdminLogin />
     }
     return <AppRouter />

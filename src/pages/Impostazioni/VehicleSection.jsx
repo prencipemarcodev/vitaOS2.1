@@ -105,7 +105,10 @@ function VehicleSection() {
   const handleDelete = async (id) => {
     if (!confirm('Sei sicuro di voler eliminare questo elemento?')) return
     try {
-      const { error } = await supabase.from('vehicle_logs').delete().eq('id', id)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      // Filtro anche per user_id per prevenire IDOR (VUL-003)
+      const { error } = await supabase.from('vehicle_logs').delete().eq('id', id).eq('user_id', user.id)
       if (error) throw error
       toast.success('Elemento eliminato')
       fetchLogs()

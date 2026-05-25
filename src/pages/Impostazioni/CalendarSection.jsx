@@ -40,7 +40,8 @@ function CalendarSection() {
   }
 
   const handleDelete = async (id) => {
-    await supabase.from('recurring_events').delete().eq('id', id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    await supabase.from('recurring_events').delete().eq('id', id).eq('user_id', user?.id)
     setRecurringEvents(recurringEvents.filter((e) => e.id !== id))
   }
 

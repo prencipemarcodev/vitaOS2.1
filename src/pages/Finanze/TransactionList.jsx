@@ -3,6 +3,7 @@ import { getIcon } from '@/lib/icons'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useAppStore } from '@/store/useAppStore'
 import { getAccounts } from '@/lib/accounts'
@@ -16,12 +17,14 @@ function TransactionList({ transactions, categories, onEdit }) {
   const { removeTransaction } = useFinanceStore()
   const { pushError, pushSuccess } = useNotifications()
   const { userConfig } = useAppStore()
+  const { user } = useAuthStore()
   const accounts = getAccounts(userConfig)
 
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa transazione?')) return
-    const { error } = await supabase.from('transactions').delete().eq('id', id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', user?.id)
     if (error) {
       pushError('Errore nell\'eliminazione')
     } else {

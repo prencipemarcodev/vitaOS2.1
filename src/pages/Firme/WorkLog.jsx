@@ -2,6 +2,7 @@ import { Trash2, Edit2, AlertCircle, Info } from 'lucide-react'
 import { formatDuration } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useFirmeStore } from '@/store/useFirmeStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
 import { toast } from 'sonner'
 import Card from '@/components/ui/Card'
@@ -12,6 +13,7 @@ import { calculateOvertime } from '@/lib/workCalculations'
 function WorkLog({ sessions, onEdit, userConfig }) {
   const { removeSession } = useFirmeStore()
   const { pushError } = useNotifications()
+  const { user } = useAuthStore()
 
   // Programma di default
   const defaultSchedule = {
@@ -27,7 +29,8 @@ function WorkLog({ sessions, onEdit, userConfig }) {
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa sessione?')) return
-    const { error } = await supabase.from('work_sessions').delete().eq('id', id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    const { error } = await supabase.from('work_sessions').delete().eq('id', id).eq('user_id', user?.id)
     if (error) {
       pushError('Errore nell\'eliminazione')
     } else {

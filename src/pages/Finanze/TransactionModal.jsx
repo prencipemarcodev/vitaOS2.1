@@ -75,6 +75,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         
         if (!expenseCat) {
           const { data, error } = await supabase.from('finance_categories').insert({
+            user_id: user?.id,  // VUL-005: aggiunto user_id per evitare categorie globali
             name: 'Giroconto',
             type: 'expense',
             icon: 'arrow-right-left',
@@ -88,6 +89,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         
         if (!incomeCat) {
           const { data, error } = await supabase.from('finance_categories').insert({
+            user_id: user?.id,  // VUL-005: aggiunto user_id per evitare categorie globali
             name: 'Giroconto',
             type: 'income',
             icon: 'arrow-right-left',
@@ -149,7 +151,8 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         }
         
         if (txToEdit) {
-          const { data, error } = await supabase.from('transactions').update(payload).eq('id', txToEdit.id).select().single()
+          // Filtro anche per user_id per prevenire IDOR (VUL-003)
+          const { data, error } = await supabase.from('transactions').update(payload).eq('id', txToEdit.id).eq('user_id', user?.id).select().single()
           if (error) throw error
           updateTransaction(txToEdit.id, data)
           toast.success('Transazione aggiornata')

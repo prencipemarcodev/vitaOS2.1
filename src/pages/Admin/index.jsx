@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const { session, signOut, isAdminMaster } = useAuthStore()
+  const { session, signOut } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     usersCount: 0,
@@ -24,10 +24,10 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([])
   const [logs, setLogs] = useState([])
 
-  const ADMIN_EMAIL = 'prencipemarco.dev@gmail.com'
+  const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || ''
 
   const fetchData = async () => {
-    const isAuthed = isAdminMaster || (session && session.user.email === ADMIN_EMAIL)
+    const isAuthed = session && session.user.email === ADMIN_EMAIL
     if (!isAuthed) return
 
     setLoading(true)
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
       setStats({
         usersCount: userCount || 0,
         dbSize: dbSize || 'N/A',
-        status: isAdminMaster ? 'Limitato (No Session)' : 'Operativo'
+        status: 'Operativo'
       })
 
       // 2. Fetch Users list
@@ -67,13 +67,13 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    const isAuthed = isAdminMaster || (session && session.user.email === ADMIN_EMAIL)
+    const isAuthed = session && session.user.email === ADMIN_EMAIL
     if (!isAuthed) {
       navigate('/')
     } else {
       fetchData()
     }
-  }, [session, isAdminMaster])
+  }, [session])
 
   // --- AZIONI ---
 
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
     navigate('/admin')
   }
 
-  if (!session && !isAdminMaster) return null
+  if (!session) return null
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] p-6 md:p-12 overflow-y-auto custom-scrollbar">

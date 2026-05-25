@@ -43,6 +43,7 @@ function RunDetailsModal({ isOpen, onClose, session }) {
         .from('workout_sessions')
         .delete()
         .eq('id', session.id)
+        .eq('user_id', userConfig?.user_id)  // VUL-003: filtro per user_id
 
       if (error) throw error
 
@@ -52,6 +53,7 @@ function RunDetailsModal({ isOpen, onClose, session }) {
         .from('user_config')
         .update({ total_run_km_ever: newTotal })
         .eq('id', userConfig.id)
+        .eq('user_id', userConfig.user_id)  // VUL-003: filtro per user_id
       
       setUserConfig({ ...userConfig, total_run_km_ever: newTotal })
       removeWorkoutSession(session.id)

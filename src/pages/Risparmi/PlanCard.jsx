@@ -155,7 +155,8 @@ function PlanCard({ plan, onEdit }) {
 
   const handleDelete = async () => {
     if (!confirm('Eliminare questo piano?')) return
-    const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id)
+    // Filtro anche per user_id per prevenire IDOR (VUL-003)
+    const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id).eq('user_id', user?.id)
     if (!error) {
       removePlan(plan.id)
       toast.success('Piano eliminato')
