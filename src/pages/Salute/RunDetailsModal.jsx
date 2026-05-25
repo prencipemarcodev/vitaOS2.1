@@ -18,16 +18,14 @@ function RunDetailsModal({ isOpen, onClose, session }) {
   const { removeWorkoutSession } = useHealthStore()
   const [deleting, setDeleting] = useState(false)
 
-  if (!session) return null
-
-  const splits = useMemo(() => session.run_splits || [], [session])
-  const polyline = useMemo(() => session.run_polyline || [], [session])
-  const distanceKm = session.run_distance_km || 0
+  const splits = useMemo(() => session?.run_splits || [], [session])
+  const polyline = useMemo(() => session?.run_polyline || [], [session])
+  const distanceKm = session?.run_distance_km || 0
   const elapsed = useMemo(() => {
     if (splits.length > 0) {
       return splits[splits.length - 1].elapsed_sec
     }
-    return (session.duration_minutes || 0) * 60
+    return (session?.duration_minutes || 0) * 60
   }, [session, splits])
 
   const elevation = useMemo(() => {
@@ -35,6 +33,7 @@ function RunDetailsModal({ isOpen, onClose, session }) {
   }, [polyline])
 
   const handleDelete = async () => {
+    if (!session) return
     if (!window.confirm('Sei sicuro di voler eliminare questa corsa dallo storico? Questa azione è irreversibile.')) {
       return
     }
@@ -68,12 +67,15 @@ function RunDetailsModal({ isOpen, onClose, session }) {
   }
 
   const formattedDate = useMemo(() => {
+    if (!session?.date) return ''
     try {
       return format(parseISO(session.date), 'dd MMMM yyyy', { locale: it })
     } catch (e) {
       return session.date
     }
-  }, [session.date])
+  }, [session?.date])
+
+  if (!session) return null
 
   const kpis = [
     { label: 'Distanza', value: `${distanceKm.toFixed(2)}`, unit: 'km', icon: Map },
