@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useSavingsStore } from '@/store/useSavingsStore'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
@@ -8,11 +8,14 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { Sparkles, AlertCircle, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 function SmartAdvicePanel() {
-  const { plans } = useSavingsStore()
+  const { plans, addMovement, updatePlan } = useSavingsStore()
   const { transactions, cumulativeBalance } = useFinanceStore()
   const { userConfig, selectedMonth } = useAppStore()
+  const [applying, setApplying] = useState(false)
 
   const totalBalance = cumulativeBalance
 
@@ -25,6 +28,55 @@ function SmartAdvicePanel() {
       totalBalance
     })
   }, [userConfig, transactions, plans, selectedMonth, totalBalance])
+
+  const handleApply = async () => {
+    if (!advice || advice.allocations.length === 0) return
+    setApplying(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      
+      for (const alloc of advice.allocations) {
+        const payload = {
+          plan_id: alloc.plan_id,
+          amount: parseFloat(alloc.amount.toFixed(2)),
+          type: 'deposit',
+          date: today,
+          notes: 'Accantonamento automatico distribuito tramite Smart Advice'
+        }
+        
+        // 1. Inserisci il movimento in Supabase
+        const { data: movementData, error: mError } = await supabase
+          .from('saving_movements')
+          .insert(payload)
+          .select().single()
+          
+        if (mError) throw mError
+        
+        // 2. Aggiorna il saldo del piano
+        const plan = plans.find(p => p.id === alloc.plan_id)
+        if (plan) {
+          const newAmount = parseFloat((parseFloat(plan.current_amount || 0) + alloc.amount).toFixed(2))
+          
+          const { error: pError } = await supabase
+            .from('saving_plans')
+            .update({ current_amount: newAmount })
+            .eq('id', alloc.plan_id)
+            
+          if (pError) throw pError
+          
+          // 3. Aggiorna lo store Zustand
+          addMovement(movementData)
+          updatePlan(alloc.plan_id, { current_amount: newAmount })
+        }
+      }
+      toast.success('Distribuzione risparmio applicata con successo! 💰')
+    } catch (err) {
+      console.error(err)
+      toast.error("Errore nell'applicazione del risparmio consigliato")
+    } finally {
+      setApplying(false)
+    }
+  }
 
   if (!advice || plans.length === 0) return null
 
@@ -97,10 +149,8 @@ function SmartAdvicePanel() {
               variant="primary" 
               size="xs" 
               className="w-full mt-2 font-bold"
-              onClick={() => {
-                // In un'app reale qui potresti triggerare i movimenti di risparmio massivamente
-                alert('Funzionalità di applicazione automatica in fase di sviluppo. Puoi registrare i depositi manualmente nei singoli piani.')
-              }}
+              loading={applying}
+              onClick={handleApply}
             >
               Applica distribuzione
             </Button>

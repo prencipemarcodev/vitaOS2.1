@@ -51,14 +51,27 @@ function TransactionList({ transactions, categories, onEdit }) {
                   <CategoryIcon size={18} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                       {category?.name || 'Altro'}
                     </p>
                     <span className="text-[8px] font-bold text-[var(--text-muted)] opacity-50">•</span>
-                    <p className="text-[10px] font-medium text-[var(--text-muted)]">
+                    <p className="text-[10px] font-medium text-[var(--text-muted)] shrink-0">
                       {format(parseISO(tx.date), 'dd MMM', { locale: it })}
                     </p>
+                    <span className="text-[8px] font-bold text-[var(--text-muted)] opacity-50">•</span>
+                    <span className={clsx(
+                      "text-[7px] font-black uppercase tracking-wider px-1 py-0.5 rounded shrink-0 border",
+                      tx.payment_method === 'bank' ? 'bg-blue-500/5 text-blue-500 border-blue-500/20' :
+                      tx.payment_method === 'cash' ? 'bg-amber-500/5 text-amber-500 border-amber-500/20' :
+                      tx.payment_method === 'revolut' ? 'bg-purple-500/5 text-purple-500 border-purple-500/20' :
+                      'bg-pink-500/5 text-pink-500 border-pink-500/20'
+                    )}>
+                      {tx.payment_method === 'bank' ? 'Banco' :
+                       tx.payment_method === 'cash' ? 'Contanti' :
+                       tx.payment_method === 'revolut' ? 'Revolut' :
+                       'PostePay'}
+                    </span>
                   </div>
                   <p className="text-sm font-bold text-[var(--text-primary)] truncate max-w-[140px] lg:max-w-[200px]">
                     {tx.description || (tx.type === 'income' ? 'Entrata' : 'Uscita')}

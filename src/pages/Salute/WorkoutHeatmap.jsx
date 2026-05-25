@@ -16,15 +16,29 @@ function WorkoutHeatmap({ sessions }) {
       
       <div className="flex flex-wrap gap-1">
         {days.map((day) => {
-          const hasWorkout = sessions.some(s => isSameDay(new Date(s.date), day))
+          const daySessions = sessions.filter(s => isSameDay(new Date(s.date), day))
+          const count = daySessions.length
+          const totalDuration = daySessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0)
+          
+          let colorClass = 'bg-[var(--bg-base)]'
+          if (count === 1) {
+            colorClass = 'bg-[var(--color-primary)] opacity-45'
+          } else if (count >= 2) {
+            colorClass = 'bg-[var(--color-primary)]'
+          }
+
+          const tooltip = count > 0 
+            ? `${format(day, 'dd MMMM yyyy', { locale: it })} • ${count} ${count === 1 ? 'allenamento' : 'allenamenti'}${totalDuration > 0 ? ` (${totalDuration} min)` : ''}`
+            : format(day, 'dd MMMM yyyy', { locale: it })
+
           return (
             <div 
               key={day.toISOString()}
               className={clsx(
                 'w-2 h-2 rounded-[2px] transition-colors',
-                hasWorkout ? 'bg-[var(--color-primary)]' : 'bg-[var(--bg-base)]'
+                colorClass
               )}
-              title={format(day, 'dd MMMM yyyy')}
+              title={tooltip}
             />
           )
         })}

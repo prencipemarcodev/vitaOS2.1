@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 function TransactionModal({ isOpen, onClose, txToEdit = null }) {
-  const { categories, addTransaction, updateTransaction } = useFinanceStore()
+  const { categories, addTransaction, updateTransaction, addCategory } = useFinanceStore()
   const { pushError, pushSuccess } = useNotifications()
   const { user } = useAuthStore()
   const [loading, setLoading] = useState(false)
@@ -21,6 +21,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
     type: 'expense',
     category: '',
     payment_method: 'bank',
+    target_account: 'cash',
     description: '',
   })
 
@@ -32,6 +33,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         type: txToEdit.type,
         category: txToEdit.category || '',
         payment_method: txToEdit.payment_method || 'bank',
+        target_account: 'cash',
         description: txToEdit.description || '',
       })
     } else {
@@ -41,6 +43,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         type: 'expense',
         category: categories.find(c => c.type === 'expense')?.id || '',
         payment_method: 'bank',
+        target_account: 'cash',
         description: '',
       })
     }
@@ -51,23 +54,107 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
     setLoading(true)
 
     try {
-      const payload = {
-        ...formData,
-        amount: parseFloat(formData.amount),
-      }
-      
-      if (txToEdit) {
-        const { data, error } = await supabase.from('transactions').update(payload).eq('id', txToEdit.id).select().single()
-        if (error) throw error
-        updateTransaction(txToEdit.id, data)
-        toast.success('Transazione aggiornata')
-        pushSuccess('Transazione aggiornata', 'edit')
+      if (formData.type === 'transfer') {
+        if (formData.payment_method === formData.target_account) {
+          toast.error("Il conto di origine e destinazione devono essere diversi!")
+          setLoading(false)
+          return
+        }
+
+        // Cerca o crea la categoria Giroconto per Uscita ed Entrata
+        let expenseCat = categories.find(c => c.name === 'Giroconto' && c.type === 'expense')
+        let incomeCat = categories.find(c => c.name === 'Giroconto' && c.type === 'income')
+        
+        if (!expenseCat) {
+          const { data, error } = await supabase.from('finance_categories').insert({
+            name: 'Giroconto',
+            type: 'expense',
+            icon: 'arrow-right-left',
+            color: '#7f8c8d',
+            is_default: false
+          }).select().single()
+          if (error) throw error
+          expenseCat = data
+          addCategory(data)
+        }
+        
+        if (!incomeCat) {
+          const { data, error } = await supabase.from('finance_categories').insert({
+            name: 'Giroconto',
+            type: 'income',
+            icon: 'arrow-right-left',
+            color: '#7f8c8d',
+            is_default: false
+          }).select().single()
+          if (error) throw error
+          incomeCat = data
+          addCategory(data)
+        }
+
+        const getAccountName = (key) => {
+          if (key === 'bank') return 'Banco'
+          if (key === 'cash') return 'Contanti'
+          if (key === 'revolut') return 'Revolut'
+          return 'PostePay'
+        }
+
+        // 1. Crea l'uscita sul conto sorgente
+        const expensePayload = {
+          date: formData.date,
+          amount: parseFloat(formData.amount),
+          type: 'expense',
+          category: expenseCat.id,
+          payment_method: formData.payment_method,
+          description: formData.description 
+            ? `${formData.description.trim()} (Giroconto)`
+            : `Giroconto a ${getAccountName(formData.target_account)}`,
+          user_id: user?.id
+        }
+        const { data: expData, error: expErr } = await supabase.from('transactions').insert(expensePayload).select().single()
+        if (expErr) throw expErr
+        addTransaction(expData)
+
+        // 2. Crea l'entrata sul conto target
+        const incomePayload = {
+          date: formData.date,
+          amount: parseFloat(formData.amount),
+          type: 'income',
+          category: incomeCat.id,
+          payment_method: formData.target_account,
+          description: formData.description
+            ? `${formData.description.trim()} (Giroconto)`
+            : `Giroconto da ${getAccountName(formData.payment_method)}`,
+          user_id: user?.id
+        }
+        const { data: incData, error: incErr } = await supabase.from('transactions').insert(incomePayload).select().single()
+        if (incErr) throw incErr
+        addTransaction(incData)
+
+        toast.success('Giroconto registrato correttamente! 🔄')
+        pushSuccess('Giroconto registrato', 'refresh-cw')
       } else {
-        const { data, error } = await supabase.from('transactions').insert({ ...payload, user_id: user?.id }).select().single()
-        if (error) throw error
-        addTransaction(data)
-        toast.success('Transazione creata')
-        pushSuccess('Transazione creata', 'plus')
+        const payload = {
+          date: formData.date,
+          amount: parseFloat(formData.amount),
+          type: formData.type,
+          category: formData.category,
+          payment_method: formData.payment_method,
+          description: formData.description,
+        }
+        
+        if (txToEdit) {
+          const { data, error } = await supabase.from('transactions').update(payload).eq('id', txToEdit.id).select().single()
+          if (error) throw error
+          updateTransaction(txToEdit.id, data)
+          toast.success('Transazione aggiornata')
+          pushSuccess('Transazione aggiornata', 'edit')
+        } else {
+          const { data, error } = await supabase.from('transactions').insert({ ...payload, user_id: user?.id }).select().single()
+          if (error) throw error
+          addTransaction(data)
+          toast.success('Transazione creata')
+          pushSuccess('Transazione creata', 'plus')
+        }
       }
       onClose()
     } catch (err) {
@@ -79,23 +166,25 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
   }
 
   const isExpense = formData.type === 'expense'
+  const isTransfer = formData.type === 'transfer'
 
   return (
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
       title={txToEdit ? 'Modifica Transazione' : 'Nuova Transazione'}
-      className={isExpense ? 'shimmer-expense' : 'shimmer-income'}
+      className={isTransfer ? 'shimmer-transfer' : isExpense ? 'shimmer-expense' : 'shimmer-income'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-2">
+        {/* Switcher dei Tipi transazione */}
+        <div className="flex gap-1.5 bg-[var(--bg-base)] p-1 rounded-2xl border border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'expense' })}
-            className={`flex-1 py-2.5 text-xs font-bold border rounded-[var(--radius-md)] transition-all ${
-              isExpense 
-                ? 'bg-[var(--color-danger-ghost)] border-[var(--color-danger)] text-[var(--color-danger)] shadow-sm' 
-                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-secondary)]'
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              formData.type === 'expense'
+                ? 'bg-[#e05252] text-white shadow-sm'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
             }`}
           >
             Uscita
@@ -103,13 +192,24 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'income' })}
-            className={`flex-1 py-2.5 text-xs font-bold border rounded-[var(--radius-md)] transition-all ${
-              !isExpense 
-                ? 'bg-[var(--color-success-ghost)] border-[var(--color-success)] text-[var(--color-success)] shadow-sm' 
-                : 'bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-secondary)]'
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              formData.type === 'income'
+                ? 'bg-[#3d9970] text-white shadow-sm'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
             }`}
           >
             Entrata
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, type: 'transfer' })}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              formData.type === 'transfer'
+                ? 'bg-indigo-500 text-white shadow-sm'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Giroconto
           </button>
         </div>
 
@@ -132,55 +232,96 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-[var(--text-secondary)]">Categoria</label>
-          <select 
-            className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
-            value={formData.category}
-            onChange={e => setFormData({ ...formData, category: e.target.value })}
-            required
-          >
-            <option value="" disabled>Seleziona categoria</option>
-            {(() => {
-              const seen = new Set();
-              return categories
-                .filter(c => c.type === formData.type)
-                .filter(c => {
-                  const key = `${c.name}-${c.type}`;
-                  if (seen.has(key)) return false;
-                  seen.add(key);
-                  return true;
-                })
-                .map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ));
-            })()}
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-[var(--text-secondary)]">Metodo</label>
-          <div className="flex gap-2">
-            {['bank', 'cash'].map(m => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setFormData({ ...formData, payment_method: m })}
-                className={`flex-1 py-2 text-xs font-bold border rounded-[var(--radius-md)] transition-colors ${
-                  formData.payment_method === m 
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm' 
-                    : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
-                }`}
-              >
-                {m === 'bank' ? 'Conto' : 'Contanti'}
-              </button>
-            ))}
+        {/* Nascondi la categoria per il Giroconto */}
+        {!isTransfer && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[var(--text-secondary)]">Categoria</label>
+            <select 
+              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              value={formData.category}
+              onChange={e => setFormData({ ...formData, category: e.target.value })}
+              required
+            >
+              <option value="" disabled>Seleziona categoria</option>
+              {(() => {
+                const seen = new Set();
+                return categories
+                  .filter(c => c.type === formData.type)
+                  .filter(c => {
+                    const key = `${c.name}-${c.type}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  })
+                  .map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ));
+              })()}
+            </select>
           </div>
-        </div>
+        )}
+
+        {/* Selettore dei Conti / Casse */}
+        {!isTransfer ? (
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[var(--text-secondary)]">Conto / Cassa</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { key: 'bank', label: '🏦 Banco' },
+                { key: 'cash', label: '💵 Contanti' },
+                { key: 'revolut', label: '💳 Revolut' },
+                { key: 'postepay', label: '💳 PostePay' }
+              ].map(m => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, payment_method: m.key })}
+                  className={`py-2 text-xs font-bold border rounded-[var(--radius-md)] transition-colors ${
+                    formData.payment_method === m.key 
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm' 
+                      : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">Da Conto (Origine)</label>
+              <select
+                value={formData.payment_method}
+                onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              >
+                <option value="bank">🏦 Banco</option>
+                <option value="cash">💵 Contanti</option>
+                <option value="revolut">💳 Revolut</option>
+                <option value="postepay">💳 PostePay</option>
+              </select>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[var(--text-secondary)]">A Conto (Destinazione)</label>
+              <select
+                value={formData.target_account}
+                onChange={e => setFormData({ ...formData, target_account: e.target.value })}
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              >
+                <option value="bank">🏦 Banco</option>
+                <option value="cash">💵 Contanti</option>
+                <option value="revolut">💳 Revolut</option>
+                <option value="postepay">💳 PostePay</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         <Input 
           label="Descrizione (opzionale)" 
-          placeholder="Es: Spesa Esselunga" 
+          placeholder="Es: Spesa Esselunga o Giroconto mensile" 
           value={formData.description} 
           onChange={e => setFormData({ ...formData, description: e.target.value })} 
         />
@@ -188,12 +329,12 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         <div className="flex flex-col gap-2 pt-4">
           <Button 
             type="submit" 
-            variant={isExpense ? 'danger' : 'success'}
+            variant={isTransfer ? 'primary' : isExpense ? 'danger' : 'success'}
             loading={loading}
             size="lg"
             className="w-full shadow-lg font-black tracking-wide"
           >
-            {txToEdit ? 'Aggiorna Transazione' : 'Crea Transazione'}
+            {txToEdit ? 'Aggiorna Transazione' : isTransfer ? 'Registra Giroconto' : 'Crea Transazione'}
           </Button>
           <Button variant="ghost" onClick={onClose} className="w-full text-[var(--text-muted)] font-bold">
             Annulla

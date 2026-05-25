@@ -25,7 +25,7 @@ function formatHM(totalSeconds) {
   return `${m}m`
 }
 
-function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
+function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCancel }) {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -37,6 +37,7 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
 
   if (!isOpen) return null
   const checkOut = format(new Date(), 'HH:mm')
+  const totalSeconds = elapsed + lunchBreakElapsed
 
   return (
     <motion.div
@@ -51,8 +52,16 @@ function SaveModal({ isOpen, elapsed, checkIn, onSave, onCancel }) {
         className="w-full max-w-sm bg-[var(--bg-surface)] rounded-3xl p-6 shadow-2xl"
       >
         <h3 className="text-base font-black mb-1">Termina sessione</h3>
-        <p className="text-xs text-[var(--text-muted)] mb-5">
-          {checkIn} → {checkOut} · <span className="font-bold text-[var(--text-primary)]">{formatHM(elapsed)}</span>
+        <p className="text-xs text-[var(--text-muted)] mb-5 leading-normal">
+          {checkIn} → {checkOut} · <span className="font-bold text-[var(--text-primary)]">{formatHM(totalSeconds)} Totali</span>
+          {lunchBreakElapsed > 0 && (
+            <>
+              <br />
+              <span className="text-emerald-500 font-extrabold">🍱 Pausa pranzo: {formatHM(lunchBreakElapsed)}</span>
+              <br />
+              <span className="text-[var(--text-primary)] font-extrabold">💼 Tempo netto lavorato: {formatHM(elapsed)}</span>
+            </>
+          )}
         </p>
         <div className="space-y-2 mb-5">
           <label className="text-xs font-bold text-[var(--text-secondary)]">Note (opzionale)</label>
@@ -83,14 +92,17 @@ function WorkTimer({ onClose }) {
   const {
     isRunning, isPaused, checkIn, checkInDate,
     elapsed, pauseElapsed,
+    isLunchBreak, lunchBreakElapsed,
     mode, pomoPhase, pomoSecondsLeft, completedPomodoros,
     pauseSession, resumeSession, tickElapsed, tickPause, stopSession,
     setMode, setPomoPhase, setPomoSecondsLeft, setCompletedPomodoros, tickPomo,
+    startLunchBreak, resumeFromLunchBreak, tickLunchBreak,
   } = useWorkSessionStore()
 
   const [showSave, setShowSave] = useState(false)
   const timerRef = useRef(null)
   const pauseTimerRef = useRef(null)
+  const lunchTimerRef = useRef(null)
 
   const startTicking = useCallback(() => {
     if (timerRef.current) return
@@ -148,10 +160,26 @@ function WorkTimer({ onClose }) {
     pauseTimerRef.current = null
   }, [])
 
+  const startLunchTicking = useCallback(() => {
+    if (lunchTimerRef.current) return
+    lunchTimerRef.current = setInterval(() => tickLunchBreak(), 1000)
+  }, [tickLunchBreak])
+
+  const stopLunchTicking = useCallback(() => {
+    clearInterval(lunchTimerRef.current)
+    lunchTimerRef.current = null
+  }, [])
+
   useEffect(() => {
     if (isRunning && !isPaused) startTicking()
-    return () => { stopTicking(); stopPauseTicking() }
-  }, [isRunning, isPaused])
+    if (isRunning && isPaused && !isLunchBreak) startPauseTicking()
+    if (isRunning && isPaused && isLunchBreak) startLunchTicking()
+    return () => { 
+      stopTicking()
+      stopPauseTicking()
+      stopLunchTicking()
+    }
+  }, [isRunning, isPaused, isLunchBreak, startTicking, startPauseTicking, startLunchTicking, stopTicking, stopPauseTicking, stopLunchTicking])
 
   const handlePause = () => {
     pauseSession()
@@ -165,9 +193,23 @@ function WorkTimer({ onClose }) {
     startTicking()
   }
 
+  const handleLunchBreak = () => {
+    startLunchBreak()
+    stopTicking()
+    stopPauseTicking()
+    startLunchTicking()
+  }
+
+  const handleResumeFromLunch = () => {
+    resumeFromLunchBreak()
+    stopLunchTicking()
+    startTicking()
+  }
+
   const handleStop = () => {
     stopTicking()
     stopPauseTicking()
+    stopLunchTicking()
     setShowSave(true)
   }
 
@@ -175,10 +217,14 @@ function WorkTimer({ onClose }) {
     const checkOut = format(new Date(), 'HH:mm')
     const [h1, m1] = checkIn.split(':').map(Number)
     const [h2, m2] = checkOut.split(':').map(Number)
-    const duration = Math.max(1, (h2 * 60 + m2) - (h1 * 60 + m1))
+    const totalDuration = Math.max(1, (h2 * 60 + m2) - (h1 * 60 + m1))
     
+    const lunchMinutes = Math.floor(lunchBreakElapsed / 60)
+    const netDuration = Math.max(1, totalDuration - lunchMinutes)
+    
+    const lunchSuffix = lunchMinutes > 0 ? `\n[🍱 Pausa Pranzo: ${lunchMinutes} min]` : ''
     const noteSuffix = mode === 'pomodoro' ? `\n[🍅 Pomodoro completati: ${completedPomodoros}]` : ''
-    const finalNotes = (notes || '').trim() + noteSuffix
+    const finalNotes = (notes || '').trim() + lunchSuffix + noteSuffix
 
     try {
       const { data, error } = await supabase
@@ -188,7 +234,7 @@ function WorkTimer({ onClose }) {
           date: checkInDate, 
           check_in: checkIn, 
           check_out: checkOut, 
-          duration_minutes: duration, 
+          duration_minutes: netDuration, 
           notes: finalNotes || null, 
           is_manual: false 
         })
@@ -207,21 +253,25 @@ function WorkTimer({ onClose }) {
   const isPomo = mode === 'pomodoro'
   const isPomoBreak = isPomo && pomoPhase === 'break'
   
-  const primaryColor = isPaused 
-    ? '#ff851b' 
-    : isPomoBreak 
-      ? 'var(--color-success)' 
-      : isPomo 
-        ? '#ef4444' 
-        : 'var(--color-primary)'
+  const primaryColor = isLunchBreak
+    ? '#10b981'
+    : isPaused 
+      ? '#ff851b' 
+      : isPomoBreak 
+        ? 'var(--color-success)' 
+        : isPomo 
+          ? '#ef4444' 
+          : 'var(--color-primary)'
         
-  const bgClass = isPaused 
-    ? 'bg-orange-50' 
-    : isPomoBreak 
-      ? 'bg-green-50' 
-      : isPomo 
-        ? 'bg-red-50' 
-        : 'bg-[var(--color-primary-ghost)]'
+  const bgClass = isLunchBreak
+    ? 'bg-emerald-50'
+    : isPaused 
+      ? 'bg-orange-50' 
+      : isPomoBreak 
+        ? 'bg-green-50' 
+        : isPomo 
+          ? 'bg-red-50' 
+          : 'bg-[var(--color-primary-ghost)]'
 
   return createPortal(
     <>
@@ -242,16 +292,18 @@ function WorkTimer({ onClose }) {
           <div className="flex items-center gap-2">
             <div className={clsx(
               'w-2 h-2 rounded-full', 
-              isPaused ? 'bg-orange-500' : isPomoBreak ? 'bg-green-500 animate-pulse' : 'bg-green-500 animate-pulse'
+              isLunchBreak ? 'bg-emerald-500 animate-pulse' : isPaused ? 'bg-orange-500' : 'bg-green-500 animate-pulse'
             )} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
-              {isPaused 
-                ? 'In pausa' 
-                : isPomoBreak 
-                  ? 'Pausa Caffè' 
-                  : isPomo 
-                    ? 'Lavoro Focalizzato' 
-                    : 'Sessione attiva'
+              {isLunchBreak 
+                ? 'Pausa Pranzo'
+                : isPaused 
+                  ? 'In pausa' 
+                  : isPomoBreak 
+                    ? 'Pausa Caffè' 
+                    : isPomo 
+                      ? 'Lavoro Focalizzato' 
+                      : 'Sessione attiva'
               }
             </span>
           </div>
@@ -310,13 +362,15 @@ function WorkTimer({ onClose }) {
             transition={{ repeat: Infinity, duration: isPaused ? 2 : 1.5, ease: 'easeInOut' }}
             className={clsx('w-24 h-24 rounded-full flex items-center justify-center transition-colors duration-500', bgClass)}
           >
-            {isPaused
-              ? <Coffee size={40} style={{ color: '#ff851b' }} />
-              : isPomoBreak
-                ? <Coffee size={40} style={{ color: 'var(--color-success)' }} />
-                : isPomo
-                  ? <span className="text-4xl select-none">🍅</span>
-                  : <Briefcase size={40} style={{ color: primaryColor }} />
+            {isLunchBreak
+              ? <span className="text-4xl select-none">🍱</span>
+              : isPaused
+                ? <Coffee size={40} style={{ color: '#ff851b' }} />
+                : isPomoBreak
+                  ? <Coffee size={40} style={{ color: 'var(--color-success)' }} />
+                  : isPomo
+                    ? <span className="text-4xl select-none">🍅</span>
+                    : <Briefcase size={40} style={{ color: primaryColor }} />
             }
           </motion.div>
 
@@ -346,12 +400,18 @@ function WorkTimer({ onClose }) {
           <div className="flex gap-6">
             <div className="text-center">
               <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Tempo attivo</p>
-              <p className="text-sm font-black">{formatHM(elapsed - pauseElapsed)}</p>
+              <p className="text-sm font-black">{formatHM(elapsed)}</p>
             </div>
             {pauseElapsed > 0 && (
               <div className="text-center">
                 <p className="text-[9px] font-bold text-orange-400 uppercase tracking-wider mb-0.5">In pausa</p>
                 <p className="text-sm font-black text-orange-500">{formatHM(pauseElapsed)}</p>
+              </div>
+            )}
+            {lunchBreakElapsed > 0 && (
+              <div className="text-center">
+                <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">Pranzo</p>
+                <p className="text-sm font-black text-emerald-500">{formatHM(lunchBreakElapsed)}</p>
               </div>
             )}
             <div className="text-center">
@@ -384,9 +444,14 @@ function WorkTimer({ onClose }) {
                 Inizia Sessione
               </motion.button>
             ) : !isPaused ? (
-              <motion.div key="running" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-6">
-                <button onClick={handlePause} className="w-16 h-16 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-500 active:scale-90 transition-transform">
-                  <Pause size={24} />
+              <motion.div key="running" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-4">
+                <button 
+                  onClick={handlePause} 
+                  className="w-16 h-16 rounded-full border-2 border-orange-400 flex flex-col items-center justify-center text-orange-500 active:scale-90 transition-transform"
+                  title="Pausa Breve"
+                >
+                  <Pause size={20} />
+                  <span className="text-[8px] font-black uppercase mt-0.5">Pausa</span>
                 </button>
                 <button
                   onClick={handleStop}
@@ -395,7 +460,14 @@ function WorkTimer({ onClose }) {
                 >
                   <Square size={28} fill="currentColor" />
                 </button>
-                <div className="w-16" />
+                <button 
+                  onClick={handleLunchBreak} 
+                  className="w-16 h-16 rounded-full border-2 border-emerald-400 flex flex-col items-center justify-center text-emerald-500 active:scale-90 transition-transform"
+                  title="Pausa Pranzo"
+                >
+                  <Coffee size={20} />
+                  <span className="text-[8px] font-black uppercase mt-0.5">Pranzo</span>
+                </button>
               </motion.div>
             ) : (
               <motion.div key="paused" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-4">
@@ -403,9 +475,12 @@ function WorkTimer({ onClose }) {
                   <Square size={16} fill="currentColor" />
                   Termina
                 </button>
-                <button onClick={handleResume} className="px-8 py-3.5 rounded-2xl bg-[var(--color-primary)] text-white font-black text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-transform">
+                <button 
+                  onClick={isLunchBreak ? handleResumeFromLunch : handleResume} 
+                  className="px-8 py-3.5 rounded-2xl bg-[var(--color-primary)] text-white font-black text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-transform"
+                >
                   <Play size={16} fill="currentColor" />
-                  Riprendi
+                  {isLunchBreak ? 'Riprendi Lavoro' : 'Riprendi'}
                 </button>
               </motion.div>
             )}
@@ -417,11 +492,16 @@ function WorkTimer({ onClose }) {
         isOpen={showSave}
         elapsed={elapsed}
         checkIn={checkIn}
+        lunchBreakElapsed={lunchBreakElapsed}
         onSave={handleSave}
         onCancel={() => {
           setShowSave(false)
-          startTicking()
-          resumeSession()
+          if (isLunchBreak) {
+            startLunchTicking()
+          } else {
+            startTicking()
+            resumeSession()
+          }
         }}
       />
     </>,

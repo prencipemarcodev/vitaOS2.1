@@ -8,7 +8,7 @@ import { it } from 'date-fns/locale'
 import { useAppStore } from '@/store/useAppStore'
 import { useFinanceStore } from '@/store/useFinanceStore'
 
-function BalanceChart({ userConfig }) {
+function BalanceChart({ userConfig, selectedAccount = 'all' }) {
   const { selectedMonth } = useAppStore()
   const { historicalTransactions } = useFinanceStore()
 
@@ -18,12 +18,16 @@ function BalanceChart({ userConfig }) {
     const end = endOfMonth(monthDate)
     const days = eachDayOfInterval({ start, end })
 
-    const bankBase = parseFloat(userConfig?.initial_bank_balance || 0)
-    const cashBase = parseFloat(userConfig?.initial_cash_balance || 0)
+    const bankBase = selectedAccount === 'all' || selectedAccount === 'bank' ? parseFloat(userConfig?.initial_bank_balance || 0) : 0
+    const cashBase = selectedAccount === 'all' || selectedAccount === 'cash' ? parseFloat(userConfig?.initial_cash_balance || 0) : 0
     
     // Calcoliamo la somma delle transazioni prima del mese corrente
     const monthStartStr = format(start, 'yyyy-MM-dd')
-    const priorTxs = historicalTransactions.filter(t => t.date < monthStartStr)
+    const filteredHistory = selectedAccount === 'all'
+      ? historicalTransactions
+      : historicalTransactions.filter(t => t.payment_method === selectedAccount)
+
+    const priorTxs = filteredHistory.filter(t => t.date < monthStartStr)
     const priorNet = priorTxs.reduce((sum, t) => sum + (t.type === 'income' ? parseFloat(t.amount || 0) : -parseFloat(t.amount || 0)), 0)
     
     let currentTotal = bankBase + cashBase + priorNet
@@ -31,7 +35,7 @@ function BalanceChart({ userConfig }) {
 
     return days.map(day => {
       const dayStr = format(day, 'yyyy-MM-dd')
-      const dayTxs = historicalTransactions.filter(t => t.date === dayStr)
+      const dayTxs = filteredHistory.filter(t => t.date === dayStr)
       const net = dayTxs.reduce((sum, t) => sum + (t.type === 'income' ? parseFloat(t.amount || 0) : -parseFloat(t.amount || 0)), 0)
       
       const isPastOrToday = isBefore(day, addDays(today, 1))
@@ -46,7 +50,7 @@ function BalanceChart({ userConfig }) {
         fullDate: format(day, 'EEEE dd MMMM', { locale: it })
       }
     }).filter(d => !d.isFuture)
-  }, [historicalTransactions, userConfig, selectedMonth])
+  }, [historicalTransactions, userConfig, selectedMonth, selectedAccount])
 
   return (
     <Card padding="md" className="h-[240px] flex flex-col">

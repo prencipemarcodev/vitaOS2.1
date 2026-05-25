@@ -26,6 +26,7 @@ function Finanze() {
   const [editingTx, setEditingTx] = useState(null)
   const [activeTab, setActiveTab] = useState('panoramica') // 'panoramica' | 'abbonamenti'
   const [showAddForm, setShowAddForm] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState('all')
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -35,11 +36,16 @@ function Finanze() {
     }
   }, [location.search])
 
+  const filteredTransactions = useMemo(() => {
+    if (selectedAccount === 'all') return transactions
+    return transactions.filter(t => t.payment_method === selectedAccount)
+  }, [transactions, selectedAccount])
+
   const kpis = useMemo(() => {
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
+    const income = filteredTransactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
+    const expense = filteredTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
     return { income, expense, net: income - expense }
-  }, [transactions])
+  }, [filteredTransactions])
 
   // Alert budget quando si sfora l'80%
   useEffect(() => {
@@ -144,34 +150,53 @@ function Finanze() {
             </Card>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex justify-start border-b border-[var(--border-subtle)] pb-2 shrink-0 gap-4">
-            <button
-              onClick={() => setActiveTab('panoramica')}
-              className={`text-sm font-bold pb-1 transition-all relative ${
-                activeTab === 'panoramica' 
-                  ? 'text-[var(--text-primary)]' 
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Panoramica
-              {activeTab === 'panoramica' && (
-                <span className="absolute bottom-[-9px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('abbonamenti')}
-              className={`text-sm font-bold pb-1 transition-all relative ${
-                activeTab === 'abbonamenti' 
-                  ? 'text-[var(--text-primary)]' 
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              Abbonamenti
-              {activeTab === 'abbonamenti' && (
-                <span className="absolute bottom-[-9px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
-              )}
-            </button>
+          {/* Tab Switcher & Account Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[var(--border-subtle)] pb-2 shrink-0 gap-3">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setActiveTab('panoramica')}
+                className={`text-sm font-bold pb-1 transition-all relative ${
+                  activeTab === 'panoramica' 
+                    ? 'text-[var(--text-primary)]' 
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                Panoramica
+                {activeTab === 'panoramica' && (
+                  <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('abbonamenti')}
+                className={`text-sm font-bold pb-1 transition-all relative ${
+                  activeTab === 'abbonamenti' 
+                    ? 'text-[var(--text-primary)]' 
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                Abbonamenti
+                {activeTab === 'abbonamenti' && (
+                  <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
+                )}
+              </button>
+            </div>
+            
+            {activeTab === 'panoramica' && (
+              <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Conto:</span>
+                <select
+                  value={selectedAccount}
+                  onChange={(e) => setSelectedAccount(e.target.value)}
+                  className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl text-xs font-bold text-[var(--text-primary)] focus:outline-none px-3 py-1 cursor-pointer"
+                >
+                  <option value="all">🌍 Tutti i conti</option>
+                  <option value="bank">🏦 Banco</option>
+                  <option value="cash">💵 Contanti</option>
+                  <option value="revolut">💳 Revolut</option>
+                  <option value="postepay">💳 PostePay</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <AnimatePresence mode="wait">
@@ -185,16 +210,16 @@ function Finanze() {
                 className="flex-1 min-h-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0 space-y-4"
               >
                 <div className="lg:col-span-2 space-y-4 lg:overflow-y-auto pr-1 pb-4">
-                  <BalanceChart userConfig={userConfig} />
-                  <BudgetTracker transactions={transactions} categories={categories} />
-                  <FinanceDistribution transactions={transactions} categories={categories} />
+                  <BalanceChart userConfig={userConfig} selectedAccount={selectedAccount} />
+                  <BudgetTracker transactions={filteredTransactions} categories={categories} />
+                  <FinanceDistribution transactions={filteredTransactions} categories={categories} />
                 </div>
                 <div className="flex flex-col lg:h-full min-h-0 lg:overflow-hidden">
                   <div className="flex items-center justify-between mb-2 px-1">
                     <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">Transazioni</h3>
                   </div>
                   <div className="flex-1 lg:overflow-y-auto pr-1 pb-4">
-                    <TransactionList transactions={transactions} categories={categories} onEdit={handleEdit} />
+                    <TransactionList transactions={filteredTransactions} categories={categories} onEdit={handleEdit} />
                   </div>
                 </div>
               </motion.div>

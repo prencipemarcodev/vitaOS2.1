@@ -18,6 +18,12 @@ export const useWorkSessionStore = create(
       pauseStartTime: null, // timestamp
       accumulatedPauseElapsed: 0, // secondi accumulati in pausa prima del ciclo corrente
       
+      // Lunch break state
+      isLunchBreak: false,
+      lunchBreakElapsed: 0, // secondi in pausa pranzo
+      lunchBreakStartTime: null, // timestamp
+      accumulatedLunchBreakElapsed: 0, // secondi accumulati in precedenza
+      
       // Pomodoro Timer state
       mode: 'standard',    // 'standard' | 'pomodoro'
       pomoPhase: 'work',   // 'work' | 'break'
@@ -34,6 +40,10 @@ export const useWorkSessionStore = create(
         startTime: Date.now(),
         pauseStartTime: null,
         accumulatedPauseElapsed: 0,
+        isLunchBreak: false,
+        lunchBreakElapsed: 0,
+        lunchBreakStartTime: null,
+        accumulatedLunchBreakElapsed: 0,
         mode: get().mode || 'standard',
         pomoPhase: 'work',
         pomoSecondsLeft: 25 * 60,
@@ -52,12 +62,26 @@ export const useWorkSessionStore = create(
         accumulatedPauseElapsed: get().pauseElapsed
       }),
 
+      startLunchBreak: () => set({
+        isLunchBreak: true,
+        isPaused: true,
+        lunchBreakStartTime: Date.now(),
+        accumulatedLunchBreakElapsed: get().lunchBreakElapsed
+      }),
+
+      resumeFromLunchBreak: () => set({
+        isLunchBreak: false,
+        isPaused: false,
+        lunchBreakStartTime: null,
+        accumulatedLunchBreakElapsed: get().lunchBreakElapsed
+      }),
+
       tickElapsed: () => {
         const state = get()
         if (state.isPaused) return
         const now = Date.now()
         const start = state.startTime || now
-        const calculatedElapsed = Math.floor((now - start) / 1000) - state.pauseElapsed
+        const calculatedElapsed = Math.floor((now - start) / 1000) - state.pauseElapsed - state.lunchBreakElapsed
         set({
           elapsed: Math.max(0, calculatedElapsed)
         })
@@ -65,11 +89,21 @@ export const useWorkSessionStore = create(
 
       tickPause: () => {
         const state = get()
-        if (!state.isPaused || !state.pauseStartTime) return
+        if (!state.isPaused || state.isLunchBreak || !state.pauseStartTime) return
         const now = Date.now()
         const diff = Math.floor((now - state.pauseStartTime) / 1000)
         set({
           pauseElapsed: state.accumulatedPauseElapsed + diff
+        })
+      },
+
+      tickLunchBreak: () => {
+        const state = get()
+        if (!state.isLunchBreak || !state.lunchBreakStartTime) return
+        const now = Date.now()
+        const diff = Math.floor((now - state.lunchBreakStartTime) / 1000)
+        set({
+          lunchBreakElapsed: state.accumulatedLunchBreakElapsed + diff
         })
       },
       
@@ -102,6 +136,10 @@ export const useWorkSessionStore = create(
         startTime: null,
         pauseStartTime: null,
         accumulatedPauseElapsed: 0,
+        isLunchBreak: false,
+        lunchBreakElapsed: 0,
+        lunchBreakStartTime: null,
+        accumulatedLunchBreakElapsed: 0,
         pomoPhase: 'work',
         pomoSecondsLeft: 25 * 60,
         completedPomodoros: 0,
