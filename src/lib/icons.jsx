@@ -3,7 +3,7 @@ import {
   Home, Utensils, Car, Heart, Dumbbell, Shirt, Film, Zap, Tv, PiggyBank,
   Target, ShoppingCart, Coffee, GraduationCap, Briefcase, Plane,
   Users, Music, Palette, Camera, Smartphone, HardDrive, Cpu, 
-  Wallet, TrendingUp, Landmark, ShieldCheck, HelpCircle
+  Wallet, TrendingUp, Landmark, ShieldCheck, HelpCircle, CreditCard
 } from 'lucide-react'
 
 export const ICON_MAP = {
@@ -46,7 +46,8 @@ export const ICON_MAP = {
   TrendingUp,
   Landmark,
   ShieldCheck,
-  HelpCircle
+  HelpCircle,
+  CreditCard
 }
 
 export const ICON_OPTIONS = Object.keys(ICON_MAP)

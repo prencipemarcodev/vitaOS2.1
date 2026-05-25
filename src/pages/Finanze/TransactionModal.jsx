@@ -3,16 +3,21 @@ import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useAppStore } from '@/store/useAppStore'
+import { getAccounts } from '@/lib/accounts'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
+
 function TransactionModal({ isOpen, onClose, txToEdit = null }) {
   const { categories, addTransaction, updateTransaction, addCategory } = useFinanceStore()
   const { pushError, pushSuccess } = useNotifications()
   const { user } = useAuthStore()
+  const { userConfig } = useAppStore()
+  const accounts = getAccounts(userConfig)
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -26,14 +31,17 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
   })
 
   useEffect(() => {
+    const defaultMethod = accounts[0]?.id || 'bank'
+    const defaultTarget = accounts[1]?.id || 'cash'
+    
     if (txToEdit) {
       setFormData({
         date: txToEdit.date,
         amount: txToEdit.amount.toString(),
         type: txToEdit.type,
         category: txToEdit.category || '',
-        payment_method: txToEdit.payment_method || 'bank',
-        target_account: 'cash',
+        payment_method: txToEdit.payment_method || defaultMethod,
+        target_account: defaultTarget,
         description: txToEdit.description || '',
       })
     } else {
@@ -42,12 +50,12 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         amount: '',
         type: 'expense',
         category: categories.find(c => c.type === 'expense')?.id || '',
-        payment_method: 'bank',
-        target_account: 'cash',
+        payment_method: defaultMethod,
+        target_account: defaultTarget,
         description: '',
       })
     }
-  }, [txToEdit, isOpen, categories])
+  }, [txToEdit, isOpen, categories, userConfig])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -92,10 +100,8 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         }
 
         const getAccountName = (key) => {
-          if (key === 'bank') return 'Banco'
-          if (key === 'cash') return 'Contanti'
-          if (key === 'revolut') return 'Revolut'
-          return 'PostePay'
+          const acc = accounts.find(a => a.id === key)
+          return acc ? acc.name : 'Conto'
         }
 
         // 1. Crea l'uscita sul conto sorgente
@@ -266,23 +272,23 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[var(--text-secondary)]">Conto / Cassa</label>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { key: 'bank', label: '🏦 Banco' },
-                { key: 'cash', label: '💵 Contanti' },
-                { key: 'revolut', label: '💳 Revolut' },
-                { key: 'postepay', label: '💳 PostePay' }
-              ].map(m => (
+              {accounts.map(acc => (
                 <button
-                  key={m.key}
+                  key={acc.id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, payment_method: m.key })}
-                  className={`py-2 text-xs font-bold border rounded-[var(--radius-md)] transition-colors ${
-                    formData.payment_method === m.key 
-                      ? 'border-[var(--color-primary)] bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm' 
+                  onClick={() => setFormData({ ...formData, payment_method: acc.id })}
+                  className={`py-2 text-xs font-bold border rounded-[var(--radius-md)] transition-all ${
+                    formData.payment_method === acc.id 
+                      ? 'shadow-sm font-black' 
                       : 'border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
                   }`}
+                  style={{
+                    backgroundColor: formData.payment_method === acc.id ? `${acc.color}15` : 'transparent',
+                    borderColor: formData.payment_method === acc.id ? acc.color : 'var(--border-subtle)',
+                    color: formData.payment_method === acc.id ? acc.color : 'var(--text-muted)'
+                  }}
                 >
-                  {m.label}
+                  {acc.name}
                 </button>
               ))}
             </div>
@@ -294,12 +300,11 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
               <select
                 value={formData.payment_method}
                 onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
-                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)] font-bold text-[var(--text-primary)] cursor-pointer"
               >
-                <option value="bank">🏦 Banco</option>
-                <option value="cash">💵 Contanti</option>
-                <option value="revolut">💳 Revolut</option>
-                <option value="postepay">💳 PostePay</option>
+                {accounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>{acc.name}</option>
+                ))}
               </select>
             </div>
             
@@ -308,12 +313,11 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
               <select
                 value={formData.target_account}
                 onChange={e => setFormData({ ...formData, target_account: e.target.value })}
-                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)] font-bold text-[var(--text-primary)] cursor-pointer"
               >
-                <option value="bank">🏦 Banco</option>
-                <option value="cash">💵 Contanti</option>
-                <option value="revolut">💳 Revolut</option>
-                <option value="postepay">💳 PostePay</option>
+                {accounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>{acc.name}</option>
+                ))}
               </select>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { startOfMonth, endOfMonth, eachDayOfInterval, format, isBefore, addDays 
 import { it } from 'date-fns/locale'
 import { useAppStore } from '@/store/useAppStore'
 import { useFinanceStore } from '@/store/useFinanceStore'
+import { getAccounts } from '@/lib/accounts'
 
 function BalanceChart({ userConfig, selectedAccount = 'all' }) {
   const { selectedMonth } = useAppStore()
@@ -18,8 +19,14 @@ function BalanceChart({ userConfig, selectedAccount = 'all' }) {
     const end = endOfMonth(monthDate)
     const days = eachDayOfInterval({ start, end })
 
-    const bankBase = selectedAccount === 'all' || selectedAccount === 'bank' ? parseFloat(userConfig?.initial_bank_balance || 0) : 0
-    const cashBase = selectedAccount === 'all' || selectedAccount === 'cash' ? parseFloat(userConfig?.initial_cash_balance || 0) : 0
+    const accounts = getAccounts(userConfig)
+    let baseBalance = 0
+    if (selectedAccount === 'all') {
+      baseBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.initial_balance || 0), 0)
+    } else {
+      const targetAcc = accounts.find(a => a.id === selectedAccount)
+      baseBalance = targetAcc ? parseFloat(targetAcc.initial_balance || 0) : 0
+    }
     
     // Calcoliamo la somma delle transazioni prima del mese corrente
     const monthStartStr = format(start, 'yyyy-MM-dd')
@@ -30,7 +37,7 @@ function BalanceChart({ userConfig, selectedAccount = 'all' }) {
     const priorTxs = filteredHistory.filter(t => t.date < monthStartStr)
     const priorNet = priorTxs.reduce((sum, t) => sum + (t.type === 'income' ? parseFloat(t.amount || 0) : -parseFloat(t.amount || 0)), 0)
     
-    let currentTotal = bankBase + cashBase + priorNet
+    let currentTotal = baseBalance + priorNet
     const today = new Date()
 
     return days.map(day => {

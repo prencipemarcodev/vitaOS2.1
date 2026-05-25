@@ -17,6 +17,8 @@ import SubscriptionManager from './SubscriptionManager'
 import { toast } from 'sonner'
 import { AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getAccounts } from '@/lib/accounts'
+
 
 function Finanze() {
   const { transactions, categories, loading } = useFinanceStore()
@@ -189,11 +191,12 @@ function Finanze() {
                   onChange={(e) => setSelectedAccount(e.target.value)}
                   className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl text-xs font-bold text-[var(--text-primary)] focus:outline-none px-3 py-1 cursor-pointer"
                 >
-                  <option value="all">🌍 Tutti i conti</option>
-                  <option value="bank">🏦 Banco</option>
-                  <option value="cash">💵 Contanti</option>
-                  <option value="revolut">💳 Revolut</option>
-                  <option value="postepay">💳 PostePay</option>
+                  <option value="all">Tutti i conti</option>
+                  {getAccounts(userConfig).map(acc => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}

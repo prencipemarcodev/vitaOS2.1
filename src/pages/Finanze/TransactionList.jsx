@@ -4,6 +4,8 @@ import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useNotifications } from '@/hooks/useNotifications'
+import { useAppStore } from '@/store/useAppStore'
+import { getAccounts } from '@/lib/accounts'
 import { toast } from 'sonner'
 import { format, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -13,6 +15,9 @@ import clsx from 'clsx'
 function TransactionList({ transactions, categories, onEdit }) {
   const { removeTransaction } = useFinanceStore()
   const { pushError, pushSuccess } = useNotifications()
+  const { userConfig } = useAppStore()
+  const accounts = getAccounts(userConfig)
+
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa transazione?')) return
@@ -60,18 +65,21 @@ function TransactionList({ transactions, categories, onEdit }) {
                       {format(parseISO(tx.date), 'dd MMM', { locale: it })}
                     </p>
                     <span className="text-[8px] font-bold text-[var(--text-muted)] opacity-50">•</span>
-                    <span className={clsx(
-                      "text-[7px] font-black uppercase tracking-wider px-1 py-0.5 rounded shrink-0 border",
-                      tx.payment_method === 'bank' ? 'bg-blue-500/5 text-blue-500 border-blue-500/20' :
-                      tx.payment_method === 'cash' ? 'bg-amber-500/5 text-amber-500 border-amber-500/20' :
-                      tx.payment_method === 'revolut' ? 'bg-purple-500/5 text-purple-500 border-purple-500/20' :
-                      'bg-pink-500/5 text-pink-500 border-pink-500/20'
-                    )}>
-                      {tx.payment_method === 'bank' ? 'Banco' :
-                       tx.payment_method === 'cash' ? 'Contanti' :
-                       tx.payment_method === 'revolut' ? 'Revolut' :
-                       'PostePay'}
-                    </span>
+                    {(() => {
+                      const acc = accounts.find(a => a.id === tx.payment_method)
+                      return (
+                        <span 
+                          className="text-[7px] font-black uppercase tracking-wider px-1 py-0.5 rounded shrink-0 border"
+                          style={{ 
+                            backgroundColor: acc ? `${acc.color}08` : 'rgba(149,165,166,0.05)', 
+                            borderColor: acc ? `${acc.color}20` : 'rgba(149,165,166,0.2)', 
+                            color: acc ? acc.color : 'var(--text-muted)' 
+                          }}
+                        >
+                          {acc ? acc.name : 'Altro'}
+                        </span>
+                      )
+                    })()}
                   </div>
                   <p className="text-sm font-bold text-[var(--text-primary)] truncate max-w-[140px] lg:max-w-[200px]">
                     {tx.description || (tx.type === 'income' ? 'Entrata' : 'Uscita')}

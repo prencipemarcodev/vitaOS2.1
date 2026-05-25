@@ -60,15 +60,15 @@ function Impostazioni() {
                   key={s.id}
                   onClick={() => setActiveSection(s.id)}
                   className={clsx(
-                    'flex items-center gap-3 mx-4 px-4 py-2.5 rounded-xl transition-all duration-200 text-left',
+                    'flex items-center gap-3 mx-3 px-3 py-2 rounded-[var(--radius-md)] transition-all duration-200 text-left',
                     isActive
-                      ? 'bg-[var(--text-primary)] text-white font-bold shadow-lg scale-[1.02]'
+                      ? 'bg-[var(--text-primary)] text-white font-bold shadow-lg scale-[1.01]'
                       : 'text-[var(--text-secondary)] hover:bg-[var(--bg-base)] hover:text-[var(--text-primary)]',
                     s.id === 'reset' && !isActive && 'text-[var(--color-danger)]'
                   )}
                 >
-                  <s.icon size={18} />
-                  <span className="text-sm">{s.label}</span>
+                  <s.icon size={18} className="shrink-0" />
+                  <span className="text-[13px] font-medium">{s.label}</span>
                 </button>
               )
             })}

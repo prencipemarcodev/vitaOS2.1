@@ -41,6 +41,18 @@ export const useAppStore = create(
           const gps_keepalive = nextConfig.gps_keepalive ?? (localStorage.getItem('vitaos_gps_gps_keepalive') === 'true')
           const gps_keepalive_interval_ms = nextConfig.gps_keepalive_interval_ms ?? (localStorage.getItem('vitaos_gps_gps_keepalive_interval_ms') ? parseInt(localStorage.getItem('vitaos_gps_gps_keepalive_interval_ms')) : 2000)
 
+          let custom_accounts = nextConfig.custom_accounts
+          if (custom_accounts === undefined || custom_accounts === null) {
+            const localAcc = localStorage.getItem('vitaos_custom_accounts')
+            if (localAcc) {
+              try {
+                custom_accounts = JSON.parse(localAcc)
+              } catch (e) {
+                console.error("Errore nel parsing locale dei conti:", e)
+              }
+            }
+          }
+
           // Salva in localStorage se presenti esplicitamente
           if ('gps_preset' in nextConfig && nextConfig.gps_preset !== undefined) {
             localStorage.setItem('vitaos_gps_gps_preset', nextConfig.gps_preset)
@@ -54,6 +66,9 @@ export const useAppStore = create(
           if ('gps_keepalive_interval_ms' in nextConfig && nextConfig.gps_keepalive_interval_ms !== undefined) {
             localStorage.setItem('vitaos_gps_gps_keepalive_interval_ms', nextConfig.gps_keepalive_interval_ms.toString())
           }
+          if ('custom_accounts' in nextConfig && nextConfig.custom_accounts !== undefined && nextConfig.custom_accounts !== null) {
+            localStorage.setItem('vitaos_custom_accounts', JSON.stringify(nextConfig.custom_accounts))
+          }
 
           return {
             userConfig: {
@@ -61,7 +76,8 @@ export const useAppStore = create(
               gps_preset,
               gps_jitter_meters,
               gps_keepalive,
-              gps_keepalive_interval_ms
+              gps_keepalive_interval_ms,
+              custom_accounts
             }
           }
         }

@@ -9,6 +9,7 @@ import { useNoteStore } from '@/store/useNoteStore'
 import { useSavingsStore } from '@/store/useSavingsStore'
 import { useTaskStore } from '@/store/useTaskStore'
 import { startOfMonth, endOfMonth, format } from 'date-fns'
+import { getAccounts } from '@/lib/accounts'
 
 /**
  * useSupabaseSync — carica i dati iniziali da Supabase e li sincronizza negli store.
@@ -191,11 +192,11 @@ export function useSupabaseSync() {
           if (allTxsRes.data) {
             setHistoricalTransactions(allTxsRes.data)
             const userConfig = useAppStore.getState().userConfig
-            const bank = parseFloat(userConfig?.initial_bank_balance || 0)
-            const cash = parseFloat(userConfig?.initial_cash_balance || 0)
+            const accounts = getAccounts(userConfig)
+            const baseBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.initial_balance || 0), 0)
             const inc = allTxsRes.data.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
             const exp = allTxsRes.data.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-            setCumulativeBalance(bank + cash + inc - exp)
+            setCumulativeBalance(baseBalance + inc - exp)
           }
         }
       }
@@ -204,11 +205,11 @@ export function useSupabaseSync() {
     if (cumulativeRes.data && !hasGeneratedTxs) {
       setHistoricalTransactions(cumulativeRes.data)
       const userConfig = useAppStore.getState().userConfig
-      const bank = parseFloat(userConfig?.initial_bank_balance || 0)
-      const cash = parseFloat(userConfig?.initial_cash_balance || 0)
+      const accounts = getAccounts(userConfig)
+      const baseBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.initial_balance || 0), 0)
       const inc = cumulativeRes.data.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
       const exp = cumulativeRes.data.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-      setCumulativeBalance(bank + cash + inc - exp)
+      setCumulativeBalance(baseBalance + inc - exp)
     }
     setFinLoading(false)
   }, [getAuthUser, monthStart, monthEnd, setTransactions, setCategories, setCumulativeBalance, setHistoricalTransactions, addTransaction, setFinLoading])

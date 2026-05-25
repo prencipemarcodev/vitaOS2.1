@@ -18,6 +18,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { differenceInMonths, parseISO, startOfMonth } from 'date-fns'
 import PACChart from './PACChart'
+import { getAccounts } from '@/lib/accounts'
 
 function PlanCard({ plan, onEdit }) {
   const { updatePlan, removePlan, addMovement, movements } = useSavingsStore()
@@ -59,15 +60,18 @@ function PlanCard({ plan, onEdit }) {
   const saldo = useMemo(() => {
     const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
     const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-    const bankBase = parseFloat(userConfig?.initial_bank_balance) || 0
-    const cashBase = parseFloat(userConfig?.initial_cash_balance) || 0
-    return bankBase + cashBase + income - expense
+    const accounts = getAccounts(userConfig)
+    const baseBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.initial_balance || 0), 0)
+    return baseBalance + income - expense
   }, [transactions, userConfig])
 
   const canDeposit = saldo >= 50
 
   const [customAmount, setCustomAmount] = useState('')
-  const [method, setMethod] = useState('bank')
+  const [method, setMethod] = useState(() => {
+    const accounts = getAccounts(userConfig)
+    return accounts[0]?.id || 'bank'
+  })
 
   const handleAdjust = async (type) => {
     const amount = parseFloat(customAmount)
@@ -225,27 +229,24 @@ function PlanCard({ plan, onEdit }) {
 
       <div className="space-y-2 mt-4">
         {/* Selettore Metodo */}
-        <div className="flex gap-1 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border-subtle)]">
-          <button 
-            onClick={() => setMethod('bank')}
-            className={clsx(
-              "flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-[8px] font-black transition-all",
-              method === 'bank' ? "bg-white shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)] hover:bg-black/5"
-            )}
-          >
-            <CreditCard size={10} />
-            CONTO
-          </button>
-          <button 
-            onClick={() => setMethod('cash')}
-            className={clsx(
-              "flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg text-[8px] font-black transition-all",
-              method === 'cash' ? "bg-white shadow-sm text-orange-600" : "text-[var(--text-muted)] hover:bg-black/5"
-            )}
-          >
-            <Banknote size={10} />
-            CONTANTI
-          </button>
+        <div className="flex flex-wrap gap-1 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border-subtle)]">
+          {getAccounts(userConfig).map(acc => (
+            <button 
+              key={acc.id}
+              onClick={() => setMethod(acc.id)}
+              className={clsx(
+                "flex-1 flex items-center justify-center gap-1 py-1 rounded-lg text-[8px] font-black transition-all whitespace-nowrap px-1.5 uppercase",
+                method === acc.id 
+                  ? "bg-white shadow-sm" 
+                  : "text-[var(--text-muted)] hover:bg-black/5"
+              )}
+              style={{
+                color: method === acc.id ? acc.color : 'var(--text-muted)'
+              }}
+            >
+              {acc.name}
+            </button>
+          ))}
         </div>
 
         <div className="flex items-center gap-2 bg-[var(--bg-base)] p-1.5 rounded-2xl border border-[var(--border-subtle)]">
