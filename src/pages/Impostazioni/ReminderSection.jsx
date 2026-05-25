@@ -67,15 +67,24 @@ function ReminderSection() {
     }
   }
 
-  const handleTestNotification = () => {
+  const handleTestNotification = async () => {
     // 1. Notifica di sistema (Native Push / OS Desktop)
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification("VitaOS 2.1 — Test Notifica", {
-          body: "Il tuo dispositivo è configurato correttamente per ricevere avvisi da VitaOS! 🚀",
-          icon: "/pwa-192x192.png",
-          tag: "vitaos-test"
-        })
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready
+          reg.showNotification("VitaOS 2.1 — Test Notifica", {
+            body: "Il tuo dispositivo è configurato correttamente per ricevere avvisi da VitaOS! 🚀",
+            icon: "/icon-192.png",
+            tag: "vitaos-test"
+          })
+        } else {
+          new Notification("VitaOS 2.1 — Test Notifica", {
+            body: "Il tuo dispositivo è configurato correttamente per ricevere avvisi da VitaOS! 🚀",
+            icon: "/icon-192.png",
+            tag: "vitaos-test"
+          })
+        }
       } catch (e) {
         console.warn("[System Notification] Fallback triggered due to error:", e)
       }

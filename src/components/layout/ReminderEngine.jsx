@@ -55,14 +55,23 @@ export function ReminderEngine() {
   useEffect(() => {
     if (!enabled) return
 
-    const sendSystemNotification = (title, body) => {
+    const sendSystemNotification = async (title, body) => {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         try {
-          new Notification(title, {
-            body,
-            icon: "/pwa-192x192.png",
-            tag: "vitaos-reminder"
-          })
+          if ('serviceWorker' in navigator) {
+            const reg = await navigator.serviceWorker.ready
+            reg.showNotification(title, {
+              body,
+              icon: "/icon-192.png",
+              tag: "vitaos-reminder"
+            })
+          } else {
+            new Notification(title, {
+              body,
+              icon: "/icon-192.png",
+              tag: "vitaos-reminder"
+            })
+          }
         } catch (e) {
           console.warn('[ReminderEngine] system notification failed:', e)
         }
