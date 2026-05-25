@@ -54,9 +54,26 @@ function ResetSection() {
     toast.info('Esportazione in corso...')
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Utente non autenticato!')
+        return
+      }
+
       const dump = {}
       for (const t of selectedTables) {
-        const { data } = await supabase.from(t).select('*')
+        let query = supabase.from(t).select('*')
+        
+        if (t === 'finance_categories') {
+          query = query.or(`user_id.eq.${user.id},user_id.is.null`)
+        } else if (t === 'notifications_read') {
+          // Questa tabella non ha user_id, selezioniamo tutti i record per retrocompatibilità
+          query = query
+        } else {
+          query = query.eq('user_id', user.id)
+        }
+
+        const { data } = await query
         dump[t] = data || []
       }
 
@@ -77,34 +94,75 @@ function ResetSection() {
 
   const handleResetOnboarding = async () => {
     setLoading(true)
-    if (userConfig?.id) {
-      await supabase.from('user_config').update({ onboarding_completed: false }).eq('id', userConfig.id)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Utente non autenticato!')
+        setLoading(false)
+        return
+      }
+
+      if (userConfig?.id) {
+        await supabase
+          .from('user_config')
+          .update({ onboarding_completed: false })
+          .eq('id', userConfig.id)
+          .eq('user_id', user.id)
+      }
+      setOnboardingCompleted(false)
+      setShowReset(false)
+      toast.success('Onboarding riattivato. Ricarica la pagina.')
+    } catch (err) {
+      toast.error("Errore durante il reset dell'onboarding")
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
-    setOnboardingCompleted(false)
-    setLoading(false)
-    setShowReset(false)
-    toast.success('Onboarding riattivato. Ricarica la pagina.')
   }
 
   const handleResetAll = async () => {
     setLoading(true)
-    const tables = [
-      'saving_movements', 'saving_plans',
-      'transactions', 'work_sessions', 'absences', 'calendar_events',
-      'recurring_events', 'workout_sessions', 'weight_log', 'gym_schedules',
-      'notes', 'notifications_read', 'sleep_log', 'water_log'
-    ]
-    for (const t of tables) {
-      await supabase.from(t).delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Utente non autenticato!')
+        setLoading(false)
+        return
+      }
+
+      const tables = [
+        'saving_movements', 'saving_plans',
+        'transactions', 'work_sessions', 'absences', 'calendar_events',
+        'recurring_events', 'workout_sessions', 'weight_log', 'gym_schedules',
+        'notes', 'notifications_read', 'sleep_log', 'water_log'
+      ]
+      for (const t of tables) {
+        let query = supabase.from(t).delete()
+        if (t === 'notifications_read') {
+          query = query.neq('id', '00000000-0000-0000-0000-000000000000')
+        } else {
+          query = query.eq('user_id', user.id)
+        }
+        await query
+      }
+
+      if (userConfig?.id) {
+        await supabase
+          .from('user_config')
+          .update({ onboarding_completed: false })
+          .eq('id', userConfig.id)
+          .eq('user_id', user.id)
+      }
+      setOnboardingCompleted(false)
+      setShowReset(false)
+      toast.success('Tutti i dati sono stati resettati.')
+      window.location.reload()
+    } catch (err) {
+      toast.error('Errore durante il reset dei dati')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
-    if (userConfig?.id) {
-      await supabase.from('user_config').update({ onboarding_completed: false }).eq('id', userConfig.id)
-    }
-    setOnboardingCompleted(false)
-    setLoading(false)
-    setShowReset(false)
-    toast.success('Tutti i dati sono stati resettati.')
-    window.location.reload()
   }
 
   return (
