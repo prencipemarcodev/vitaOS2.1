@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import Card from '@/components/ui/Card'
 import { eachDayOfInterval, subDays, format, isSameDay } from 'date-fns'
+import { it } from 'date-fns/locale'
 import clsx from 'clsx'
 
 function WorkoutHeatmap({ sessions }) {
