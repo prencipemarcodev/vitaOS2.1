@@ -18,7 +18,7 @@ import { formatCurrency } from '@/lib/formatters'
 
 function Overview() {
   const { userConfig, selectedMonth } = useAppStore()
-  const { transactions } = useFinanceStore()
+  const { transactions, cumulativeBalance } = useFinanceStore()
   const { sessions } = useFirmeStore()
   const { events } = useCalendarStore()
   const { plans } = useSavingsStore()
@@ -26,12 +26,14 @@ function Overview() {
 
   // ── KPI derivati ──
   const kpis = useMemo(() => {
-    // Saldo
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-    const bankBase = parseFloat(userConfig?.initial_bank_balance) || 0
-    const cashBase = parseFloat(userConfig?.initial_cash_balance) || 0
-    const saldo = bankBase + cashBase + income - expense
+    // Saldo: usa cumulativeBalance (tutte le transazioni fino alla fine del mese selezionato)
+    // NON ricalcolare da transactions filtrate per mese — altrimenti mesi futuri vuoti
+    // mostrano un saldo artificialmente più alto perché mancano le uscite passate.
+    const saldo = cumulativeBalance
+
+    // Variazione del mese corrente (solo per il sottotitolo)
+    const monthIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+    const monthExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
 
     // Ore lavorate
     const totalMinutes = sessions.reduce((s, sess) => s + (sess.duration_minutes || 0), 0)
@@ -107,8 +109,8 @@ function Overview() {
       ? (parseFloat(activePlan.current_amount) / parseFloat(activePlan.target_amount) * 100).toFixed(0)
       : null
 
-    return { saldo, income, expense, totalMinutes, upcoming, activePlan, planProgress }
-  }, [transactions, sessions, events, plans, userConfig])
+    return { saldo, income: monthIncome, expense: monthExpense, totalMinutes, upcoming, activePlan, planProgress }
+  }, [transactions, cumulativeBalance, sessions, events, plans, userConfig])
 
   return (
     <>
