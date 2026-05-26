@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase, Trash2, ChevronDown } from 'lucide-react'
@@ -9,14 +9,6 @@ import { supabase } from '@/lib/supabase'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import clsx from 'clsx'
-
-function formatTime(totalSeconds) {
-  const h = Math.floor(totalSeconds / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = totalSeconds % 60
-  if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
 
 function formatHM(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600)
@@ -78,19 +70,24 @@ function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCanc
         initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-        className="w-full max-w-sm bg-[var(--bg-surface)] rounded-3xl p-6 shadow-2xl"
+        className="w-full max-w-sm bg-[var(--bg-surface)] rounded-[32px] p-5 sm:p-6 shadow-2xl border border-[var(--border-subtle)] text-center"
       >
-        <h3 className="text-base font-black mb-1">Termina sessione</h3>
+        <h3 className="text-base font-black mb-1" style={{ fontFamily: 'var(--font-display)' }}>Termina sessione</h3>
         
-        {/* Orari Regolabili */}
-        <div className="grid grid-cols-2 gap-4 mb-4 mt-3">
+        {/* Orari Regolabili — optimized spacing for perfect mobile layout */}
+        <div className="grid grid-cols-2 gap-3 mb-4 mt-4">
           <div className="space-y-1.5 text-left">
             <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Ora Inizio</label>
             <input
               type="time"
               value={editedCheckIn}
               onChange={e => setEditedCheckIn(e.target.value)}
-              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              className="w-full text-center bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-2xl py-2.5 px-2 text-sm sm:text-base font-black text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              style={{
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
+                minWidth: '0',
+              }}
             />
           </div>
           <div className="space-y-1.5 text-left">
@@ -99,7 +96,12 @@ function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCanc
               type="time"
               value={editedCheckOut}
               onChange={e => setEditedCheckOut(e.target.value)}
-              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              className="w-full text-center bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-2xl py-2.5 px-2 text-sm sm:text-base font-black text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+              style={{
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
+                minWidth: '0',
+              }}
             />
           </div>
         </div>
@@ -117,35 +119,53 @@ function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCanc
           )}
         </p>
 
-        <div className="space-y-2 mb-5">
+        <div className="space-y-2 mb-5 text-left">
           <label className="text-xs font-bold text-[var(--text-secondary)]">Note (opzionale)</label>
           <textarea
             rows={3}
-            placeholder="Es: Riunione mattutina, sviluppo feature X..."
+            placeholder="Es: Sviluppo feature X, riunione..."
             value={notes}
             onChange={e => setNotes(e.target.value)}
             className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
           />
         </div>
-        <div className="flex gap-2">
-          <button onClick={onCancel} className="flex-1 py-3 rounded-2xl border border-[var(--border-subtle)] text-sm font-bold text-[var(--text-muted)]">
-            Annulla
-          </button>
-          <button onClick={handleSave} disabled={loading} className="flex-1 py-3 rounded-2xl bg-[var(--color-primary)] text-white text-sm font-black shadow-lg disabled:opacity-60">
+
+        {/* Vertical Stacking for perfectly dimensioned, unified font-black buttons */}
+        <div className="space-y-2.5 mt-5">
+          <button 
+            onClick={handleSave} 
+            disabled={loading} 
+            className="w-full py-3.5 rounded-2xl bg-[var(--color-primary)] text-white text-sm font-black shadow-lg disabled:opacity-60 transition-transform active:scale-[0.97]"
+          >
             {loading ? 'Salvo...' : 'Salva Sessione'}
           </button>
+          
+          <button 
+            onClick={onCancel} 
+            className="w-full py-3.5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-sm font-black text-[var(--text-secondary)] transition-transform active:scale-[0.97]"
+          >
+            Annulla
+          </button>
+          
+          <button 
+            onClick={onDiscard} 
+            className="w-full py-3.5 rounded-2xl border border-red-200 dark:border-red-950/30 bg-red-50/20 dark:bg-red-950/10 text-sm font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-transform active:scale-[0.97] flex items-center justify-center gap-1.5"
+          >
+            <Trash2 size={14} />
+            Elimina Sessione
+          </button>
         </div>
-
-        <button 
-          onClick={onDiscard} 
-          className="w-full py-2.5 rounded-2xl text-xs font-bold text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/10 transition-colors flex items-center justify-center gap-1.5 mt-2"
-        >
-          <Trash2 size={13} />
-          Elimina Sessione
-        </button>
       </motion.div>
     </motion.div>
   )
+}
+
+function formatTime(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 function WorkTimer({ onClose }) {
@@ -156,10 +176,9 @@ function WorkTimer({ onClose }) {
     elapsed, pauseElapsed,
     isLunchBreak, lunchBreakElapsed,
     mode, pomoPhase, pomoSecondsLeft, completedPomodoros,
-    pauseSession, resumeSession, tickElapsed, tickPause, stopSession,
-    setMode, setPomoPhase, setPomoSecondsLeft, setCompletedPomodoros, tickPomo,
-    startLunchBreak, resumeFromLunchBreak, tickLunchBreak,
-    setFullTimerOpen,
+    pauseSession, resumeSession, stopSession,
+    setMode, setFullTimerOpen,
+    startLunchBreak, resumeFromLunchBreak,
   } = useWorkSessionStore()
 
   const [showSave, setShowSave] = useState(false)
@@ -170,116 +189,24 @@ function WorkTimer({ onClose }) {
       setFullTimerOpen(false)
     }
   }
-  const timerRef = useRef(null)
-  const pauseTimerRef = useRef(null)
-  const lunchTimerRef = useRef(null)
-
-  const startTicking = useCallback(() => {
-    if (timerRef.current) return
-    timerRef.current = setInterval(() => {
-      tickElapsed()
-      
-      const currentStore = useWorkSessionStore.getState()
-      if (currentStore.mode === 'pomodoro') {
-        const prevPhase = currentStore.pomoPhase
-        tickPomo()
-        
-        const nextStore = useWorkSessionStore.getState()
-        if (nextStore.pomoPhase !== prevPhase) {
-          // Fase cambiata!
-          if (nextStore.pomoPhase === 'break') {
-            toast.success("🍅 Pomodoro completato! Ora 5 minuti di pausa caffè.", { duration: 8000 })
-            try {
-              const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-              const osc = audioCtx.createOscillator()
-              osc.type = 'sine'
-              osc.frequency.setValueAtTime(880, audioCtx.currentTime) // La (A5)
-              osc.connect(audioCtx.destination)
-              osc.start()
-              osc.stop(audioCtx.currentTime + 0.3)
-            } catch (e) {}
-          } else {
-            toast.info("💼 Pausa terminata! Si ricomincia a lavorare.", { duration: 8000 })
-            try {
-              const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-              const osc = audioCtx.createOscillator()
-              osc.type = 'sine'
-              osc.frequency.setValueAtTime(660, audioCtx.currentTime) // Mi (E5)
-              osc.connect(audioCtx.destination)
-              osc.start()
-              osc.stop(audioCtx.currentTime + 0.3)
-            } catch (e) {}
-          }
-        }
-      }
-    }, 1000)
-  }, [tickElapsed, tickPomo])
-
-  const stopTicking = useCallback(() => {
-    clearInterval(timerRef.current)
-    timerRef.current = null
-  }, [])
-
-  const startPauseTicking = useCallback(() => {
-    if (pauseTimerRef.current) return
-    pauseTimerRef.current = setInterval(() => tickPause(), 1000)
-  }, [tickPause])
-
-  const stopPauseTicking = useCallback(() => {
-    clearInterval(pauseTimerRef.current)
-    pauseTimerRef.current = null
-  }, [])
-
-  const startLunchTicking = useCallback(() => {
-    if (lunchTimerRef.current) return
-    lunchTimerRef.current = setInterval(() => tickLunchBreak(), 1000)
-  }, [tickLunchBreak])
-
-  const stopLunchTicking = useCallback(() => {
-    clearInterval(lunchTimerRef.current)
-    lunchTimerRef.current = null
-  }, [])
-
-  useEffect(() => {
-    if (isRunning && !isPaused) startTicking()
-    if (isRunning && isPaused && !isLunchBreak) startPauseTicking()
-    if (isRunning && isPaused && isLunchBreak) startLunchTicking()
-    return () => { 
-      stopTicking()
-      stopPauseTicking()
-      stopLunchTicking()
-    }
-  }, [isRunning, isPaused, isLunchBreak, startTicking, startPauseTicking, startLunchTicking, stopTicking, stopPauseTicking, stopLunchTicking])
 
   const handlePause = () => {
     pauseSession()
-    stopTicking()
-    startPauseTicking()
   }
 
   const handleResume = () => {
     resumeSession()
-    stopPauseTicking()
-    startTicking()
   }
 
   const handleLunchBreak = () => {
     startLunchBreak()
-    stopTicking()
-    stopPauseTicking()
-    startLunchTicking()
   }
 
   const handleResumeFromLunch = () => {
     resumeFromLunchBreak()
-    stopLunchTicking()
-    startTicking()
   }
 
   const handleStop = () => {
-    stopTicking()
-    stopPauseTicking()
-    stopLunchTicking()
     setShowSave(true)
   }
 
@@ -363,10 +290,35 @@ function WorkTimer({ onClose }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-        className="fixed inset-0 z-[9999] bg-[var(--bg-base)] flex flex-col"
+        className="fixed inset-0 z-[9999] bg-[var(--bg-base)] flex flex-col overflow-hidden"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+        {/* Subtle pulsing background glow orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.25, 1],
+              opacity: [0.15, 0.28, 0.15],
+              x: [0, 30, 0],
+              y: [0, -40, 0]
+            }}
+            transition={{ repeat: Infinity, duration: 12, ease: "easeInOut" }}
+            className="absolute -top-32 -left-32 w-[450px] h-[450px] rounded-full bg-[var(--color-primary)] blur-[120px]"
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.35, 1],
+              opacity: [0.12, 0.25, 0.12],
+              x: [0, -50, 0],
+              y: [0, 30, 0]
+            }}
+            transition={{ repeat: Infinity, duration: 15, ease: "easeInOut", delay: 2.5 }}
+            className="absolute -bottom-32 -right-32 w-[450px] h-[450px] rounded-full bg-emerald-500 blur-[120px]"
+          />
+        </div>
+
+        {/* Transparent custom header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]/40 bg-[var(--bg-surface)]/80 backdrop-blur-md shrink-0 z-10">
           <button onClick={handleClose} className="flex items-center gap-1.5 text-xs font-black text-[var(--color-primary)] active:scale-95 transition-transform" title="Minimizza timer">
             <ChevronDown size={18} />
             Minimizza
@@ -395,7 +347,7 @@ function WorkTimer({ onClose }) {
 
         {/* Mode Switcher pill (only visible when session hasn't started) */}
         {!isRunning && (
-          <div className="flex justify-center p-4 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)]">
+          <div className="flex justify-center p-4 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] shrink-0 z-10">
             <div className="bg-[var(--bg-base)] p-1 rounded-2xl border border-[var(--border-subtle)] flex gap-1 shadow-sm">
               <button
                 type="button"
@@ -425,149 +377,192 @@ function WorkTimer({ onClose }) {
           </div>
         )}
 
-        {/* Active Session Mode Label */}
-        {isRunning && (
-          <div className="flex justify-center pt-6">
-            <span className={clsx(
-              'text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border',
-              isPomo 
-                ? 'bg-red-500/10 border-red-500/20 text-red-500' 
-                : 'bg-[var(--color-primary-ghost)] border-[var(--color-primary)]/10 text-[var(--color-primary)]'
-            )}>
-              {isPomo ? 'Modalità Pomodoro' : 'Modalità Timer Libero'}
-            </span>
-          </div>
-        )}
+        {/* Gorgeous, Organic, Premium Floating Card Layout */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 max-w-md mx-auto w-full overflow-y-auto z-10">
+          <div className="w-full bg-white/80 dark:bg-black/60 border border-[var(--border-default)] rounded-[32px] p-8 shadow-2xl flex flex-col items-center justify-center gap-6 relative overflow-hidden backdrop-blur-xl">
+            {/* Subtle glow orbs inside the card */}
+            <div className="absolute -top-12 -left-12 w-32 h-32 rounded-full bg-[var(--color-primary)]/5 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -right-12 w-32 h-32 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-8 p-8">
-          <motion.div
-            animate={{ scale: isPaused ? [1, 1.02, 1] : [1, 1.04, 1] }}
-            transition={{ repeat: Infinity, duration: isPaused ? 2 : 1.5, ease: 'easeInOut' }}
-            className={clsx('w-24 h-24 rounded-full flex items-center justify-center transition-colors duration-500', bgClass)}
-          >
-            {isLunchBreak
-              ? <span className="text-4xl select-none">🍱</span>
-              : isPaused
-                ? <Coffee size={40} style={{ color: '#ff851b' }} />
-                : isPomoBreak
-                  ? <Coffee size={40} style={{ color: 'var(--color-success)' }} />
-                  : isPomo
-                    ? <span className="text-4xl select-none">🍅</span>
-                    : <Briefcase size={40} style={{ color: primaryColor }} />
-            }
-          </motion.div>
-
-          <div className="text-center">
-            <motion.p
-              key={isPomo ? pomoSecondsLeft : elapsed}
-              initial={{ opacity: 0.8, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-7xl font-black tabular-nums tracking-tight leading-none text-[var(--text-primary)]"
-            >
-              {isPomo ? formatTime(pomoSecondsLeft) : formatTime(elapsed)}
-            </motion.p>
-            
-            {isPomo && (
-              <p className="text-sm font-extrabold text-red-500/80 mt-2 flex items-center justify-center gap-1.5">
-                <span>🍅</span> completati in questa sessione: <span className="text-base font-black text-red-500">{completedPomodoros}</span>
-              </p>
-            )}
-            
+            {/* Active Mode Label inside card */}
             {isRunning && (
-              <p className="text-xs text-[var(--text-muted)] font-bold mt-3 uppercase tracking-widest">
-                Iniziato alle {checkIn}
-              </p>
+              <span className={clsx(
+                'text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shrink-0',
+                isPomo 
+                  ? 'bg-red-500/10 border-red-500/20 text-red-500' 
+                  : 'bg-[var(--color-primary-ghost)] border-[var(--color-primary)]/10 text-[var(--color-primary)]'
+              )}>
+                {isPomo ? 'Modalità Pomodoro' : 'Modalità Timer Libero'}
+              </span>
             )}
-          </div>
 
-          <div className="flex gap-6">
-            <div className="text-center">
-              <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Tempo attivo</p>
-              <p className="text-sm font-black">{formatHM(elapsed)}</p>
-            </div>
-            {pauseElapsed > 0 && (
-              <div className="text-center">
-                <p className="text-[9px] font-bold text-orange-400 uppercase tracking-wider mb-0.5">In pausa</p>
-                <p className="text-sm font-black text-orange-500">{formatHM(pauseElapsed)}</p>
-              </div>
-            )}
-            {lunchBreakElapsed > 0 && (
-              <div className="text-center">
-                <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">Pranzo</p>
-                <p className="text-sm font-black text-emerald-500">{formatHM(lunchBreakElapsed)}</p>
-              </div>
-            )}
-            <div className="text-center">
-              <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Data</p>
-              <p className="text-sm font-black">{format(new Date(), 'dd MMM')}</p>
-            </div>
-          </div>
-        </div>
+            {/* Custom Glowing suitcase circular status indicator */}
+            <motion.div
+              animate={{ scale: isPaused ? [1, 1.02, 1] : [1, 1.04, 1] }}
+              transition={{ repeat: Infinity, duration: isPaused ? 2 : 1.5, ease: 'easeInOut' }}
+              className={clsx(
+                'w-20 h-20 rounded-full flex items-center justify-center transition-colors duration-500 border border-[var(--border-subtle)] shadow-inner shrink-0',
+                bgClass
+              )}
+            >
+              {isLunchBreak
+                ? <span className="text-3xl select-none">🍱</span>
+                : isPaused
+                  ? <Coffee size={32} style={{ color: '#ff851b' }} />
+                  : isPomoBreak
+                    ? <Coffee size={32} style={{ color: 'var(--color-success)' }} />
+                    : isPomo
+                      ? <span className="text-3xl select-none">🍅</span>
+                      : <Briefcase size={32} style={{ color: primaryColor }} />
+              }
+            </motion.div>
 
-        <div className="px-8 pb-10 flex items-center justify-center gap-6 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] pt-6">
-          <AnimatePresence mode="wait">
-            {!isRunning ? (
-              // Se la sessione non è ancora partita, mostriamo il tasto Start!
-              <motion.button
-                key="start"
-                initial={{ opacity: 0, scale: 0.9 }}
+            {/* High-end Styled Timer Text (using clean font-body) */}
+            <div className="text-center w-full">
+              <motion.p
+                key={isPomo ? pomoSecondsLeft : elapsed}
+                initial={{ opacity: 0.8, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                onClick={() => {
-                  const now = new Date()
-                  const timeStr = format(now, 'HH:mm')
-                  const dateStr = format(now, 'yyyy-MM-dd')
-                  useWorkSessionStore.getState().startSession(timeStr, dateStr)
-                }}
-                className={clsx(
-                  'px-12 py-4 rounded-3xl text-white font-black text-base shadow-xl active:scale-95 transition-all duration-300',
-                  isPomo ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]'
-                )}
+                className="text-6xl font-black tracking-tight leading-none text-[var(--text-primary)] tabular-nums"
+                style={{ fontFamily: 'var(--font-body)' }}
               >
-                Inizia Sessione
-              </motion.button>
-            ) : !isPaused ? (
-              <motion.div key="running" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-4">
-                <button 
-                  onClick={handlePause} 
-                  className="w-16 h-16 rounded-full border-2 border-orange-400 flex flex-col items-center justify-center text-orange-500 active:scale-90 transition-transform"
-                  title="Pausa Breve"
-                >
-                  <Pause size={20} />
-                  <span className="text-[8px] font-black uppercase mt-0.5">Pausa</span>
-                </button>
-                <button
-                  onClick={handleStop}
-                  className="w-20 h-20 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-xl active:scale-90 transition-transform"
-                  style={{ boxShadow: `0 8px 32px -8px color-mix(in srgb, var(--color-primary) 50%, transparent)` }}
-                >
-                  <Square size={28} fill="currentColor" />
-                </button>
-                <button 
-                  onClick={handleLunchBreak} 
-                  className="w-16 h-16 rounded-full border-2 border-emerald-400 flex flex-col items-center justify-center text-emerald-500 active:scale-90 transition-transform"
-                  title="Pausa Pranzo"
-                >
-                  <Coffee size={20} />
-                  <span className="text-[8px] font-black uppercase mt-0.5">Pranzo</span>
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div key="paused" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="flex items-center gap-4">
-                <button onClick={handleStop} className="px-6 py-3.5 rounded-2xl border-2 border-red-400 text-red-500 font-black text-sm flex items-center gap-2 active:scale-95 transition-transform">
-                  <Square size={16} fill="currentColor" />
-                  Termina
-                </button>
-                <button 
-                  onClick={isLunchBreak ? handleResumeFromLunch : handleResume} 
-                  className="px-8 py-3.5 rounded-2xl bg-[var(--color-primary)] text-white font-black text-sm flex items-center gap-2 shadow-lg active:scale-95 transition-transform"
-                >
-                  <Play size={16} fill="currentColor" />
-                  {isLunchBreak ? 'Riprendi Lavoro' : 'Riprendi'}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {isPomo ? formatTime(pomoSecondsLeft) : formatTime(elapsed)}
+              </motion.p>
+              
+              {isPomo && (
+                <p className="text-xs font-bold text-red-500/80 mt-2.5 flex items-center justify-center gap-1.5 leading-none">
+                  <span>🍅</span> completati: <span className="text-sm font-black text-red-500">{completedPomodoros}</span>
+                </p>
+              )}
+              
+              {isRunning && (
+                <p className="text-[10px] text-[var(--text-muted)] font-black mt-3.5 uppercase tracking-widest leading-none">
+                  Iniziato alle {checkIn}
+                </p>
+              )}
+            </div>
+
+            {/* Micro details panel inside the floating card */}
+            <div className="flex gap-6 justify-center w-full border-t border-[var(--border-subtle)]/60 pt-5 mt-2 shrink-0">
+              <div className="text-center">
+                <p className="text-[8px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Tempo attivo</p>
+                <p className="text-xs font-black text-[var(--text-primary)]">{formatHM(elapsed)}</p>
+              </div>
+              {pauseElapsed > 0 && (
+                <div className="text-center">
+                  <p className="text-[8px] font-black text-orange-400 uppercase tracking-wider mb-0.5">In pausa</p>
+                  <p className="text-xs font-black text-orange-500">{formatHM(pauseElapsed)}</p>
+                </div>
+              )}
+              {lunchBreakElapsed > 0 && (
+                <div className="text-center">
+                  <p className="text-[8px] font-black text-emerald-400 uppercase tracking-wider mb-0.5">Pranzo</p>
+                  <p className="text-xs font-black text-emerald-500">{formatHM(lunchBreakElapsed)}</p>
+                </div>
+              )}
+              <div className="text-center">
+                <p className="text-[8px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Data</p>
+                <p className="text-xs font-black text-[var(--text-primary)]">{format(new Date(), 'dd MMM')}</p>
+              </div>
+            </div>
+
+            {/* Unified Controls INSIDE the card for seamless, premium UX */}
+            <div className="w-full pt-5 border-t border-[var(--border-subtle)]/60 flex flex-col items-center gap-4 shrink-0">
+              <AnimatePresence mode="wait">
+                {!isRunning ? (
+                  <motion.button
+                    key="start"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onClick={() => {
+                      const now = new Date()
+                      const timeStr = format(now, 'HH:mm')
+                      const dateStr = format(now, 'yyyy-MM-dd')
+                      useWorkSessionStore.getState().startSession(timeStr, dateStr)
+                    }}
+                    className={clsx(
+                      'px-12 py-4 rounded-full text-white font-black text-sm shadow-md active:scale-95 transition-all duration-300',
+                      isPomo ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]'
+                    )}
+                  >
+                    Inizia Sessione
+                  </motion.button>
+                ) : (
+                  <motion.div 
+                    key="controls" 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0, y: 10 }} 
+                    className="flex items-center justify-center gap-5 w-full"
+                  >
+                    {/* Left Button: Pause / Resume */}
+                    {isLunchBreak ? (
+                      <button 
+                        disabled
+                        className="w-14 h-14 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex flex-col items-center justify-center text-[var(--text-muted)] opacity-30 cursor-not-allowed"
+                        title="Pausa"
+                      >
+                        <Pause size={18} />
+                        <span className="text-[7px] font-black uppercase mt-0.5">Pausa</span>
+                      </button>
+                    ) : !isPaused ? (
+                      <button 
+                        onClick={handlePause} 
+                        className="w-14 h-14 rounded-full bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 flex flex-col items-center justify-center text-orange-500 active:scale-[0.90] transition-all hover:bg-orange-100/30"
+                        title="Metti in pausa"
+                      >
+                        <Pause size={18} />
+                        <span className="text-[7px] font-black uppercase mt-0.5">Pausa</span>
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleResume} 
+                        className="w-14 h-14 rounded-full bg-[var(--color-primary-ghost)] border border-[var(--color-primary)]/20 flex flex-col items-center justify-center text-[var(--color-primary)] active:scale-[0.90] transition-all hover:bg-[var(--color-primary-ghost)]/80"
+                        title="Riprendi lavoro"
+                      >
+                        <Play size={18} fill="currentColor" />
+                        <span className="text-[7px] font-black uppercase mt-0.5">Riprendi</span>
+                      </button>
+                    )}
+
+                    {/* Center Button: Stop */}
+                    <button
+                      onClick={handleStop}
+                      className="w-18 h-18 rounded-full bg-red-500 hover:bg-red-600 flex flex-col items-center justify-center text-white shadow-lg active:scale-[0.90] transition-all"
+                      style={{ width: '4.5rem', height: '4.5rem' }}
+                      title="Termina sessione"
+                    >
+                      <Square size={20} fill="currentColor" />
+                      <span className="text-[8px] font-black uppercase mt-0.5">Termina</span>
+                    </button>
+
+                    {/* Right Button: Lunch Break / Resume */}
+                    {!isLunchBreak ? (
+                      <button 
+                        onClick={handleLunchBreak} 
+                        disabled={isPaused}
+                        className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 flex flex-col items-center justify-center text-emerald-600 active:scale-[0.90] transition-all hover:bg-emerald-100/30 disabled:opacity-40"
+                        title="Pausa pranzo"
+                      >
+                        <span className="text-base select-none">🍱</span>
+                        <span className="text-[7px] font-black uppercase mt-0.5">Pranzo</span>
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleResumeFromLunch} 
+                        className="w-14 h-14 rounded-full bg-[var(--color-primary-ghost)] border border-[var(--color-primary)]/20 flex flex-col items-center justify-center text-[var(--color-primary)] active:scale-[0.90] transition-all hover:bg-[var(--color-primary-ghost)]/80 animate-pulse"
+                        title="Riprendi lavoro"
+                      >
+                        <Play size={18} fill="currentColor" />
+                        <span className="text-[7px] font-black uppercase mt-0.5">Riprendi</span>
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -577,15 +572,7 @@ function WorkTimer({ onClose }) {
         checkIn={checkIn}
         lunchBreakElapsed={lunchBreakElapsed}
         onSave={handleSave}
-        onCancel={() => {
-          setShowSave(false)
-          if (isLunchBreak) {
-            startLunchTicking()
-          } else {
-            startTicking()
-            resumeSession()
-          }
-        }}
+        onCancel={() => setShowSave(false)}
         onDiscard={handleDiscard}
       />
     </>,

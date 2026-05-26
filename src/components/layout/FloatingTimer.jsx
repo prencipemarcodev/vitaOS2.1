@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Play, Pause, Square, Maximize2, ChevronRight, Briefcase } from 'lucide-react'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
@@ -14,24 +14,27 @@ function formatTime(totalSeconds) {
 }
 
 export default function FloatingTimer() {
-  const {
-    isRunning, isPaused, isLunchBreak, elapsed, lunchBreakElapsed, mode, pomoPhase, pomoSecondsLeft,
-    setFullTimerOpen, pauseSession, resumeSession, startLunchBreak, resumeFromLunchBreak
-  } = useWorkSessionStore()
+  // Granular store selections for high reactivity and no lag
+  const isRunning = useWorkSessionStore(state => state.isRunning)
+  const isPaused = useWorkSessionStore(state => state.isPaused)
+  const isLunchBreak = useWorkSessionStore(state => state.isLunchBreak)
+  const elapsed = useWorkSessionStore(state => state.elapsed)
+  const mode = useWorkSessionStore(state => state.mode)
+  const pomoPhase = useWorkSessionStore(state => state.pomoPhase)
+  const pomoSecondsLeft = useWorkSessionStore(state => state.pomoSecondsLeft)
+
+  const setFullTimerOpen = useWorkSessionStore(state => state.setFullTimerOpen)
+  const pauseSession = useWorkSessionStore(state => state.pauseSession)
+  const resumeSession = useWorkSessionStore(state => state.resumeSession)
+  const startLunchBreak = useWorkSessionStore(state => state.startLunchBreak)
+  const resumeFromLunchBreak = useWorkSessionStore(state => state.resumeFromLunchBreak)
   
   const [isExpanded, setIsExpanded] = useState(false)
-  const [timeStr, setTimeStr] = useState('00:00')
-
-  // Aggiorna la stringa del tempo ad ogni variazione di secondo
-  useEffect(() => {
-    if (mode === 'pomodoro') {
-      setTimeStr(formatTime(pomoSecondsLeft))
-    } else {
-      setTimeStr(formatTime(elapsed))
-    }
-  }, [elapsed, pomoSecondsLeft, mode])
 
   if (!isRunning) return null
+
+  // Sincronizzazione istantanea calcolando la stringa direttamente inline
+  const timeStr = mode === 'pomodoro' ? formatTime(pomoSecondsLeft) : formatTime(elapsed)
 
   // Stili cromatici coordinati
   const statusColorClass = isLunchBreak 
@@ -59,7 +62,10 @@ export default function FloatingTimer() {
             className="pointer-events-auto flex items-center gap-2 pl-3.5 pr-2.5 py-2.5 rounded-l-full bg-white/80 dark:bg-black/80 backdrop-blur-md border-l border-y border-[var(--border-subtle)] shadow-lg hover:pl-4 transition-all group"
           >
             <span className={clsx("w-2 h-2 rounded-full animate-pulse", statusColorClass)} />
-            <span className="text-xs font-black font-mono tracking-tight text-[var(--text-primary)]">
+            <span 
+              className="text-xs font-black tracking-tight text-[var(--text-primary)] tabular-nums"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
               {timeStr}
             </span>
             <div className="w-6 h-6 rounded-full bg-[var(--color-primary-ghost)] flex items-center justify-center text-[var(--color-primary)] group-hover:scale-110 transition-transform">
@@ -104,7 +110,10 @@ export default function FloatingTimer() {
 
             {/* Timer Principale */}
             <div className="text-center py-2">
-              <p className="text-4xl font-black font-mono tracking-tight text-[var(--text-primary)] tabular-nums">
+              <p 
+                className="text-4xl font-black tracking-tight text-[var(--text-primary)] tabular-nums"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
                 {timeStr}
               </p>
               {mode === 'pomodoro' && (
@@ -166,3 +175,4 @@ export default function FloatingTimer() {
     </div>
   )
 }
+

@@ -101,6 +101,29 @@ function AppInner() {
     return () => clearTimeout(t)
   }, [session])
 
+  // 4. Global Work Session Timer Ticking (keeps ticking synchronized cross-page)
+  const { isRunning, tickElapsed, tickPause, tickLunchBreak, tickPomo } = useWorkSessionStore()
+
+  useEffect(() => {
+    if (!isRunning) return
+
+    const interval = setInterval(() => {
+      const state = useWorkSessionStore.getState()
+      if (!state.isPaused) {
+        state.tickElapsed()
+        if (state.mode === 'pomodoro') {
+          state.tickPomo()
+        }
+      } else if (state.isLunchBreak) {
+        state.tickLunchBreak()
+      } else {
+        state.tickPause()
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isRunning, tickElapsed, tickPause, tickLunchBreak, tickPomo])
+
   // Se l'autenticazione sta caricando o la sessione è in fase di recupero
   if (authLoading) {
     return (
