@@ -28,16 +28,45 @@ function formatHM(totalSeconds) {
 function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCancel, onDiscard }) {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  
+  // Local states for custom check-in and check-out times
+  const [editedCheckIn, setEditedCheckIn] = useState(checkIn || '09:00')
+  const [editedCheckOut, setEditedCheckOut] = useState(format(new Date(), 'HH:mm'))
+
+  // Reset values when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setEditedCheckIn(checkIn || '09:00')
+      setEditedCheckOut(format(new Date(), 'HH:mm'))
+    }
+  }, [isOpen, checkIn])
 
   const handleSave = async () => {
     setLoading(true)
-    await onSave(notes)
+    await onSave(notes, editedCheckIn, editedCheckOut)
     setLoading(false)
   }
 
   if (!isOpen) return null
-  const checkOut = format(new Date(), 'HH:mm')
-  const totalSeconds = elapsed + lunchBreakElapsed
+
+  // Recalculate values dynamically based on edited start/end times
+  const [h1, m1] = editedCheckIn.split(':').map(Number)
+  const [h2, m2] = editedCheckOut.split(':').map(Number)
+  
+  let totalMinutes = (h2 * 60 + m2) - (h1 * 60 + m1)
+  if (totalMinutes < 0) {
+    totalMinutes += 24 * 60 // Handle overnight session
+  }
+  
+  const lunchMinutes = Math.floor(lunchBreakElapsed / 60)
+  const netMinutes = Math.max(0, totalMinutes - lunchMinutes)
+
+  const formatMinsToHM = (mins) => {
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    if (h > 0) return `${h}h ${m}m`
+    return `${m}m`
+  }
 
   return (
     <motion.div
@@ -52,17 +81,42 @@ function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCanc
         className="w-full max-w-sm bg-[var(--bg-surface)] rounded-3xl p-6 shadow-2xl"
       >
         <h3 className="text-base font-black mb-1">Termina sessione</h3>
-        <p className="text-xs text-[var(--text-muted)] mb-5 leading-normal">
-          {checkIn} → {checkOut} · <span className="font-bold text-[var(--text-primary)]">{formatHM(totalSeconds)} Totali</span>
-          {lunchBreakElapsed > 0 && (
+        
+        {/* Orari Regolabili */}
+        <div className="grid grid-cols-2 gap-4 mb-4 mt-3">
+          <div className="space-y-1.5 text-left">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Ora Inizio</label>
+            <input
+              type="time"
+              value={editedCheckIn}
+              onChange={e => setEditedCheckIn(e.target.value)}
+              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+            />
+          </div>
+          <div className="space-y-1.5 text-left">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Ora Fine</label>
+            <input
+              type="time"
+              value={editedCheckOut}
+              onChange={e => setEditedCheckOut(e.target.value)}
+              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
+            />
+          </div>
+        </div>
+
+        {/* Informazioni durata ricalcolate in tempo reale */}
+        <p className="text-xs text-[var(--text-muted)] mb-5 leading-normal text-left">
+          Durata totale: <span className="font-bold text-[var(--text-primary)]">{formatMinsToHM(totalMinutes)}</span>
+          {lunchMinutes > 0 && (
             <>
               <br />
-              <span className="text-emerald-500 font-extrabold">🍱 Pausa pranzo: {formatHM(lunchBreakElapsed)}</span>
+              <span className="text-emerald-500 font-extrabold">🍱 Pausa pranzo: {formatMinsToHM(lunchMinutes)}</span>
               <br />
-              <span className="text-[var(--text-primary)] font-extrabold">💼 Tempo netto lavorato: {formatHM(elapsed)}</span>
+              <span className="text-[var(--text-primary)] font-extrabold">💼 Tempo netto lavorato: {formatMinsToHM(netMinutes)}</span>
             </>
           )}
         </p>
+
         <div className="space-y-2 mb-5">
           <label className="text-xs font-bold text-[var(--text-secondary)]">Note (opzionale)</label>
           <textarea
@@ -229,11 +283,16 @@ function WorkTimer({ onClose }) {
     setShowSave(true)
   }
 
-  const handleSave = async (notes) => {
-    const checkOut = format(new Date(), 'HH:mm')
-    const [h1, m1] = checkIn.split(':').map(Number)
-    const [h2, m2] = checkOut.split(':').map(Number)
-    const totalDuration = Math.max(1, (h2 * 60 + m2) - (h1 * 60 + m1))
+  const handleSave = async (notes, finalCheckIn, finalCheckOut) => {
+    const checkInToUse = finalCheckIn || checkIn
+    const checkOutToUse = finalCheckOut || format(new Date(), 'HH:mm')
+    const [h1, m1] = checkInToUse.split(':').map(Number)
+    const [h2, m2] = checkOutToUse.split(':').map(Number)
+    let totalDuration = (h2 * 60 + m2) - (h1 * 60 + m1)
+    if (totalDuration < 0) {
+      totalDuration += 24 * 60 // Handle overnight session
+    }
+    totalDuration = Math.max(1, totalDuration)
     
     const lunchMinutes = Math.floor(lunchBreakElapsed / 60)
     const netDuration = Math.max(1, totalDuration - lunchMinutes)
@@ -248,8 +307,8 @@ function WorkTimer({ onClose }) {
         .insert({ 
           user_id: user?.id, 
           date: checkInDate, 
-          check_in: checkIn, 
-          check_out: checkOut, 
+          check_in: checkInToUse, 
+          check_out: checkOutToUse, 
           duration_minutes: netDuration, 
           notes: finalNotes || null, 
           is_manual: false 
@@ -257,7 +316,9 @@ function WorkTimer({ onClose }) {
         .select().single()
       if (error) throw error
       addSession(data)
-      toast.success(`Sessione salvata — ${formatHM(elapsed)}`)
+      
+      const elapsedSeconds = netDuration * 60
+      toast.success(`Sessione salvata — ${formatHM(elapsedSeconds)}`)
       stopSession()
       handleClose()
     } catch (err) {

@@ -3,6 +3,8 @@ import { useHealthStore } from '@/store/useHealthStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { useReminderStore } from '@/store/useReminderStore'
+import { useWorkSessionStore } from '@/store/useWorkSessionStore'
+import { useAppStore } from '@/store/useAppStore'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
@@ -264,6 +266,89 @@ export function ReminderEngine() {
     triggeredToday,
     addTriggered,
     resetTriggered,
+    addNotification
+  ])
+
+  // 5. Prolonged Work Session Check
+  const { isRunning, elapsed, checkIn, checkInDate } = useWorkSessionStore()
+  const { userConfig } = useAppStore()
+
+  useEffect(() => {
+    if (!isRunning || !checkIn || !checkInDate) return
+
+    const alertEnabled = userConfig?.work_session_alert_enabled ?? true
+    if (!alertEnabled) return
+
+    const alertHours = userConfig?.work_session_alert_hours ?? userConfig?.daily_hours ?? 8
+    const elapsedSeconds = elapsed
+    const thresholdSeconds = alertHours * 3600
+
+    if (elapsedSeconds >= thresholdSeconds) {
+      const sessionAlertKey = `work-session-alert-${checkInDate}-${checkIn}`
+      
+      // Controlla se la notifica per questa specifica sessione è già stata inviata
+      if (!triggeredToday[sessionAlertKey]) {
+        addTriggered(sessionAlertKey)
+        playChime()
+
+        const title = 'Stai ancora lavorando? 💼'
+        const body = `Il tuo timer è attivo da oltre ${alertHours} ore. Ricordati di fermarlo o regolare gli orari.`
+
+        toast(title, {
+          description: body,
+          action: {
+            label: 'Gestisci',
+            onClick: () => {
+              useWorkSessionStore.getState().setFullTimerOpen(true)
+            }
+          },
+          duration: 12000
+        })
+
+        // Invia notifica di sistema nativa
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, {
+                  body,
+                  icon: "/icon-192.png",
+                  tag: "vitaos-session-alert"
+                })
+              })
+            } else {
+              new Notification(title, {
+                body,
+                icon: "/icon-192.png",
+                tag: "vitaos-session-alert"
+              })
+            }
+          } catch (e) {}
+        }
+
+        // Aggiungi a Notification Center
+        addNotification({
+          id: sessionAlertKey,
+          type: 'info',
+          message: body,
+          icon: 'bell',
+          category: 'Sistema',
+          action: () => {
+            useWorkSessionStore.getState().setFullTimerOpen(true)
+          }
+        })
+      }
+    }
+  }, [
+    isRunning,
+    elapsed,
+    checkIn,
+    checkInDate,
+    userConfig?.work_session_alert_enabled,
+    userConfig?.work_session_alert_hours,
+    userConfig?.daily_hours,
+    triggeredToday,
+    addTriggered,
     addNotification
   ])
 
