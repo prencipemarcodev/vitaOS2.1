@@ -65,6 +65,7 @@ function AppInner() {
   const { theme, onboardingCompleted, userConfig, showOnboardingForce } = useAppStore()
   const { session, setSession, loading: authLoading } = useAuthStore()
   const location = useLocation()
+  const isFullTimerOpen = useWorkSessionStore(state => state.isFullTimerOpen)
 
   // 1. Listen for Auth Changes
   useEffect(() => {
@@ -143,8 +144,6 @@ function AppInner() {
   if (!onboardingCompleted || useAppStore.getState().showOnboardingForce) {
     return <Onboarding />
   }
-
-  const isFullTimerOpen = useWorkSessionStore(state => state.isFullTimerOpen)
 
   return (
     <div className="h-[100dvh] w-full flex overflow-hidden bg-[var(--bg-base)]">
