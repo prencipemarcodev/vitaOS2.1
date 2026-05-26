@@ -103,9 +103,9 @@ function Firme() {
               <AnimatePresence>
                 {menuOpen && (
                   <>
-                    {/* Invisible Dismiss Overlay */}
+                    {/* Invisible Dismiss Overlay (No blur, fully clean) */}
                     <div 
-                      className="fixed inset-0 z-40 bg-black/5 backdrop-blur-[0.5px]" 
+                      className="fixed inset-0 z-40 bg-transparent" 
                       onClick={() => setMenuOpen(false)} 
                     />
                     <motion.div
@@ -113,7 +113,8 @@ function Firme() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9, y: -10 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                      className="absolute right-0 mt-2.5 z-50 w-44 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xl py-1.5 flex flex-col text-left overflow-hidden"
+                      style={{ x: '-50%' }}
+                      className="absolute left-1/2 mt-2.5 z-50 w-44 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xl py-1.5 flex flex-col text-left overflow-hidden"
                     >
                       <button
                         onClick={() => {
