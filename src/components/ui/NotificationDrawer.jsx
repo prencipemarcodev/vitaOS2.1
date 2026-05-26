@@ -52,7 +52,7 @@ function NotificationDrawer({ isOpen, onClose }) {
             className="fixed z-[110] flex flex-col bg-[var(--bg-surface)]
               inset-x-3 lg:inset-auto lg:w-80 lg:max-w-[90vw]
               top-[calc(env(safe-area-inset-top,0px)+64px)] lg:top-[76px]
-              bottom-[calc(env(safe-area-inset-bottom,0px)+12px)] lg:bottom-4
+              bottom-[calc(env(safe-area-inset-bottom,16px)/2+62px)] lg:bottom-4
               lg:right-4 rounded-[24px] border border-[var(--border-subtle)] shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}

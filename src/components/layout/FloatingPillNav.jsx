@@ -58,14 +58,14 @@ function FloatingPillNav() {
       </AnimatePresence>
 
       <nav
-        className="lg:hidden fixed z-[110] bottom-0 left-0 right-0 flex justify-center pb-[env(safe-area-inset-bottom,16px)] pointer-events-none"
+        className="lg:hidden fixed z-[110] bottom-0 left-0 right-0 flex justify-center pb-[calc(env(safe-area-inset-bottom,16px)/2)] pointer-events-none"
         aria-label="Navigazione principale"
       >
         <motion.div
           layout
           initial={{ y: 80, opacity: 0 }}
           animate={{ 
-            y: -4, 
+            y: 0, 
             opacity: 1,
             width: moreOpen ? '320px' : '270px'
           }}
