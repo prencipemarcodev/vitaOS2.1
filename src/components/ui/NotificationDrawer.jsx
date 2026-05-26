@@ -36,7 +36,7 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.div
             key="notif-backdrop"
-            className="fixed inset-0 z-40 bg-black/20 hidden lg:block"
+            className="fixed inset-0 z-[105] bg-black/20 hidden lg:block"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -49,8 +49,8 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.aside
             key="notif-drawer"
-            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)] inset-0 lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-80 lg:max-w-[90vw]
-              lg:my-4 lg:mr-4 lg:rounded-[24px] lg:border lg:border-[var(--border-subtle)] lg:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)] inset-0 lg:inset-auto lg:top-[76px] lg:right-4 lg:bottom-4 lg:w-80 lg:max-w-[90vw]
+              lg:rounded-[24px] lg:border lg:border-[var(--border-subtle)] lg:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
