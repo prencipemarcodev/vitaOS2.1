@@ -153,7 +153,7 @@ function Finanze() {
           </div>
 
           {/* Tab Switcher & Account Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[var(--border-subtle)] pb-2 shrink-0 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[var(--border-subtle)] pb-3 sm:pb-2 shrink-0 gap-3">
             <div className="flex gap-4">
               <button
                 onClick={() => setActiveTab('panoramica')}
@@ -165,7 +165,7 @@ function Finanze() {
               >
                 Panoramica
                 {activeTab === 'panoramica' && (
-                  <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
+                  <span className="absolute bottom-[-15px] sm:bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
                 )}
               </button>
               <button
@@ -178,13 +178,13 @@ function Finanze() {
               >
                 Abbonamenti
                 {activeTab === 'abbonamenti' && (
-                  <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
+                  <span className="absolute bottom-[-15px] sm:bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
                 )}
               </button>
             </div>
             
             {activeTab === 'panoramica' && (
-              <div className="flex items-center gap-1.5 self-start sm:self-auto">
+              <div className="flex items-center gap-1.5 self-start sm:self-auto mt-2 sm:mt-0 mb-1 sm:mb-0">
                 <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Conto:</span>
                 <select
                   value={selectedAccount}

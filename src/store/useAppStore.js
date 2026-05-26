@@ -53,6 +53,15 @@ export const useAppStore = create(
             }
           }
 
+          // Ulteriore salvaguardia se custom_accounts è rimasto una stringa
+          if (typeof custom_accounts === 'string') {
+            try {
+              custom_accounts = JSON.parse(custom_accounts)
+            } catch (e) {
+              console.error("Errore nel parsing di emergenza dei conti:", e)
+            }
+          }
+
           // Salva in localStorage se presenti esplicitamente
           if ('gps_preset' in nextConfig && nextConfig.gps_preset !== undefined) {
             localStorage.setItem('vitaos_gps_gps_preset', nextConfig.gps_preset)
@@ -67,7 +76,13 @@ export const useAppStore = create(
             localStorage.setItem('vitaos_gps_gps_keepalive_interval_ms', nextConfig.gps_keepalive_interval_ms.toString())
           }
           if ('custom_accounts' in nextConfig && nextConfig.custom_accounts !== undefined && nextConfig.custom_accounts !== null) {
-            localStorage.setItem('vitaos_custom_accounts', JSON.stringify(nextConfig.custom_accounts))
+            let toSave = nextConfig.custom_accounts
+            if (typeof toSave === 'string') {
+              try { toSave = JSON.parse(toSave) } catch (e) {}
+            }
+            if (Array.isArray(toSave)) {
+              localStorage.setItem('vitaos_custom_accounts', JSON.stringify(toSave))
+            }
           }
 
           return {
