@@ -152,54 +152,71 @@ function Finanze() {
             </Card>
           </div>
 
-          {/* Tab Switcher & Account Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b-0 sm:border-b border-[var(--border-subtle)] pb-0 sm:pb-2 shrink-0 gap-3 sm:gap-3">
-            <div className="flex gap-4 border-b border-[var(--border-subtle)] sm:border-b-0 pb-2 sm:pb-0 w-full sm:w-auto">
-              <button
-                onClick={() => setActiveTab('panoramica')}
-                className={`text-sm font-bold pb-1 transition-all relative ${
-                  activeTab === 'panoramica' 
-                    ? 'text-[var(--text-primary)]' 
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                Panoramica
-                {activeTab === 'panoramica' && (
-                  <span className="absolute bottom-[-9px] sm:bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('abbonamenti')}
-                className={`text-sm font-bold pb-1 transition-all relative ${
-                  activeTab === 'abbonamenti' 
-                    ? 'text-[var(--text-primary)]' 
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                Abbonamenti
-                {activeTab === 'abbonamenti' && (
-                  <span className="absolute bottom-[-9px] sm:bottom-[-11px] left-0 right-0 h-[2px] bg-[var(--color-primary)] rounded-full" />
-                )}
-              </button>
-            </div>
-            
-            {activeTab === 'panoramica' && (
-              <div className="flex items-center gap-1.5 self-start sm:self-auto pt-2 pb-1 sm:pt-0 sm:pb-0">
-                <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Conto:</span>
-                <select
-                  value={selectedAccount}
-                  onChange={(e) => setSelectedAccount(e.target.value)}
-                  className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl text-xs font-bold text-[var(--text-primary)] focus:outline-none px-3 py-1 cursor-pointer"
+          {/* Tab Switcher — Pill Segmented Control */}
+          <div className="flex flex-col shrink-0 gap-2">
+            {/* Row 1: Panoramica / Abbonamenti pill tabs */}
+            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] w-fit">
+              {[
+                { id: 'panoramica', label: 'Panoramica' },
+                { id: 'abbonamenti', label: 'Abbonamenti' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                  }`}
+                  style={activeTab === tab.id ? { fontFamily: 'var(--font-display)' } : {}}
                 >
-                  <option value="all">Tutti i conti</option>
-                  {getAccounts(userConfig).map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                       {acc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-[2px] bg-[var(--color-primary)] rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Row 2: Account filter pills (only on panoramica) */}
+            <AnimatePresence>
+            {activeTab === 'panoramica' && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 -mx-0.5 px-0.5"
+              >
+                {[{ id: 'all', name: 'Tutti', color: '#B46243' }, ...getAccounts(userConfig)].map(acc => {
+                  const isActive = selectedAccount === acc.id
+                  return (
+                    <button
+                      key={acc.id}
+                      onClick={() => setSelectedAccount(acc.id)}
+                      className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all duration-200 border ${
+                        isActive
+                          ? 'border-transparent text-white shadow-sm'
+                          : 'bg-[var(--bg-elevated)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]'
+                      }`}
+                      style={isActive ? {
+                        backgroundColor: acc.color,
+                        boxShadow: `0 2px 8px -2px ${acc.color}60`
+                      } : {}}
+                    >
+                      {acc.id !== 'all' && (
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.7)' : acc.color }}
+                        />
+                      )}
+                      {acc.name}
+                    </button>
+                  )
+                })}
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
 
           <AnimatePresence mode="wait">
