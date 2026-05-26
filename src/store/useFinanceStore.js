@@ -13,6 +13,10 @@ export const useFinanceStore = create((set) => ({
   setHistoricalTransactions: (historicalTransactions) => set({ historicalTransactions }),
 
   addTransaction: (tx) => set((s) => ({ transactions: [tx, ...s.transactions] })),
+  // Aggiunge anche a historicalTransactions per aggiornare il grafico saldo in real-time
+  addHistoricalTransaction: (tx) => set((s) => ({
+    historicalTransactions: [...s.historicalTransactions, { amount: tx.amount, type: tx.type, date: tx.date, payment_method: tx.payment_method }]
+  })),
   updateTransaction: (id, updates) => set((s) => ({
     transactions: s.transactions.map((t) => t.id === id ? { ...t, ...updates } : t),
   })),

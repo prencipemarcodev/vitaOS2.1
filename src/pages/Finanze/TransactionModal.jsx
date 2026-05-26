@@ -13,7 +13,7 @@ import { format } from 'date-fns'
 
 
 function TransactionModal({ isOpen, onClose, txToEdit = null }) {
-  const { categories, addTransaction, updateTransaction, addCategory } = useFinanceStore()
+  const { categories, addTransaction, updateTransaction, addCategory, addHistoricalTransaction, setCumulativeBalance, cumulativeBalance } = useFinanceStore()
   const { pushError, pushSuccess } = useNotifications()
   const { user } = useAuthStore()
   const { userConfig } = useAppStore()
@@ -161,6 +161,10 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           const { data, error } = await supabase.from('transactions').insert({ ...payload, user_id: user?.id }).select().single()
           if (error) throw error
           addTransaction(data)
+          // Aggiorna il grafico saldo e il cumulativeBalance in real-time (senza attendere il prossimo sync)
+          addHistoricalTransaction(data)
+          const delta = data.type === 'income' ? parseFloat(data.amount || 0) : -parseFloat(data.amount || 0)
+          setCumulativeBalance(cumulativeBalance + delta)
           toast.success('Transazione creata')
           pushSuccess('Transazione creata', 'plus')
         }

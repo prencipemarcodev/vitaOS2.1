@@ -19,16 +19,25 @@ function TransactionList({ transactions, categories, onEdit }) {
   const { userConfig } = useAppStore()
   const { user } = useAuthStore()
   const accounts = getAccounts(userConfig)
+  const { historicalTransactions, setHistoricalTransactions, cumulativeBalance, setCumulativeBalance } = useFinanceStore()
 
 
   const handleDelete = async (id) => {
     if (!confirm('Eliminare questa transazione?')) return
+    // Trova la transazione prima di eliminarla (serve per aggiornare il grafico)
+    const tx = transactions.find(t => t.id === id)
     // Filtro anche per user_id per prevenire IDOR (VUL-003)
     const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', user?.id)
     if (error) {
       pushError('Errore nell\'eliminazione')
     } else {
       removeTransaction(id)
+      // Aggiorna il grafico saldo e cumulativeBalance in real-time
+      if (tx) {
+        setHistoricalTransactions(historicalTransactions.filter(t => !(t.date === tx.date && parseFloat(t.amount) === parseFloat(tx.amount) && t.type === tx.type)))
+        const delta = tx.type === 'income' ? -parseFloat(tx.amount || 0) : parseFloat(tx.amount || 0)
+        setCumulativeBalance(cumulativeBalance + delta)
+      }
       toast.success('Transazione eliminata')
       pushSuccess('Transazione eliminata', 'trash')
     }
