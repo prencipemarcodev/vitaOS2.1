@@ -18,11 +18,10 @@ import { format } from 'date-fns'
 function Firme() {
   const { sessions, loading } = useFirmeStore()
   const { userConfig } = useAppStore()
-  const { isRunning, startSession } = useWorkSessionStore()
+  const { isRunning, startSession, setFullTimerOpen } = useWorkSessionStore()
   const location = useLocation()
   const [formOpen, setFormOpen] = useState(false)
   const [editingSession, setEditingSession] = useState(null)
-  const [timerOpen, setTimerOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -46,7 +45,7 @@ function Firme() {
     if (!isRunning) {
       startSession(format(new Date(), 'HH:mm'), format(new Date(), 'yyyy-MM-dd'))
     }
-    setTimerOpen(true)
+    setFullTimerOpen(true)
   }
 
   return (
@@ -161,11 +160,6 @@ function Firme() {
         sessionToEdit={editingSession}
       />
 
-      <AnimatePresence>
-        {timerOpen && (
-          <WorkTimer onClose={() => setTimerOpen(false)} />
-        )}
-      </AnimatePresence>
     </>
   )
 }

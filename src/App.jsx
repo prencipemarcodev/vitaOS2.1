@@ -10,6 +10,10 @@ import AppRouter from '@/router'
 import Onboarding from '@/pages/Onboarding'
 import Logo from '@/components/layout/Logo'
 import { ReminderEngine } from '@/components/layout/ReminderEngine'
+import { AnimatePresence } from 'framer-motion'
+import FloatingTimer from '@/components/layout/FloatingTimer'
+import WorkTimer from '@/pages/Firme/WorkTimer'
+import { useWorkSessionStore } from '@/store/useWorkSessionStore'
 
 import { useLocation } from 'react-router-dom'
 import AuthPage from '@/pages/AuthPage'
@@ -140,6 +144,8 @@ function AppInner() {
     return <Onboarding />
   }
 
+  const isFullTimerOpen = useWorkSessionStore(state => state.isFullTimerOpen)
+
   return (
     <div className="h-[100dvh] w-full flex overflow-hidden bg-[var(--bg-base)]">
       <OnboardingReminder />
@@ -157,6 +163,16 @@ function AppInner() {
 
       {/* Mobile Bottom Nav */}
       <FloatingPillNav />
+
+      {/* Timer Fluttuante e Bolla (Visibile se sessione attiva e non a schermo intero) */}
+      <FloatingTimer />
+
+      {/* Timer a Schermo Intero (Overlay Globale) */}
+      <AnimatePresence>
+        {isFullTimerOpen && (
+          <WorkTimer />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

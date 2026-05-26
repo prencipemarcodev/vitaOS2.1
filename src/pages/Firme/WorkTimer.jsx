@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase, Trash2 } from 'lucide-react'
+import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase, Trash2, ChevronDown } from 'lucide-react'
 import { useFirmeStore } from '@/store/useFirmeStore'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -105,9 +105,17 @@ function WorkTimer({ onClose }) {
     pauseSession, resumeSession, tickElapsed, tickPause, stopSession,
     setMode, setPomoPhase, setPomoSecondsLeft, setCompletedPomodoros, tickPomo,
     startLunchBreak, resumeFromLunchBreak, tickLunchBreak,
+    setFullTimerOpen,
   } = useWorkSessionStore()
 
   const [showSave, setShowSave] = useState(false)
+  const handleClose = () => {
+    if (onClose) {
+      onClose()
+    } else {
+      setFullTimerOpen(false)
+    }
+  }
   const timerRef = useRef(null)
   const pauseTimerRef = useRef(null)
   const lunchTimerRef = useRef(null)
@@ -251,7 +259,7 @@ function WorkTimer({ onClose }) {
       addSession(data)
       toast.success(`Sessione salvata — ${formatHM(elapsed)}`)
       stopSession()
-      onClose()
+      handleClose()
     } catch (err) {
       toast.error('Errore nel salvataggio')
       console.error(err)
@@ -261,7 +269,7 @@ function WorkTimer({ onClose }) {
   const handleDiscard = () => {
     stopSession()
     toast.info('Sessione eliminata')
-    onClose()
+    handleClose()
   }
 
   const isPomo = mode === 'pomodoro'
@@ -298,9 +306,9 @@ function WorkTimer({ onClose }) {
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-          <button onClick={onClose} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
-            <ChevronLeft size={16} />
-            Indietro
+          <button onClick={handleClose} className="flex items-center gap-1.5 text-xs font-black text-[var(--color-primary)] active:scale-95 transition-transform" title="Minimizza timer">
+            <ChevronDown size={18} />
+            Minimizza
           </button>
           
           <div className="flex items-center gap-2">

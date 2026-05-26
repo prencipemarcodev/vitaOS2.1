@@ -29,6 +29,7 @@ export const useWorkSessionStore = create(
       pomoPhase: 'work',   // 'work' | 'break'
       pomoSecondsLeft: 25 * 60,
       completedPomodoros: 0,
+      isFullTimerOpen: false,
 
       startSession: (checkIn, checkInDate) => set({
         isRunning: true,
@@ -49,6 +50,8 @@ export const useWorkSessionStore = create(
         pomoSecondsLeft: 25 * 60,
         completedPomodoros: 0,
       }),
+
+      setFullTimerOpen: (isOpen) => set({ isFullTimerOpen: isOpen }),
 
       pauseSession: () => set({
         isPaused: true,
@@ -143,6 +146,7 @@ export const useWorkSessionStore = create(
         pomoPhase: 'work',
         pomoSecondsLeft: 25 * 60,
         completedPomodoros: 0,
+        isFullTimerOpen: false,
       }),
     }),
     {
