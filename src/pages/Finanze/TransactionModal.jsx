@@ -189,7 +189,10 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
         <div className="flex gap-1.5 bg-[var(--bg-base)] p-1 rounded-2xl border border-[var(--border-subtle)]">
           <button
             type="button"
-            onClick={() => setFormData({ ...formData, type: 'expense' })}
+            onClick={() => {
+              const defaultCat = categories.find(c => c.type === 'expense')?.id || ''
+              setFormData({ ...formData, type: 'expense', category: defaultCat })
+            }}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
               formData.type === 'expense'
                 ? 'bg-[#e05252] text-white shadow-sm'
@@ -200,7 +203,10 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           </button>
           <button
             type="button"
-            onClick={() => setFormData({ ...formData, type: 'income' })}
+            onClick={() => {
+              const defaultCat = categories.find(c => c.type === 'income')?.id || ''
+              setFormData({ ...formData, type: 'income', category: defaultCat })
+            }}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
               formData.type === 'income'
                 ? 'bg-[#3d9970] text-white shadow-sm'
@@ -211,7 +217,7 @@ function TransactionModal({ isOpen, onClose, txToEdit = null }) {
           </button>
           <button
             type="button"
-            onClick={() => setFormData({ ...formData, type: 'transfer' })}
+            onClick={() => setFormData({ ...formData, type: 'transfer', category: '' })}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
               formData.type === 'transfer'
                 ? 'bg-indigo-500 text-white shadow-sm'
