@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase } from 'lucide-react'
+import { Square, Pause, Play, ChevronLeft, Coffee, Briefcase, Trash2 } from 'lucide-react'
 import { useFirmeStore } from '@/store/useFirmeStore'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -25,7 +25,7 @@ function formatHM(totalSeconds) {
   return `${m}m`
 }
 
-function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCancel }) {
+function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCancel, onDiscard }) {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -81,6 +81,14 @@ function SaveModal({ isOpen, elapsed, checkIn, lunchBreakElapsed, onSave, onCanc
             {loading ? 'Salvo...' : 'Salva Sessione'}
           </button>
         </div>
+
+        <button 
+          onClick={onDiscard} 
+          className="w-full py-2.5 rounded-2xl text-xs font-bold text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/10 transition-colors flex items-center justify-center gap-1.5 mt-2"
+        >
+          <Trash2 size={13} />
+          Elimina Sessione
+        </button>
       </motion.div>
     </motion.div>
   )
@@ -248,6 +256,12 @@ function WorkTimer({ onClose }) {
       toast.error('Errore nel salvataggio')
       console.error(err)
     }
+  }
+
+  const handleDiscard = () => {
+    stopSession()
+    toast.info('Sessione eliminata')
+    onClose()
   }
 
   const isPomo = mode === 'pomodoro'
@@ -503,6 +517,7 @@ function WorkTimer({ onClose }) {
             resumeSession()
           }
         }}
+        onDiscard={handleDiscard}
       />
     </>,
     document.body
