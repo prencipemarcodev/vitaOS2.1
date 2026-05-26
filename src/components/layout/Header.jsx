@@ -15,11 +15,10 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
     <>
       <header
         className={clsx(
-          'sticky top-0 z-[100] shrink-0 transition-all duration-[var(--transition-fast)]',
-          // Mobile base layout
-          'pt-[env(safe-area-inset-top,0px)] bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]',
-          // Desktop floating pill overrides
-          'lg:mx-4 lg:mt-4 lg:mb-2 lg:rounded-full lg:bg-[var(--bg-surface)] lg:border lg:border-[var(--border-subtle)] lg:shadow-[0_8px_30px_rgba(0,0,0,0.03)] lg:pt-0 lg:backdrop-blur-none',
+          'sticky z-[100] shrink-0 transition-all duration-[var(--transition-fast)]',
+          // Floating Pill on all devices (Mobile & Desktop)
+          'mx-3 lg:mx-4 mb-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)]/90 backdrop-blur-md shadow-md',
+          'mt-[calc(env(safe-area-inset-top,0px)+12px)] lg:mt-4 lg:shadow-[0_8px_30px_rgba(0,0,0,0.03)] lg:bg-[var(--bg-surface)] lg:backdrop-blur-none',
           className
         )}
       >

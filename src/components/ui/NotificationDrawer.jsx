@@ -36,7 +36,7 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.div
             key="notif-backdrop"
-            className="fixed inset-0 z-[105] bg-black/20 hidden lg:block"
+            className="fixed inset-0 z-[105] bg-black/20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -49,17 +49,17 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.aside
             key="notif-drawer"
-            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)] inset-0 lg:inset-auto lg:top-[76px] lg:right-4 lg:bottom-4 lg:w-80 lg:max-w-[90vw]
-              lg:rounded-[24px] lg:border lg:border-[var(--border-subtle)] lg:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)]
+              inset-x-3 lg:inset-auto lg:w-80 lg:max-w-[90vw]
+              top-[calc(env(safe-area-inset-top,0px)+64px)] lg:top-[76px]
+              bottom-[calc(env(safe-area-inset-bottom,0px)+12px)] lg:bottom-4
+              lg:right-4 rounded-[24px] border border-[var(--border-subtle)] shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
-            <div 
-              className="flex items-center justify-between px-4 lg:px-5 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top,40px)] lg:pt-0 lg:!h-[var(--header-height)]"
-              style={{ height: 'calc(var(--header-height) + env(safe-area-inset-top,40px))' }}
-            >
+            <div className="flex items-center justify-between px-4 lg:px-5 shrink-0 border-b border-[var(--border-subtle)] h-[var(--header-height)]">
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifiche</h3>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="xs" icon={CheckCheck} onClick={markAllAsRead}>
