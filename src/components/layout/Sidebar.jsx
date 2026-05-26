@@ -35,6 +35,7 @@ function Sidebar() {
       <div className="flex items-center pt-6 pb-2 px-6 shrink-0">
         <Logo className="text-base" />
       </div>
+      <div className="mx-5 mb-2 h-[1px] bg-[var(--border-subtle)]" />
 
       {/* Nav links */}
       <div className="flex-1 flex flex-col py-3 overflow-hidden" role="list">
@@ -47,7 +48,7 @@ function Sidebar() {
         </div>
 
         {/* SEPARATOR */}
-        <div className="mx-5 my-1.5 h-[1px] bg-[var(--border-subtle)]/60" />
+        <div className="mx-5 my-1.5 h-[1px] bg-[var(--border-subtle)]" />
 
         {/* MIDDLE: Sections */}
         <ul className="flex-1 px-2.5 space-y-0.5 overflow-y-auto custom-scrollbar">
@@ -62,53 +63,17 @@ function Sidebar() {
           ))}
         </ul>
 
-        {/* BOTTOM: Settings & Logout & Profile */}
-        <div className="px-2.5 mt-auto pt-3 border-t border-[var(--border-subtle)]/40 space-y-1">
+        {/* BOTTOM: Settings & Logout */}
+        <div className="px-2.5 mt-auto space-y-1">
+          <div className="mx-5 mb-2.5 h-[1px] bg-[var(--border-subtle)]" />
           <NavItem 
             item={NAV_ITEMS.find(i => i.to === '/impostazioni')} 
             isActive={location.pathname.startsWith('/impostazioni')} 
           />
           <LogoutButton />
-          
-          <UserProfile />
         </div>
       </div>
     </nav>
-  )
-}
-
-function UserProfile() {
-  const { user } = useAuthStore()
-  if (!user) return null
-
-  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Marco'
-  const initial = displayName.charAt(0).toUpperCase()
-
-  // Colore di sfondo dinamico e morbido basato sull'iniziale
-  const colors = [
-    'bg-gradient-to-tr from-rose-500 to-orange-400 text-white',
-    'bg-gradient-to-tr from-sky-500 to-indigo-400 text-white',
-    'bg-gradient-to-tr from-emerald-500 to-teal-400 text-white',
-    'bg-gradient-to-tr from-violet-600 to-fuchsia-400 text-white',
-    'bg-gradient-to-tr from-amber-500 to-yellow-400 text-white'
-  ]
-  const colorIndex = displayName.charCodeAt(0) % colors.length
-  const bgClass = colors[colorIndex]
-
-  return (
-    <div className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-2xl bg-[var(--bg-elevated)]/50 border border-[var(--border-subtle)]/30 mt-2 select-none">
-      <div className={`w-7.5 h-7.5 rounded-full flex items-center justify-center font-black text-xs shrink-0 shadow-sm ${bgClass}`} style={{ width: '30px', height: '30px' }}>
-        {initial}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-black text-[var(--text-primary)] truncate capitalize leading-tight">
-          {displayName}
-        </p>
-        <p className="text-[9px] font-semibold text-[var(--text-muted)] truncate mt-0.5 leading-none">
-          {user.email}
-        </p>
-      </div>
-    </div>
   )
 }
 

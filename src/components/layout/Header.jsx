@@ -15,14 +15,16 @@ function Header({ title, showMonth = false, showNotification = false, actions, c
     <>
       <header
         className={clsx(
-          'sticky top-0 left-0 right-0 z-[100] shrink-0',
-          'bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]',
-          'pt-[env(safe-area-inset-top,0px)]',
+          'sticky top-0 z-[100] shrink-0 transition-all duration-[var(--transition-fast)]',
+          // Mobile base layout
+          'pt-[env(safe-area-inset-top,0px)] bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]',
+          // Desktop floating pill overrides
+          'lg:mx-4 lg:mt-4 lg:mb-2 lg:rounded-full lg:bg-[var(--bg-surface)] lg:border lg:border-[var(--border-subtle)] lg:shadow-[0_8px_30px_rgba(0,0,0,0.03)] lg:pt-0 lg:backdrop-blur-none',
           className
         )}
       >
-        <div className="h-[var(--header-height)] px-4 flex items-center justify-between relative max-w-full">
-          {/* SInistra: Titolo */}
+        <div className="h-[var(--header-height)] px-4 lg:px-6 flex items-center justify-between relative max-w-full">
+          {/* Sinistra: Titolo */}
           <div className="flex-[1] min-w-0 flex items-center pr-2">
             <h1
               className="text-sm font-bold text-[var(--text-primary)] leading-none truncate tracking-tight"
