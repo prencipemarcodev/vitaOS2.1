@@ -8,7 +8,7 @@ import { isHoliday } from '@/lib/italianCalendar'
 import clsx from 'clsx'
 import { useAppStore } from '@/store/useAppStore'
 
-function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], onDayClick }) {
+function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], subscriptions = [], onDayClick }) {
   const { userConfig } = useAppStore()
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(new Date(selectedMonth)), { weekStartsOn: 1 })
@@ -55,6 +55,10 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], o
           const dayAbsence = absences.find(a => {
             const d = format(day, 'yyyy-MM-dd')
             return d >= a.start_date && d <= a.end_date
+          })
+          const daySubs = subscriptions.filter(sub => {
+            if (!sub.is_active || !sub.next_renewal_date) return false
+            return isSameDay(new Date(sub.next_renewal_date), day)
           })
 
           return (
@@ -126,7 +130,18 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], o
                   </div>
                 ))}
 
-                {/* 4. Indicatore "Ancora altri" */}
+                {/* 5. Abbonamenti da pagare */}
+                {daySubs.map((sub) => (
+                  <div 
+                    key={sub.id} 
+                    className="px-1 py-0.5 bg-orange-100 text-orange-700 rounded-md text-[7px] font-black uppercase truncate leading-none"
+                    title={`Rinnovo ${sub.name}: €${parseFloat(sub.amount).toFixed(2)}`}
+                  >
+                    💳 {sub.name} (€{parseFloat(sub.amount).toFixed(0)})
+                  </div>
+                ))}
+
+                {/* 6. Indicatore "Ancora altri" */}
                 {(dayEvents.length > 1) && (
                   <div className="flex items-center gap-1 pl-1">
                     <div className="w-1 h-1 rounded-full bg-gray-400" />

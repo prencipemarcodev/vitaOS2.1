@@ -10,11 +10,11 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { useAppStore } from '@/store/useAppStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useTaskStore } from '@/store/useTaskStore'
-import { Briefcase, GraduationCap, Dumbbell, Star } from 'lucide-react'
+import { Briefcase, GraduationCap, Dumbbell, Star, CreditCard } from 'lucide-react'
 import { isHoliday } from '@/lib/italianCalendar'
 import { useState } from 'react'
 
-function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = [], onAddEvent }) {
+function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = [], subscriptions = [], onAddEvent }) {
   const { removeEvent, removeAbsence } = useCalendarStore()
   const { pushError } = useNotifications()
   const { userConfig } = useAppStore()
@@ -33,6 +33,10 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
     return date >= d && date <= e
   })
   const dayTasks = tasks.filter(t => isSameDay(new Date(t.date), date))
+  const daySubscriptions = subscriptions.filter(sub => {
+    if (!sub.is_active || !sub.next_renewal_date) return false
+    return isSameDay(new Date(sub.next_renewal_date), date)
+  })
 
   // Programma del giorno (Work, Study, Gym)
   const getSchedule = (type) => {
@@ -208,6 +212,33 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
                         </div>
                       </div>
                     )}
+                  </div>
+                </section>
+              )}
+
+              {/* Abbonamenti / Cose da pagare */}
+              {daySubscriptions.length > 0 && (
+                <section>
+                  <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-4">Cose da Pagare (Abbonamenti)</h3>
+                  <div className="grid gap-2">
+                    {daySubscriptions.map(sub => (
+                      <div key={sub.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-orange-50/70 border border-orange-100 dark:bg-orange-950/10 dark:border-orange-900/20">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-sm dark:bg-orange-950 dark:text-orange-400">
+                            <CreditCard size={16} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[var(--text-primary)] truncate">{sub.name}</p>
+                            <p className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider mt-0.5">
+                              Rinnovo {sub.billing_period === 'yearly' ? 'Annuale' : 'Mensile'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-sm font-black text-orange-600 dark:text-orange-400">€ {parseFloat(sub.amount).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </section>
               )}

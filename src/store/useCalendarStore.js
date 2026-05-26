@@ -4,11 +4,13 @@ export const useCalendarStore = create((set, get) => ({
   events: [],
   absences: [],
   recurringEvents: [],
+  subscriptions: [],
   loading: false,
 
   setEvents: (events) => set({ events }),
   setAbsences: (absences) => set({ absences }),
   setRecurringEvents: (recurring) => set({ recurringEvents: recurring }),
+  setSubscriptions: (subscriptions) => set({ subscriptions }),
 
   addEvent: (event) => set((s) => ({ events: [...s.events, event] })),
   updateEvent: (id, updates) => set((s) => ({
@@ -21,3 +23,4 @@ export const useCalendarStore = create((set, get) => ({
 
   setLoading: (loading) => set({ loading }),
 }))
+

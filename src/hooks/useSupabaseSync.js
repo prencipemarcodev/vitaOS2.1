@@ -22,7 +22,7 @@ import { getAccounts } from '@/lib/accounts'
  */
 export function useSupabaseSync() {
   const { selectedMonth, setUserConfig, setOnboardingCompleted } = useAppStore()
-  const { setEvents, setAbsences, setRecurringEvents, setLoading: setCalLoading } = useCalendarStore()
+  const { setEvents, setAbsences, setRecurringEvents, setSubscriptions, setLoading: setCalLoading } = useCalendarStore()
   const { setTasks } = useTaskStore()
   const { setTransactions, setCategories, setCumulativeBalance, setHistoricalTransactions, addTransaction, setLoading: setFinLoading } = useFinanceStore()
   const { setSessions, setLoading: setFirmeLoading } = useFirmeStore()
@@ -85,7 +85,7 @@ export function useSupabaseSync() {
     const user = await getAuthUser()
     if (!user) return
     setCalLoading(true)
-    const [eventsRes, absencesRes, recurringRes, tasksRes] = await Promise.all([
+    const [eventsRes, absencesRes, recurringRes, tasksRes, subsRes] = await Promise.all([
       supabase
         .from('calendar_events')
         .select('*')
@@ -110,14 +110,20 @@ export function useSupabaseSync() {
         .eq('user_id', user.id)
         .gte('date', monthStart)
         .lte('date', monthEnd)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
     ])
     if (eventsRes.data) setEvents(eventsRes.data)
     if (absencesRes.data) setAbsences(absencesRes.data)
     if (recurringRes.data) setRecurringEvents(recurringRes.data)
     if (tasksRes.data) setTasks(tasksRes.data)
+    if (subsRes.data) setSubscriptions(subsRes.data)
     setCalLoading(false)
-  }, [getAuthUser, monthStart, monthEnd, setEvents, setAbsences, setRecurringEvents, setTasks, setCalLoading])
+  }, [getAuthUser, monthStart, monthEnd, setEvents, setAbsences, setRecurringEvents, setTasks, setSubscriptions, setCalLoading])
 
   // ── Load finance data for the month ──
   const loadFinance = useCallback(async () => {

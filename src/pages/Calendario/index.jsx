@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import { Plus } from 'lucide-react'
 
 function Calendario() {
-  const { events, absences, recurringEvents, loading } = useCalendarStore()
+  const { events, absences, recurringEvents, subscriptions, loading } = useCalendarStore()
   const { selectedMonth, userConfig } = useAppStore()
   
   const remainingLeave = (userConfig?.annual_leave_days || 0) - (userConfig?.leave_days_used || 0)
@@ -86,6 +86,7 @@ function Calendario() {
               events={events} 
               absences={absences} 
               recurringEvents={recurringEvents}
+              subscriptions={subscriptions}
               onDayClick={handleDayClick} 
             />
           </div>
@@ -116,6 +117,7 @@ function Calendario() {
         events={events} 
         absences={absences} 
         recurringEvents={recurringEvents}
+        subscriptions={subscriptions}
         onAddEvent={handleAddEvent}
       />
 
