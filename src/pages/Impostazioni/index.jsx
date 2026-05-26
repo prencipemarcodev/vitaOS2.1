@@ -52,30 +52,38 @@ function Impostazioni() {
         <div className="flex flex-col md:flex-row h-full overflow-hidden">
           
           {/* ── Sidebar (Desktop) ── */}
-          <nav className="hidden md:flex flex-col w-64 shrink-0 border-r border-[var(--border-subtle)] bg-white overflow-y-auto py-4">
-            {SECTIONS.map((s) => {
-              const isActive = s.id === activeSection
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveSection(s.id)}
-                  className={clsx(
-                    'flex items-center gap-3 mx-3 px-3 py-2 rounded-[var(--radius-md)] transition-all duration-200 text-left',
-                    isActive
-                      ? 'bg-[var(--text-primary)] text-white font-bold shadow-lg scale-[1.01]'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-base)] hover:text-[var(--text-primary)]',
-                    s.id === 'reset' && !isActive && 'text-[var(--color-danger)]'
-                  )}
-                >
-                  <s.icon size={18} className="shrink-0" />
-                  <span className="text-[13px] font-medium">{s.label}</span>
-                </button>
-              )
-            })}
+          <nav className="hidden md:flex flex-col w-56 shrink-0 bg-[var(--bg-surface)] border border-[var(--border-subtle)] my-4 ml-4 mr-1.5 rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.03)] py-4 overflow-y-auto custom-scrollbar">
+            <div className="px-2.5 space-y-0.5" role="list">
+              {SECTIONS.map((s) => {
+                const isActive = s.id === activeSection
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setActiveSection(s.id)}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left relative transition-all duration-[var(--transition-fast)] group',
+                      isActive
+                        ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)] font-bold shadow-sm'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]',
+                      s.id === 'reset' && !isActive && 'text-[var(--color-danger)] text-red-500/80 hover:bg-red-50 hover:text-red-600'
+                    )}
+                  >
+                    <s.icon size={16} className={clsx('shrink-0 transition-transform', isActive && 'scale-110')} />
+                    <span className="text-[13px] font-semibold whitespace-nowrap overflow-hidden flex-1">{s.label}</span>
+                    {isActive && (
+                      <motion.div 
+                        layoutId="settings-active-pill"
+                        className="absolute left-1 w-1 h-3.5 bg-[var(--color-primary)] rounded-full"
+                      />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </nav>
 
           {/* ── Tabs (Mobile) ── */}
-          <div className="md:hidden flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)] bg-white overflow-x-auto shrink-0 scrollbar-hide">
+          <div className="md:hidden flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-x-auto shrink-0 scrollbar-hide">
             {SECTIONS.map((s) => {
               const isActive = s.id === activeSection
               return (
@@ -85,7 +93,7 @@ function Impostazioni() {
                   className={clsx(
                     'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all',
                     isActive
-                      ? 'bg-[var(--text-primary)] text-[var(--bg-surface)] shadow-md'
+                      ? 'bg-[var(--color-primary-ghost)] text-[var(--color-primary)] shadow-sm'
                       : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
                   )}
                 >
