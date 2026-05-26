@@ -49,14 +49,15 @@ function NotificationDrawer({ isOpen, onClose }) {
         {isOpen && (
           <motion.aside
             key="notif-drawer"
-            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)] inset-0 lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-80 lg:max-w-[90vw] lg:border-l lg:border-[var(--border-subtle)] lg:shadow-2xl"
+            className="fixed z-[110] flex flex-col bg-[var(--bg-surface)] inset-0 lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-80 lg:max-w-[90vw]
+              lg:my-4 lg:mr-4 lg:rounded-[24px] lg:border lg:border-[var(--border-subtle)] lg:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           >
             <div 
-              className="flex items-center justify-between px-4 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top,40px)]"
+              className="flex items-center justify-between px-4 lg:px-5 shrink-0 border-b border-[var(--border-subtle)] pt-[env(safe-area-inset-top,40px)] lg:pt-0 lg:!h-[var(--header-height)]"
               style={{ height: 'calc(var(--header-height) + env(safe-area-inset-top,40px))' }}
             >
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifiche</h3>
