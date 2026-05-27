@@ -293,44 +293,6 @@ function VehicleDashboard({ vehicle }) {
                     className="mx-0 rounded-none"
                   />
 
-                  {/* Hotspot pins overlay sopra il viewer */}
-                  {hasData && oilLog && (
-                    <div className="absolute left-2 top-3 z-20 pointer-events-none">
-                      <HotspotPin label="🔧 Cambio Olio"
-                        value={`${Math.round(stats.maxOdo - oilLog.odometer).toLocaleString('it-IT')} km fa`}
-                        badge={oilPct >= 80 ? '⚠️ Urgente' : '✓ OK'}
-                        badgeColor={oilPct >= 80 ? 'var(--color-warning)' : 'var(--color-success)'}
-                        status={oilPct >= 90 ? 'danger' : oilPct >= 70 ? 'warning' : 'ok'}
-                        side="left" delay={0.3} />
-                    </div>
-                  )}
-                  {stats.maxOdo > 0 && (
-                    <div className="absolute top-2 z-20 pointer-events-none" style={{ left: '50%', transform: 'translateX(-50%)' }}>
-                      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-                        <div className="bg-[var(--bg-surface)]/90 backdrop-blur-md border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1.5 shadow-[var(--shadow-md)] text-center">
-                          <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-0.5">📍 Odometro</p>
-                          <p className="text-xs font-black text-[var(--text-primary)]">{stats.maxOdo.toLocaleString('it-IT')} km</p>
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
-                  {stats.avgConsumption > 0 && (
-                    <div className="absolute right-2 top-3 z-20 pointer-events-none">
-                      <HotspotPin label="⛽ Consumo" value={`${stats.avgConsumption.toFixed(1)} l/100`}
-                        status="ok" side="right" delay={0.6} />
-                    </div>
-                  )}
-                  {insuranceEntry && (
-                    <div className="absolute bottom-10 left-2 z-20 pointer-events-none">
-                      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-                        <div className="bg-[var(--bg-surface)]/90 backdrop-blur-md border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1.5 shadow-[var(--shadow-md)]">
-                          <p className="text-[9px] font-bold uppercase text-[var(--text-muted)] mb-0.5">🛡️ Assicurazione</p>
-                          <p className="text-xs font-black text-[var(--text-primary)]">{format(new Date(insuranceEntry.date), 'dd MMM yyyy', { locale: it })}</p>
-                          <span className="text-[8px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,160,23,0.12)', color: 'var(--color-warning)' }}>⚠️ Rinnovo</span>
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
                   {!hasData && !loading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-base)]/50 backdrop-blur-[2px] z-10">
                       <Car size={28} className="text-[var(--text-muted)] mb-2 opacity-30" />
