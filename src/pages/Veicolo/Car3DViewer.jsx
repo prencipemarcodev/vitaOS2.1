@@ -86,15 +86,15 @@ function GLBModel({ type, color, autoRotate }) {
 }
 
 // ── Config camera ─────────────────────────────────────────────────
-// CAM_TARGET: centro visivo auto. Sedan H≈1.3u → centro ~Y=0.65
-// Angolo orizzontale: atan((1.5-0.65)/sqrt(4.5²+4.5²)) ≈ 7.6°
-// Car showcases usano 7-12°: poca prospettiva pavimento, auto centrata
-const CAM_TARGET = [0, 0.65, 0]
-const CAM_POSITION = [4.5, 0.5, 4.5]
+// CAM_TARGET Y = punto in cui si centra il viewport (corpo auto, non ruote)
+// CAM_POSITION Y = altezza camera — più basso = angolo piatto = auto più alta nel frame
+// Angolo: atan((1.1 - 0.6) / sqrt(3.2²+3.2²)) = atan(0.5/4.52) ≈ 6.3° (car configurator)
+const CAM_TARGET   = [0, 0.6, 0]
+const CAM_POSITION = [3.2, 1.1, 3.2]
 
 // ── DEBUG MODE ────────────────────────────────────────────────────
 // Imposta su true per attivare helpers 3D e overlay con stats live
-const DEBUG = false
+const DEBUG = true
 
 // ── Helpers di debug (visibili solo in modalità DEBUG) ────────────
 function DebugHelpers({ controlsRef }) {
@@ -246,8 +246,7 @@ function Car3DViewer({
   height,          // opzionale: se non passato usa altezza responsiva
   className = '',
 }) {
-  // Auto-rotazione: sempre spenta — modello statico, l'utente trascina manualmente
-  const autoRotate = false
+  const [autoRotate, setAutoRotate] = useState(true)
   const [internalColor, setInternalColor] = useState(externalColor ?? '#9aacc8')
   const [glbExists, setGlbExists] = useState(false)
   const [gltfReady, setGltfReady] = useState(false)
@@ -312,7 +311,45 @@ function Car3DViewer({
         </div>
       )}
 
-      {/* Nessun overlay — viewer pulito */}
+      {/* Hint drag */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none">
+        <motion.span
+          initial={{ opacity: 0 }} animate={{ opacity: [0, 0.7, 0] }}
+          transition={{ duration: 3.5, delay: 1.2, repeat: 0 }}
+          className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap px-3 py-1 rounded-full"
+          style={{
+            color: 'rgba(255,255,255,0.7)',
+            background: 'rgba(0,0,0,0.18)',
+            backdropFilter: 'blur(6px)',
+          }}>
+          Trascina · Scorri per zoom
+        </motion.span>
+      </div>
+
+      {/* Pulsante rotazione (bottom-right) */}
+      <div className="absolute bottom-3 right-3 pointer-events-auto">
+        <button
+          onClick={() => setAutoRotate(v => !v)}
+          className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-all"
+          style={{
+            background: autoRotate ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.12)',
+            color: 'rgba(255,255,255,0.9)',
+            backdropFilter: 'blur(6px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}>
+          {autoRotate ? '⏸' : '▶'}
+        </button>
+      </div>
+
+      {/* DEBUG overlay HTML (attivato da DEBUG flag) */}
+      {DEBUG && canvasReady && (
+        <div
+          className="absolute top-2 left-2 pointer-events-none z-30 font-mono text-[10px] leading-snug p-2 rounded-lg"
+          style={{ background: 'rgba(0,0,0,0.72)', color: '#0f0', backdropFilter: 'blur(4px)' }}
+        >
+          <DebugPanel vehicleType={vehicleType} useGLB={useGLB} />
+        </div>
+      )}
     </div>
   )
 }
