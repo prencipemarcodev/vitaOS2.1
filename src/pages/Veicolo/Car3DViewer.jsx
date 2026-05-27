@@ -68,12 +68,12 @@ function GLBModel({ type, color, autoRotate }) {
 
 // ── Config camera (valori di default) ────────────────────────────
 // Modificabili live tramite il pannello debug (DEBUG=true)
-const DEFAULT_CAM_TARGET   = [0, 0.6, 0]
+const DEFAULT_CAM_TARGET = [0, 0.6, 0]
 const DEFAULT_CAM_POSITION = [3.2, 1.1, 3.2]
-const DEFAULT_FOV          = 42
+const DEFAULT_FOV = 42
 
 // ── DEBUG MODE ────────────────────────────────────────────────────
-const DEBUG = false
+const DEBUG = true
 
 // ── CameraRig: setup imperativo camera + controls ─────────────────
 // Usa RAF per garantire che OrbitControls sia montato prima di agire.
@@ -97,7 +97,7 @@ function CameraRig({ controlsRef, position, target, fov, applySignal }) {
       }
     })
     return () => cancelAnimationFrame(raf)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Aggiornamento live (debug panel)
@@ -110,7 +110,7 @@ function CameraRig({ controlsRef, position, target, fov, applySignal }) {
       controlsRef.current.target.set(...target)
       controlsRef.current.update()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applySignal])
 
   return null
@@ -309,16 +309,16 @@ function Car3DViewer({
   const [canvasReady, setCanvasReady] = useState(false)
 
   // ── Debug camera state ──────────────────────────────────────────
-  const [dbPos, setDbPos]       = useState([...DEFAULT_CAM_POSITION])
-  const [dbTgt, setDbTgt]       = useState([...DEFAULT_CAM_TARGET])
-  const [dbFov, setDbFov]       = useState(DEFAULT_FOV)
+  const [dbPos, setDbPos] = useState([...DEFAULT_CAM_POSITION])
+  const [dbTgt, setDbTgt] = useState([...DEFAULT_CAM_TARGET])
+  const [dbFov, setDbFov] = useState(DEFAULT_FOV)
   // applySignal: incrementato ogni volta che il pannello debug
   // chiede un aggiornamento live della camera
   const [applySignal, setApplySignal] = useState(0)
 
   const camPosition = DEBUG ? dbPos : DEFAULT_CAM_POSITION
-  const camTarget   = DEBUG ? dbTgt : DEFAULT_CAM_TARGET
-  const camFov      = DEBUG ? dbFov : DEFAULT_FOV
+  const camTarget = DEBUG ? dbTgt : DEFAULT_CAM_TARGET
+  const camFov = DEBUG ? dbFov : DEFAULT_FOV
 
   const handleDebugApply = useCallback((pos, tgt, fov) => {
     setDbPos([...pos])
