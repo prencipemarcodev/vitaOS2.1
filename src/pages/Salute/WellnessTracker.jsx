@@ -324,9 +324,8 @@ function WaterTracker({ waterLog }) {
             </p>
           </div>
         </div>
-        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg ${
-          pct >= 100 ? 'bg-green-50 text-green-600' : pct >= 60 ? 'bg-blue-50 text-blue-600' : 'bg-[var(--bg-base)] text-[var(--text-muted)]'
-        }`}>
+        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg ${pct >= 100 ? 'bg-green-50 text-green-600' : pct >= 60 ? 'bg-blue-50 text-blue-600' : 'bg-[var(--bg-base)] text-[var(--text-muted)]'
+          }`}>
           {pct >= 100 ? 'Obiettivo! 🎉' : `${pct}%`}
         </span>
       </div>
@@ -367,9 +366,8 @@ function WaterTracker({ waterLog }) {
                 whileTap={{ scale: 0.8 }}
                 onClick={() => handleAdd((i + 1) * WATER_STEP_ML - currentMl)}
                 disabled={loading}
-                className={`h-5 rounded flex items-center justify-center transition-all ${
-                  i < glasses ? 'opacity-100' : 'opacity-20'
-                }`}
+                className={`h-5 rounded flex items-center justify-center transition-all ${i < glasses ? 'opacity-100' : 'opacity-20'
+                  }`}
                 style={{ backgroundColor: i < glasses ? waterColor : '#93c5fd' }}
                 title={`${(i + 1) * WATER_STEP_ML}ml`}
               >
@@ -476,7 +474,7 @@ function WeightTracker({ weightLog }) {
       addWeightEntry(data)
       setShowInput(false)
       toast.success('Peso registrato ⚖️')
-      
+
       // Aggiorna anche user_config
       await supabase.from('user_config').update({ weight_kg: parseFloat(newWeight), weight_updated_at: TODAY }).eq('user_id', user.id)
     } catch (err) {
