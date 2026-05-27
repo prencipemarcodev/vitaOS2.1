@@ -66,14 +66,15 @@ function GLBModel({ type, color, autoRotate }) {
   )
 }
 
-// ── Config camera (valori di default) ────────────────────────────
-// Modificabili live tramite il pannello debug (DEBUG=true)
-const DEFAULT_CAM_TARGET = [0, 0.6, 0]
-const DEFAULT_CAM_POSITION = [3.2, 1.1, 3.2]
-const DEFAULT_FOV = 42
+// ── Config camera (valori di default) ─────────────────────────
+// Valori trovati con il pannello debug e poi dimezzati in distanza (zoom ×2)
+// POS originale [6.20, 4.20, 6.20] → /2 = [3.10, 2.10, 3.10]
+const DEFAULT_CAM_TARGET   = [0, 0, 0.05]   // centro visivo (quasi all'origine)
+const DEFAULT_CAM_POSITION = [3.10, 2.10, 3.10] // metà distanza = zoom doppio
+const DEFAULT_FOV          = 42
 
-// ── DEBUG MODE ────────────────────────────────────────────────────
-const DEBUG = true
+// ── DEBUG MODE ─────────────────────────────────────────────────
+const DEBUG = false
 
 // ── CameraRig: setup imperativo camera + controls ─────────────────
 // Usa RAF per garantire che OrbitControls sia montato prima di agire.
