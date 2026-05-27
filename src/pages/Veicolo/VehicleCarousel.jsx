@@ -64,7 +64,7 @@ function VehicleCarousel({ vehicles, activeIndex, onSelect, onAdd, onEdit }) {
     const containerW = containerRef.current?.clientWidth ?? 360
     const target = -(activeIndex * STEP) + (containerW / 2) - (CARD_W / 2)
     x.set(target) // immediato, senza animazione
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // solo al mount
 
   // ── Sync on external activeIndex change ─────────────────────
@@ -189,8 +189,8 @@ function VehicleCarousel({ vehicles, activeIndex, onSelect, onAdd, onEdit }) {
                   <span className="text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)]">
                     {v.fuel_type === 'gasoline' ? '⛽ Benzina'
                       : v.fuel_type === 'diesel' ? '🛢️ Diesel'
-                      : v.fuel_type === 'electric' ? '⚡ Elettrico'
-                      : '🔋 Ibrido'}
+                        : v.fuel_type === 'electric' ? '⚡ Elettrico'
+                          : '🔋 Ibrido'}
                   </span>
                 </div>
               </motion.div>
