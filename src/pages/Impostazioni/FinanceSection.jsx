@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, X, RefreshCw, Edit2, Trash2, Coins } from 'lucide-react'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
+import { useConfirmStore } from '@/store/useConfirmStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { supabase } from '@/lib/supabase'
 import Card from '@/components/ui/Card'
@@ -21,6 +22,7 @@ function FinanceSection() {
   const { categories, addCategory, removeCategory } = useFinanceStore()
   const { userConfig, setUserConfig } = useAppStore()
   const { user } = useAuthStore()
+  const confirm = useConfirmStore(s => s.confirm)
   const [showAdd, setShowAdd] = useState(false)
   const [newCat, setNewCat] = useState({ name: '', type: 'expense', icon: 'Clipboard', color: '#95a5a6', is_periodic: false, periodic_amount: '', periodic_day: 1 })
 
@@ -165,9 +167,16 @@ function FinanceSection() {
     setEditingAccId(null)
   }
 
-  const handleDeleteAccount = (id) => {
+  const handleDeleteAccount = async (id) => {
     if (id === 'cash') return
-    if (!confirm("Sei sicuro di voler eliminare questo conto? Le transazioni storiche registrate con questa modalità rimarranno tracciate ma il conto non sarà più selezionabile per nuovi movimenti.")) return
+    const ok = await confirm({
+      title: 'Elimina conto',
+      message: 'Sei sicuro di voler eliminare questo conto? Le transazioni storiche registrate con questa modalità rimarranno tracciate ma il conto non sarà più selezionabile per nuovi movimenti.',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     const accountsList = getAccounts(userConfig)
     const updated = accountsList.filter(a => a.id !== id)
     saveAccounts(updated)

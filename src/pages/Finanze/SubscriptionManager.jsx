@@ -10,8 +10,10 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { format, differenceInDays } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 function SubscriptionManager({ showAddForm, setShowAddForm }) {
+  const confirm = useConfirmStore(s => s.confirm)
   const [subs, setSubs] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorNotice, setErrorNotice] = useState(false)
@@ -108,7 +110,14 @@ function SubscriptionManager({ showAddForm, setShowAddForm }) {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Vuoi davvero eliminare questo abbonamento?')) return
+    const ok = await confirm({
+      title: 'Elimina abbonamento',
+      message: 'Vuoi davvero eliminare questo abbonamento?',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return

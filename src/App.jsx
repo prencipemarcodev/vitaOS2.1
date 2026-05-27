@@ -14,6 +14,7 @@ import { AnimatePresence } from 'framer-motion'
 import FloatingTimer from '@/components/layout/FloatingTimer'
 import WorkTimer from '@/pages/Firme/WorkTimer'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
+import ConfirmationModal from '@/components/ui/ConfirmationModal'
 
 import { useLocation } from 'react-router-dom'
 import AuthPage from '@/pages/AuthPage'
@@ -195,6 +196,7 @@ function AppInner() {
           <WorkTimer />
         )}
       </AnimatePresence>
+      <ConfirmationModal />
     </div>
   )
 }

@@ -9,8 +9,10 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 function VehicleSection() {
+  const confirm = useConfirmStore(s => s.confirm)
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorNotice, setErrorNotice] = useState(false)
@@ -103,7 +105,14 @@ function VehicleSection() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Sei sicuro di voler eliminare questo elemento?')) return
+    const ok = await confirm({
+      title: 'Elimina elemento',
+      message: 'Sei sicuro di voler eliminare questo elemento?',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return

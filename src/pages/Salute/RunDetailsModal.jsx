@@ -11,8 +11,10 @@ import { toast } from 'sonner'
 import { Map, Trophy, Timer, Flame, TrendingUp, Zap, Trash2, Calendar } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 function RunDetailsModal({ isOpen, onClose, session }) {
+  const confirm = useConfirmStore(s => s.confirm)
   const { pushError } = useNotifications()
   const { userConfig, setUserConfig } = useAppStore()
   const { removeWorkoutSession } = useHealthStore()
@@ -34,9 +36,14 @@ function RunDetailsModal({ isOpen, onClose, session }) {
 
   const handleDelete = async () => {
     if (!session) return
-    if (!window.confirm('Sei sicuro di voler eliminare questa corsa dallo storico? Questa azione è irreversibile.')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Elimina corsa dallo storico',
+      message: 'Sei sicuro di voler eliminare questa corsa dallo storico? Questa azione è irreversibile.',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     setDeleting(true)
     try {
       const { error } = await supabase

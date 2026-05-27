@@ -7,10 +7,12 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { toast } from 'sonner'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 import { calculateOvertime } from '@/lib/workCalculations'
 
 function WorkLog({ sessions, onEdit, userConfig }) {
+  const confirm = useConfirmStore(s => s.confirm)
   const { removeSession } = useFirmeStore()
   const { pushError } = useNotifications()
   const { user } = useAuthStore()
@@ -28,7 +30,14 @@ function WorkLog({ sessions, onEdit, userConfig }) {
   const schedule = userConfig?.work_schedule || defaultSchedule
 
   const handleDelete = async (id) => {
-    if (!confirm('Eliminare questa sessione?')) return
+    const ok = await confirm({
+      title: 'Elimina sessione',
+      message: 'Eliminare questa sessione?',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     // Filtro anche per user_id per prevenire IDOR (VUL-003)
     const { error } = await supabase.from('work_sessions').delete().eq('id', id).eq('user_id', user?.id)
     if (error) {

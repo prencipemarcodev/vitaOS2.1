@@ -5,8 +5,10 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { toast } from 'sonner'
 import Card from '@/components/ui/Card'
 import clsx from 'clsx'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 function NoteCard({ note, onEdit }) {
+  const confirm = useConfirmStore(s => s.confirm)
   const { removeNote, updateNote } = useNoteStore()
   const { user } = useAuthStore()
 
@@ -19,7 +21,14 @@ function NoteCard({ note, onEdit }) {
 
   const handleDelete = async (e) => {
     e.stopPropagation()
-    if (!confirm('Eliminare questa nota?')) return
+    const ok = await confirm({
+      title: 'Elimina nota',
+      message: 'Eliminare questa nota?',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     // Filtro anche per user_id per prevenire IDOR (VUL-003)
     const { error } = await supabase.from('notes').delete().eq('id', note.id).eq('user_id', user?.id)
     if (!error) {

@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import { useAuthStore } from '@/store/useAuthStore'
 import Logo from './Logo'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 const NAV_ITEMS = [
   { to: '/',             icon: LayoutDashboard, label: 'Overview',      id: '1' },
@@ -79,11 +80,19 @@ function Sidebar() {
 
 function LogoutButton() {
   const { signOut } = useAuthStore()
+  const confirm = useConfirmStore(s => s.confirm)
   
   return (
     <button
-      onClick={() => {
-        if(confirm('Vuoi uscire da VitaOS?')) signOut()
+      onClick={async () => {
+        const ok = await confirm({
+          title: 'Esci da VitaOS',
+          message: 'Vuoi davvero uscire da VitaOS?',
+          variant: 'primary',
+          confirmText: 'Esci',
+          cancelText: 'Annulla'
+        })
+        if (ok) signOut()
       }}
       className="w-full flex items-center gap-3 px-3 py-2 rounded-xl
         text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600

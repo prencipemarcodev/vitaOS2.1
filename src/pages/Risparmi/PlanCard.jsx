@@ -12,6 +12,7 @@ import Badge from '@/components/ui/Badge'
 import { motion } from 'framer-motion'
 import Button from '@/components/ui/Button'
 import { getIcon } from '@/lib/icons'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
@@ -21,6 +22,7 @@ import PACChart from './PACChart'
 import { getAccounts } from '@/lib/accounts'
 
 function PlanCard({ plan, onEdit }) {
+  const confirm = useConfirmStore(s => s.confirm)
   const { updatePlan, removePlan, addMovement, movements } = useSavingsStore()
   const { transactions, categories, addTransaction } = useFinanceStore()
   const { userConfig } = useAppStore()
@@ -154,7 +156,14 @@ function PlanCard({ plan, onEdit }) {
   }
 
   const handleDelete = async () => {
-    if (!confirm('Eliminare questo piano?')) return
+    const ok = await confirm({
+      title: 'Elimina piano',
+      message: 'Eliminare questo piano?',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     // Filtro anche per user_id per prevenire IDOR (VUL-003)
     const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id).eq('user_id', user?.id)
     if (!error) {

@@ -12,8 +12,10 @@ import { format, parseISO } from 'date-fns'
 import { it } from 'date-fns/locale'
 import Card from '@/components/ui/Card'
 import clsx from 'clsx'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 function TransactionList({ transactions, categories, onEdit }) {
+  const confirm = useConfirmStore(s => s.confirm)
   const { removeTransaction } = useFinanceStore()
   const { pushError, pushSuccess } = useNotifications()
   const { userConfig } = useAppStore()
@@ -23,7 +25,14 @@ function TransactionList({ transactions, categories, onEdit }) {
 
 
   const handleDelete = async (id) => {
-    if (!confirm('Eliminare questa transazione?')) return
+    const ok = await confirm({
+      title: 'Elimina transazione',
+      message: 'Eliminare questa transazione?',
+      variant: 'danger',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     // Trova la transazione prima di eliminarla (serve per aggiornare il grafico)
     const tx = transactions.find(t => t.id === id)
     // Filtro anche per user_id per prevenire IDOR (VUL-003)

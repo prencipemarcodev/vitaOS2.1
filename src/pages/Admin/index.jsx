@@ -11,8 +11,10 @@ import { useAuthStore } from '@/store/useAuthStore'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { toast } from 'sonner'
+import { useConfirmStore } from '@/store/useConfirmStore'
 
 export default function AdminDashboard() {
+  const confirm = useConfirmStore(s => s.confirm)
   const navigate = useNavigate()
   const { session, signOut } = useAuthStore()
   const [loading, setLoading] = useState(true)
@@ -78,7 +80,14 @@ export default function AdminDashboard() {
   // --- AZIONI ---
 
   const handleResetUserData = async (userId, userName) => {
-    if (!confirm(`Sei sicuro di voler resettare TUTTI i dati di ${userName}? Questa azione è irreversibile.`)) return
+    const ok = await confirm({
+      title: 'Reset Dati Utente',
+      message: `Sei sicuro di voler resettare TUTTI i dati di ${userName}? Questa azione è irreversibile.`,
+      variant: 'warning',
+      confirmText: 'Resetta',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     
     try {
       const { error } = await supabase.rpc('admin_reset_user_data', { target_user_id: userId })
@@ -91,7 +100,14 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteUser = async (userId, userName) => {
-    if (!confirm(`ELIMINAZIONE TOTALE: Vuoi cancellare definitivamente ${userName} e tutti i suoi dati dal sistema?`)) return
+    const ok = await confirm({
+      title: 'CANCELLAZIONE TOTALE UTENTE',
+      message: `ELIMINAZIONE TOTALE: Vuoi cancellare definitivamente ${userName} e tutti i suoi dati dal sistema?`,
+      variant: 'danger',
+      confirmText: 'Elimina Utente',
+      cancelText: 'Annulla'
+    })
+    if (!ok) return
     
     try {
       // Nota: Eliminare un utente da auth richiede permessi speciali o una RPC dedicata
