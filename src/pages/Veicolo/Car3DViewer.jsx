@@ -69,9 +69,9 @@ function GLBModel({ type, color, autoRotate }) {
 // ── Config camera (valori di default) ─────────────────────────
 // Valori trovati con il pannello debug e poi dimezzati in distanza (zoom ×2)
 // POS originale [6.20, 4.20, 6.20] → /2 = [3.10, 2.10, 3.10]
-const DEFAULT_CAM_TARGET   = [0, 0, 0.05]   // centro visivo (quasi all'origine)
+const DEFAULT_CAM_TARGET = [0, 0, 0]   // centro visivo (quasi all'origine)
 const DEFAULT_CAM_POSITION = [3.10, 2.10, 3.10] // metà distanza = zoom doppio
-const DEFAULT_FOV          = 42
+const DEFAULT_FOV = 42
 
 // ── DEBUG MODE ─────────────────────────────────────────────────
 const DEBUG = false
