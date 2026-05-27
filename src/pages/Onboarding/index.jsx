@@ -12,6 +12,7 @@ import StepOrariLavoro from './StepOrariLavoro'
 import StepOrariStudioGym from './StepOrariStudioGym'
 import StepSaldoIniziale from './StepSaldoIniziale'
 import StepPrimoRisparmio from './StepPrimoRisparmio'
+import StepVeicolo from './StepVeicolo'
 import StepDone from './StepDone'
 
 const STEPS = [
@@ -21,6 +22,7 @@ const STEPS = [
   { id: 'studio_gym',  label: 'Studio & Palestra', component: StepOrariStudioGym },
   { id: 'saldo',       label: 'Saldo iniziale',   component: StepSaldoIniziale },
   { id: 'risparmio',   label: 'Primo risparmio',  component: StepPrimoRisparmio },
+  { id: 'veicolo',     label: 'Il tuo Garage',    component: StepVeicolo },
   { id: 'done',        label: 'Pronti!',          component: StepDone },
 ]
 
@@ -63,6 +65,11 @@ function Onboarding() {
 
     // Step 5 — Primo risparmio (opzionale)
     first_plan: null,
+
+    // Step 6 — Veicolo (opzionale)
+    has_vehicle: null,      // null | true | false
+    vehicle_type: null,     // city | hatchback | sedan | wagon | suv | suv_large | electric
+    vehicle_color: '#9aacc8',
   })
 
   const configId = userConfig?.id
@@ -126,6 +133,29 @@ function Onboarding() {
         })
       }
     }
+
+    // Step 7 (Veicolo)
+    if (stepIndex === 6 && formData.has_vehicle === true && formData.vehicle_type) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // Controlla se esiste già un veicolo creato in questo onboarding
+        const { data: existing } = await supabase
+          .from('vehicles')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('name', 'La mia Auto')
+          .limit(1)
+        
+        if (!existing || existing.length === 0) {
+          await supabase.from('vehicles').insert({
+            user_id: user.id,
+            name: 'La mia Auto',
+            vehicle_type: formData.vehicle_type,
+            color: formData.vehicle_color ?? '#9aacc8',
+          })
+        }
+      }
+    }
   }, [configId, formData])
 
   // ── Navigazione step ──
@@ -163,7 +193,7 @@ function Onboarding() {
   const handleFinish = async () => {
     await saveStepData(currentStep)
     if (configId) {
-      await supabase.from('user_config').update({ onboarding_completed: true, onboarding_step: 6 }).eq('id', configId)
+      await supabase.from('user_config').update({ onboarding_completed: true, onboarding_step: 7 }).eq('id', configId)
     }
     setShowOnboardingForce(false)
     setOnboardingCompleted(true)

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -9,66 +9,11 @@ import { toast } from 'sonner'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import AnimatedNumber from '@/components/ui/AnimatedNumber'
+import Car3DViewer from './Car3DViewer'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useConfirmStore } from '@/store/useConfirmStore'
 
-// ─────────────────────────────────────────────────────────────
-// Car SVG — tintable via `color` prop
-// ─────────────────────────────────────────────────────────────
-function CarIllustration({ color = '#9aacc8' }) {
-  const id = color.replace('#', '')
-  return (
-    <svg viewBox="0 0 320 130" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 280 }} aria-hidden="true">
-      <defs>
-        <linearGradient id={`vb-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.95" />
-          <stop offset="55%" stopColor={color} stopOpacity="0.75" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.55" />
-        </linearGradient>
-        <linearGradient id={`vr-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="1" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.7" />
-        </linearGradient>
-        <linearGradient id={`vw-${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#48485a" />
-          <stop offset="100%" stopColor="#1e1e28" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="160" cy="126" rx="130" ry="6" fill="rgba(0,0,0,0.08)" />
-      <path d="M32 90 L32 76 Q35 68 50 63 L62 61 L258 61 L272 66 L282 76 L282 90 Z" fill={`url(#vb-${id})`} />
-      <path d="M88 61 L104 34 Q110 28 118 26 L200 26 Q208 26 214 31 L234 61 Z" fill={`url(#vr-${id})`} />
-      <path d="M200 26 Q208 26 214 31 L234 61 L212 61 Z" fill="rgba(140,190,240,0.22)" stroke="rgba(150,200,255,0.28)" strokeWidth="0.6" />
-      <path d="M88 61 L104 34 Q110 28 118 26 L110 61 Z" fill="rgba(140,190,240,0.18)" stroke="rgba(150,200,255,0.2)" strokeWidth="0.6" />
-      <rect x="112" y="30" width="86" height="29" rx="3" fill="rgba(130,185,240,0.16)" stroke="rgba(150,200,255,0.18)" strokeWidth="0.6" />
-      <line x1="154" y1="30" x2="154" y2="59" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
-      <path d="M34 76 L280 76" stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
-      <path d="M268 67 L280 73 L277 80 L260 78 Z" fill="rgba(255,245,180,0.92)" />
-      <path d="M50 64 L34 71 L35 79 L54 77 Z" fill="rgba(220,60,60,0.82)" />
-      <path d="M152 61 L152 88" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" />
-      <path d="M196 61 L196 88" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" />
-      <rect x="116" y="73" width="22" height="3" rx="1.5" fill="rgba(255,255,255,0.2)" />
-      <rect x="160" y="73" width="22" height="3" rx="1.5" fill="rgba(255,255,255,0.2)" />
-      <path d="M248 61 L258 56 L261 60 L250 64 Z" fill={color} opacity="0.75" />
-      {[226, 90].map((cx, i) => (
-        <g key={i}>
-          <circle cx={cx} cy={97} r="22" fill={`url(#vw-${id})`} />
-          <circle cx={cx} cy={97} r="9" fill="#48485a" />
-          <circle cx={cx} cy={97} r="3.5" fill="rgba(255,255,255,0.28)" />
-          {[0, 60, 120, 180, 240, 300].map(deg => {
-            const rad = (deg * Math.PI) / 180
-            return <line key={deg}
-              x1={cx + Math.cos(rad) * 9.5} y1={97 + Math.sin(rad) * 9.5}
-              x2={cx + Math.cos(rad) * 16}  y2={97 + Math.sin(rad) * 16}
-              stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
-          })}
-        </g>
-      ))}
-      <path d="M120 28 Q160 24 198 28 Q178 34 140 34 Z" fill="rgba(255,255,255,0.14)" />
-    </svg>
-  )
-}
 
 // ── Hotspot Pin ───────────────────────────────────────────────
 function HotspotPin({ label, value, badge, badgeColor, status = 'ok', side = 'left', delay = 0 }) {
@@ -139,6 +84,10 @@ function VehicleDashboard({ vehicle }) {
   const [submitting, setSubmitting] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [viewerOpen, setViewerOpen] = useState(true)
+  const [vehicleColor, setVehicleColor] = useState(vehicle?.color ?? '#9aacc8')
+
+  // Sync color when vehicle changes
+  useEffect(() => { setVehicleColor(vehicle?.color ?? '#9aacc8') }, [vehicle?.id])
 
   // Form state
   const [type, setType] = useState('fuel')
@@ -298,46 +247,48 @@ function VehicleDashboard({ vehicle }) {
                 transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 style={{ overflow: 'hidden' }}
               >
-                <div className="relative flex items-end justify-center"
-                  style={{
-                    minHeight: 200,
-                    background: `radial-gradient(ellipse 80% 60% at 50% 70%, ${vehicle.color}12 0%, var(--bg-base) 100%)`,
-                    paddingBottom: 24, paddingTop: 20,
-                  }}>
-                  {/* Hotspots */}
+                {/* 3D / SVG Viewer con hotspot overlay */}
+                <div className="relative">
+                  <Car3DViewer
+                    vehicleType={vehicle.vehicle_type ?? 'sedan'}
+                    color={vehicleColor}
+                    onColorChange={setVehicleColor}
+                    label={vehicle.name}
+                    height={240}
+                    className="mx-0 rounded-none"
+                  />
+
+                  {/* Hotspot pins overlay sopra il viewer */}
                   {hasData && oilLog && (
-                    <div className="absolute left-2 top-3" style={{ zIndex: 10 }}>
+                    <div className="absolute left-2 top-3 z-20 pointer-events-none">
                       <HotspotPin label="🔧 Cambio Olio"
                         value={`${Math.round(stats.maxOdo - oilLog.odometer).toLocaleString('it-IT')} km fa`}
                         badge={oilPct >= 80 ? '⚠️ Urgente' : '✓ OK'}
                         badgeColor={oilPct >= 80 ? 'var(--color-warning)' : 'var(--color-success)'}
                         status={oilPct >= 90 ? 'danger' : oilPct >= 70 ? 'warning' : 'ok'}
-                        side="left" delay={0.5} />
+                        side="left" delay={0.3} />
                     </div>
                   )}
                   {stats.maxOdo > 0 && (
-                    <div className="absolute top-2" style={{ left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
-                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.65 }}>
-                        <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1.5 shadow-[var(--shadow-md)] text-center">
+                    <div className="absolute top-2 z-20 pointer-events-none" style={{ left: '50%', transform: 'translateX(-50%)' }}>
+                      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+                        <div className="bg-[var(--bg-surface)]/90 backdrop-blur-md border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1.5 shadow-[var(--shadow-md)] text-center">
                           <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-0.5">📍 Odometro</p>
                           <p className="text-xs font-black text-[var(--text-primary)]">{stats.maxOdo.toLocaleString('it-IT')} km</p>
                         </div>
-                        <div style={{ width: 1, height: 16, background: 'linear-gradient(to bottom, var(--color-success), transparent)', margin: '0 auto' }} />
-                        <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }} transition={{ duration: 2.4, repeat: Infinity }}
-                          style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--color-success)', boxShadow: '0 0 0 4px rgba(61,153,112,0.25)', margin: '0 auto' }} />
                       </motion.div>
                     </div>
                   )}
                   {stats.avgConsumption > 0 && (
-                    <div className="absolute right-2 top-3" style={{ zIndex: 10 }}>
+                    <div className="absolute right-2 top-3 z-20 pointer-events-none">
                       <HotspotPin label="⛽ Consumo" value={`${stats.avgConsumption.toFixed(1)} l/100`}
-                        status="ok" side="right" delay={0.8} />
+                        status="ok" side="right" delay={0.6} />
                     </div>
                   )}
                   {insuranceEntry && (
-                    <div className="absolute bottom-8 left-2" style={{ zIndex: 10 }}>
-                      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
-                        <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1.5 shadow-[var(--shadow-md)]">
+                    <div className="absolute bottom-10 left-2 z-20 pointer-events-none">
+                      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+                        <div className="bg-[var(--bg-surface)]/90 backdrop-blur-md border border-[var(--border-default)] rounded-[var(--radius-md)] px-2.5 py-1.5 shadow-[var(--shadow-md)]">
                           <p className="text-[9px] font-bold uppercase text-[var(--text-muted)] mb-0.5">🛡️ Assicurazione</p>
                           <p className="text-xs font-black text-[var(--text-primary)]">{format(new Date(insuranceEntry.date), 'dd MMM yyyy', { locale: it })}</p>
                           <span className="text-[8px] font-black px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,160,23,0.12)', color: 'var(--color-warning)' }}>⚠️ Rinnovo</span>
@@ -345,22 +296,10 @@ function VehicleDashboard({ vehicle }) {
                       </motion.div>
                     </div>
                   )}
-
-                  {/* Car SVG */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.88, y: 12 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-                    style={{ width: '75%', maxWidth: 280 }}>
-                    <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-                      <CarIllustration color={vehicle.color} />
-                    </motion.div>
-                  </motion.div>
-
                   {!hasData && !loading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-base)]/60 backdrop-blur-[2px]">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-base)]/50 backdrop-blur-[2px] z-10">
                       <Car size={28} className="text-[var(--text-muted)] mb-2 opacity-30" />
-                      <p className="text-xs font-bold text-[var(--text-muted)] opacity-50 text-center px-8">Inserisci rifornimenti e spese per sbloccare la telemetria</p>
+                      <p className="text-xs font-bold text-[var(--text-muted)] opacity-50 text-center px-8">Inserisci rifornimenti per sbloccare la telemetria</p>
                     </div>
                   )}
                 </div>

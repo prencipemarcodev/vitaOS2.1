@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Edit2, Trash2, X, Check } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { X, Check } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import { VEHICLE_TYPES } from '../Onboarding/StepVeicolo'
 
 const FUEL_TYPES = [
   { value: 'gasoline', label: '⛽ Benzina' },
@@ -27,14 +28,15 @@ const PALETTE = [
 
 function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
   const isEdit = Boolean(vehicle)
-  const [name, setName]           = useState(vehicle?.name      ?? '')
-  const [brand, setBrand]         = useState(vehicle?.brand     ?? '')
-  const [model, setModel]         = useState(vehicle?.model     ?? '')
-  const [year, setYear]           = useState(vehicle?.year      ?? new Date().getFullYear())
-  const [color, setColor]         = useState(vehicle?.color     ?? '#9aacc8')
-  const [fuelType, setFuelType]   = useState(vehicle?.fuel_type ?? 'gasoline')
-  const [plate, setPlate]         = useState(vehicle?.plate     ?? '')
-  const [saving, setSaving]       = useState(false)
+  const [name, setName]             = useState(vehicle?.name         ?? '')
+  const [brand, setBrand]           = useState(vehicle?.brand        ?? '')
+  const [model, setModel]           = useState(vehicle?.model        ?? '')
+  const [year, setYear]             = useState(vehicle?.year         ?? new Date().getFullYear())
+  const [color, setColor]           = useState(vehicle?.color        ?? '#9aacc8')
+  const [fuelType, setFuelType]     = useState(vehicle?.fuel_type    ?? 'gasoline')
+  const [vehicleType, setVehicleType] = useState(vehicle?.vehicle_type ?? 'sedan')
+  const [plate, setPlate]           = useState(vehicle?.plate        ?? '')
+  const [saving, setSaving]         = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -45,14 +47,15 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
       if (!user) return
 
       const payload = {
-        user_id:   user.id,
-        name:      name.trim(),
-        brand:     brand.trim() || null,
-        model:     model.trim() || null,
-        year:      year ? parseInt(year) : null,
+        user_id:      user.id,
+        name:         name.trim(),
+        brand:        brand.trim() || null,
+        model:        model.trim() || null,
+        year:         year ? parseInt(year) : null,
         color,
-        fuel_type: fuelType,
-        plate:     plate.trim() || null,
+        fuel_type:    fuelType,
+        vehicle_type: vehicleType,
+        plate:        plate.trim() || null,
       }
 
       let error
@@ -150,6 +153,34 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
                 {FUEL_TYPES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
             </div>
+          </div>
+
+          {/* Vehicle Type */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Tipo di Auto</label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {VEHICLE_TYPES.map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setVehicleType(t.id)}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all duration-150"
+                  style={{
+                    borderColor: vehicleType === t.id ? 'var(--color-primary)' : 'var(--border-subtle)',
+                    background: vehicleType === t.id ? 'var(--color-primary-ghost)' : 'var(--bg-base)',
+                  }}
+                  title={t.label}
+                >
+                  <span className="text-lg">{t.badge ?? '🚗'}</span>
+                  <span className="text-[8px] font-bold text-[var(--text-muted)] text-center leading-tight line-clamp-1">
+                    {t.label.split(' ')[0]}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-[var(--text-muted)] opacity-70">
+              {VEHICLE_TYPES.find(t => t.id === vehicleType)?.examples}
+            </p>
           </div>
 
           {/* Plate */}

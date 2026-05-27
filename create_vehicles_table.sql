@@ -7,16 +7,17 @@
 create table if not exists public.vehicles (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade,
-  name        text not null default 'La mia Auto',
-  brand       text,
-  model       text,
-  year        int,
-  color       text default '#9aacc8',
-  fuel_type   text default 'gasoline', -- gasoline | diesel | electric | hybrid
-  plate       text,
-  sort_order  int  default 0,
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
+  name         text not null default 'La mia Auto',
+  brand        text,
+  model        text,
+  year         int,
+  color        text default '#9aacc8',
+  fuel_type    text default 'gasoline',  -- gasoline | diesel | electric | hybrid
+  vehicle_type text default 'sedan',     -- city | hatchback | sedan | wagon | suv | suv_large | electric
+  plate        text,
+  sort_order   int  default 0,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
 );
 
 -- 2. RLS
