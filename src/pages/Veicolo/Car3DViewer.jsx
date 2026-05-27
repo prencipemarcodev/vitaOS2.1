@@ -89,8 +89,8 @@ function GLBModel({ type, color, autoRotate }) {
 // CAM_TARGET: centro visivo auto. Sedan H≈1.3u → centro ~Y=0.65
 // Angolo orizzontale: atan((1.5-0.65)/sqrt(4.5²+4.5²)) ≈ 7.6°
 // Car showcases usano 7-12°: poca prospettiva pavimento, auto centrata
-const CAM_TARGET   = [0, 0.65, 0]
-const CAM_POSITION = [4.5, 1.5, 4.5]
+const CAM_TARGET = [0, 0.65, 0]
+const CAM_POSITION = [4.5, 0.5, 4.5]
 
 // ── DEBUG MODE ────────────────────────────────────────────────────
 // Imposta su true per attivare helpers 3D e overlay con stats live
