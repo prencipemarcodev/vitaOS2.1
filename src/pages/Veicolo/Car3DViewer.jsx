@@ -111,8 +111,8 @@ function CarScene({ type, color, autoRotate, useGLB }) {
         maxDistance={8}
         minPolarAngle={Math.PI / 8}
         maxPolarAngle={Math.PI / 1.9}
-        autoRotate={autoRotate && !useGLB}
-        autoRotateSpeed={0.8}
+        target={[0, 0.5, 0]}
+        autoRotate={false}
         makeDefault
       />
     </>
@@ -206,7 +206,7 @@ function Car3DViewer({
     >
       {canvasReady && (
         <Canvas
-          camera={{ position: [2.8, 1.4, 2.8], fov: 45 }}
+          camera={{ position: [3.2, 1.6, 3.2], fov: 42 }}
           shadows
           dpr={[1, 2]}
           gl={{ shadowMapType: PCFShadowMap }}
