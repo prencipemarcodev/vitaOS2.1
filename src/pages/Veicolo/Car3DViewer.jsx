@@ -1,142 +1,69 @@
 /**
- * Car3DViewer — viewer WebGL con OrbitControls, stile Tesla habitacle.
+ * Car3DViewer — viewer WebGL con modello 3D procedurale (sempre attivo)
+ * + supporto GLB opzionale se il file è presente in /models/cars/{type}.glb
  *
- * Comportamento:
- * - Se il file GLB esiste in /models/cars/{type}.glb → carica e mostra il modello 3D
- * - Se il file non esiste o Three.js ha errori → fallback alla SVG animata
- * - Tinting colore utente applicato alle mesh della carrozzeria (nome include "body" o "paint")
+ * Funziona SUBITO senza file esterni grazie a ProceduralCar.
+ * Se viene trovato un .glb, lo usa al posto del modello procedurale (upgrade automatico).
  */
-import { Suspense, useRef, useEffect, useState, useCallback } from 'react'
+import { Suspense, useRef, useEffect, useState, useCallback, lazy } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
 import { motion } from 'framer-motion'
-import { Car } from 'lucide-react'
+import ProceduralCarRotating from './ProceduralCar'
 
-// ── Lazy import Three.js per non appesantire il bundle principale ──
-let threeLoaded = false
-let Canvas, useGLTF, OrbitControls, Environment, ContactShadows, useFrame
-
-async function loadThree() {
-  if (threeLoaded) return true
+// ── Lazy: GLB model (solo se il file esiste) ──────────────────────
+let useGLTF = null
+async function tryLoadGLTF() {
   try {
-    const fiber = await import('@react-three/fiber')
     const drei = await import('@react-three/drei')
-    Canvas = fiber.Canvas
     useGLTF = drei.useGLTF
-    OrbitControls = drei.OrbitControls
-    Environment = drei.Environment
-    ContactShadows = drei.ContactShadows
-    useFrame = fiber.useFrame
-    threeLoaded = true
     return true
-  } catch {
-    return false
-  }
+  } catch { return false }
 }
 
-// ── Fallback SVG (usata quando Three.js non è caricato o modello assente) ──
-function CarSVGFallback({ color = '#9aacc8' }) {
-  const id = color.replace('#', '')
-  return (
-    <svg viewBox="0 0 320 130" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 280 }} aria-hidden="true">
-      <defs>
-        <linearGradient id={`f-vb-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.95" />
-          <stop offset="55%" stopColor={color} stopOpacity="0.75" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.55" />
-        </linearGradient>
-        <linearGradient id={`f-vr-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="1" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.7" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="160" cy="126" rx="130" ry="6" fill="rgba(0,0,0,0.08)" />
-      <path d="M32 90 L32 76 Q35 68 50 63 L62 61 L258 61 L272 66 L282 76 L282 90 Z" fill={`url(#f-vb-${id})`} />
-      <path d="M88 61 L104 34 Q110 28 118 26 L200 26 Q208 26 214 31 L234 61 Z" fill={`url(#f-vr-${id})`} />
-      <path d="M200 26 Q208 26 214 31 L234 61 L212 61 Z" fill="rgba(140,190,240,0.22)" />
-      <path d="M88 61 L104 34 Q110 28 118 26 L110 61 Z" fill="rgba(140,190,240,0.18)" />
-      <rect x="112" y="30" width="86" height="29" rx="3" fill="rgba(130,185,240,0.16)" />
-      <path d="M268 67 L280 73 L277 80 L260 78 Z" fill="rgba(255,245,180,0.92)" />
-      <path d="M50 64 L34 71 L35 79 L54 77 Z" fill="rgba(220,60,60,0.82)" />
-      {[226, 90].map((cx, i) => (
-        <g key={i}>
-          <circle cx={cx} cy={97} r="22" fill="#2a2a38" />
-          <circle cx={cx} cy={97} r="9" fill="#48485a" />
-          <circle cx={cx} cy={97} r="3.5" fill="rgba(255,255,255,0.28)" />
-        </g>
-      ))}
-    </svg>
-  )
-}
-
-// ── Skeleton durante il caricamento del modello 3D ────────────────
-function LoadingCar({ color }) {
-  return (
-    <group>
-      {/* Box placeholder animato */}
-      <mesh position={[0, 0.2, 0]}>
-        <boxGeometry args={[2.8, 0.8, 1.4]} />
-        <meshStandardMaterial color={color} transparent opacity={0.3} wireframe />
-      </mesh>
-      <mesh position={[0, 0.85, 0.1]}>
-        <boxGeometry args={[1.6, 0.55, 1.3]} />
-        <meshStandardMaterial color={color} transparent opacity={0.2} wireframe />
-      </mesh>
-    </group>
-  )
-}
-
-// ── Modello 3D (caricato via useGLTF) ────────────────────────────
-function CarModel({ type, color }) {
+// ── Componente GLB (caricato solo se il file esiste) ──────────────
+function GLBModel({ type, color }) {
   const { scene } = useGLTF(`/models/cars/${type}.glb`)
-  const ref = useRef()
-
-  // Applica colore alle mesh della carrozzeria
   useEffect(() => {
-    if (!scene) return
-    scene.traverse((child) => {
+    scene.traverse(child => {
       if (!child.isMesh) return
-      const name = child.name.toLowerCase()
-      // Tinta solo mesh body/paint/carrosserie/car_body
-      const isBody = ['body', 'paint', 'car', 'hull', 'chassis', 'exterior'].some(k => name.includes(k))
-      if (isBody) {
+      const n = child.name.toLowerCase()
+      if (['body', 'paint', 'car', 'hull', 'chassis', 'exterior'].some(k => n.includes(k))) {
         child.material = child.material.clone()
         child.material.color.set(color)
         child.castShadow = true
-        child.receiveShadow = false
       }
     })
   }, [scene, color])
-
-  // Gentle auto-rotate on idle (reset when user interacts)
-  useFrame((_, delta) => {
-    if (ref.current) {
-      // Tiny oscillation for a "alive" feel (no full rotation)
-      ref.current.rotation.y += delta * 0.08
-    }
-  })
-
+  const ref = useRef()
+  useFrame((_, delta) => { if (ref.current) ref.current.rotation.y += delta * 0.08 })
   return <primitive ref={ref} object={scene} />
 }
 
-// ── Scene wrapper ─────────────────────────────────────────────────
-function CarScene({ type, color, autoRotate }) {
+// ── Scene ─────────────────────────────────────────────────────────
+function CarScene({ type, color, autoRotate, useGLB }) {
   return (
     <>
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={0.55} />
       <directionalLight position={[4, 6, 4]} intensity={1.2} castShadow
         shadow-mapSize-width={512} shadow-mapSize-height={512} />
-      <directionalLight position={[-4, 3, -4]} intensity={0.4} />
+      <directionalLight position={[-3, 3, -3]} intensity={0.4} />
       <Environment preset="city" />
-      <Suspense fallback={<LoadingCar color={color} />}>
-        <CarModel type={type} color={color} />
-        <ContactShadows position={[0, -0.85, 0]} opacity={0.25} scale={6} blur={2} />
+
+      <Suspense fallback={<ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />}>
+        {useGLB && useGLTF
+          ? <GLBModel type={type} color={color} />
+          : <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
+        }
+        <ContactShadows position={[0, -0.86, 0]} opacity={0.28} scale={7} blur={2.5} />
       </Suspense>
+
       <OrbitControls
         enableZoom={false}
         enablePan={false}
         minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI / 2.1}
-        autoRotate={autoRotate}
+        autoRotate={autoRotate && !useGLB} // La rotazione procedurale la gestisce ProceduralCarRotating
         autoRotateSpeed={0.6}
         makeDefault
       />
@@ -144,166 +71,129 @@ function CarScene({ type, color, autoRotate }) {
   )
 }
 
-// ── Controlli UI overlay ─────────────────────────────────────────
-function ViewerControls({ autoRotate, setAutoRotate, color, onColorChange, label }) {
-  const PALETTE = [
-    '#9aacc8', '#c8a09a', '#a8c8a0', '#1e1e28',
-    '#f0ede8', '#b46243', '#4a90d9', '#c8c09a',
-  ]
+// ── Controlli UI overlay ──────────────────────────────────────────
+const PALETTE = [
+  '#9aacc8', '#c8a09a', '#a8c8a0', '#1e1e28',
+  '#f0ede8', '#b46243', '#4a90d9', '#c8c09a',
+]
+
+function ViewerControls({ autoRotate, setAutoRotate, color, onColorChange }) {
   return (
     <div className="absolute bottom-3 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
-      {/* Color dots */}
       <div className="flex gap-1.5 pointer-events-auto">
         {PALETTE.map(c => (
-          <button
-            key={c}
-            onClick={() => onColorChange(c)}
+          <button key={c} onClick={() => onColorChange(c)}
             className="w-4 h-4 rounded-full border-2 transition-all duration-150"
             style={{
               background: c,
               borderColor: color === c ? 'white' : 'transparent',
               transform: color === c ? 'scale(1.3)' : 'scale(1)',
               boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            }}
-          />
+            }} />
         ))}
       </div>
-
-      {/* Auto-rotate toggle */}
-      <button
-        onClick={() => setAutoRotate(v => !v)}
-        className="pointer-events-auto text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-all duration-200"
+      <button onClick={() => setAutoRotate(v => !v)}
+        className="pointer-events-auto text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-all"
         style={{
           background: autoRotate ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
           color: 'rgba(255,255,255,0.9)',
           backdropFilter: 'blur(4px)',
           border: '1px solid rgba(255,255,255,0.15)',
-        }}
-      >
+        }}>
         {autoRotate ? '⏸ Fermo' : '▶ Ruota'}
       </button>
     </div>
   )
 }
 
-// ── Componente principale esportato ────────────────────────────────
+// ── Componente principale ─────────────────────────────────────────
 function Car3DViewer({
   vehicleType = 'sedan',
   color: externalColor,
   onColorChange,
-  label,
-  height = 220,
+  height = 240,
   className = '',
 }) {
-  const [threeReady, setThreeReady] = useState(false)
-  const [modelExists, setModelExists] = useState(null) // null = checking, true/false
   const [autoRotate, setAutoRotate] = useState(true)
   const [internalColor, setInternalColor] = useState(externalColor ?? '#9aacc8')
+  const [glbExists, setGlbExists] = useState(false)
+  const [gltfReady, setGltfReady] = useState(false)
+  const [canvasReady, setCanvasReady] = useState(false)
 
   const color = externalColor ?? internalColor
+
   const handleColorChange = useCallback((c) => {
     setInternalColor(c)
     onColorChange?.(c)
   }, [onColorChange])
 
-  // Carica Three.js in modo asincrono
+  // Carica Three.js (montaggio iniziale)
   useEffect(() => {
-    loadThree().then(ok => setThreeReady(ok))
+    tryLoadGLTF().then(setGltfReady)
+    // Piccolo ritardo per evitare layout shift durante la transizione pagina
+    const t = setTimeout(() => setCanvasReady(true), 80)
+    return () => clearTimeout(t)
   }, [])
 
-  // Verifica se il modello GLB esiste (fetch HEAD)
+  // Controlla se esiste il GLB per questo tipo
   useEffect(() => {
-    setModelExists(null)
+    setGlbExists(false)
     fetch(`/models/cars/${vehicleType}.glb`, { method: 'HEAD' })
-      .then(r => setModelExists(r.ok))
-      .catch(() => setModelExists(false))
+      .then(r => { if (r.ok) setGlbExists(true) })
+      .catch(() => {})
   }, [vehicleType])
 
-  const showViewer = threeReady && modelExists === true
+  const useGLB = glbExists && gltfReady
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[var(--radius-xl)] ${className}`}
+      className={`relative overflow-hidden ${className}`}
       style={{
         height,
-        background: `radial-gradient(ellipse 90% 70% at 50% 75%, ${color}18 0%, ${color}06 50%, var(--bg-base) 100%)`,
+        background: `radial-gradient(ellipse 90% 70% at 50% 75%, ${color}1a 0%, ${color}06 55%, var(--bg-base) 100%)`,
       }}
     >
-      {/* ── 3D Canvas ── */}
-      {showViewer && Canvas && (
+      {canvasReady && (
         <Canvas
-          camera={{ position: [3.5, 1.6, 3.5], fov: 42 }}
+          camera={{ position: [3.8, 1.8, 3.8], fov: 40 }}
           shadows
           dpr={[1, 1.5]}
           style={{ width: '100%', height: '100%' }}
         >
-          <CarScene type={vehicleType} color={color} autoRotate={autoRotate} />
+          <CarScene type={vehicleType} color={color} autoRotate={autoRotate} useGLB={useGLB} />
         </Canvas>
       )}
 
-      {/* ── SVG Fallback ── */}
-      {!showViewer && (
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <div style={{ width: '75%', maxWidth: 260 }}>
-            <CarSVGFallback color={color} />
-          </div>
-        </motion.div>
-      )}
-
-      {/* ── Loading indicator (verifica in corso) ── */}
-      {modelExists === null && !showViewer && (
-        <div className="absolute top-3 right-3">
-          <div className="w-3 h-3 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin opacity-40" />
-        </div>
-      )}
-
-      {/* ── "3D non disponibile" badge discreto ── */}
-      {modelExists === false && (
-        <div className="absolute top-3 right-3">
-          <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full opacity-30"
-            style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
-            SVG preview
+      {/* GLB badge (solo se 3D da file) */}
+      {useGLB && (
+        <div className="absolute top-2.5 left-3 pointer-events-none">
+          <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(4px)' }}>
+            3D
           </span>
         </div>
       )}
 
-      {/* ── Controlli (visibili solo quando 3D attivo) ── */}
-      {showViewer && (
-        <ViewerControls
-          autoRotate={autoRotate}
-          setAutoRotate={setAutoRotate}
-          color={color}
-          onColorChange={handleColorChange}
-          label={label}
-        />
-      )}
+      {/* Hint drag */}
+      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 pointer-events-none">
+        <motion.span
+          initial={{ opacity: 0 }} animate={{ opacity: [0, 0.6, 0] }}
+          transition={{ duration: 3, delay: 1.5, repeat: 0 }}
+          className="text-[8px] font-bold uppercase tracking-widest whitespace-nowrap"
+          style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Trascina per ruotare
+        </motion.span>
+      </div>
 
-      {/* ── Hint drag (solo quando 3D attivo) ── */}
-      {showViewer && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none">
-          <motion.span
-            initial={{ opacity: 0.5 }}
-            animate={{ opacity: [0.5, 0.8, 0.5] }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="text-[8px] font-bold uppercase tracking-widest"
-            style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Trascina per ruotare
-          </motion.span>
-        </div>
-      )}
+      {/* Controlli */}
+      <ViewerControls
+        autoRotate={autoRotate}
+        setAutoRotate={setAutoRotate}
+        color={color}
+        onColorChange={handleColorChange}
+      />
     </div>
   )
-}
-
-// Pre-carica il modello successivo nel background (ottimizzazione UX)
-export function preloadCarModel(type) {
-  if (typeof useGLTF !== 'undefined') {
-    useGLTF.preload(`/models/cars/${type}.glb`)
-  }
 }
 
 export default Car3DViewer
