@@ -88,25 +88,25 @@ function GLBModel({ type, color, autoRotate }) {
 // ── Config camera ─────────────────────────────────────────────────
 // CAM_TARGET = centro visivo del modello (metà altezza ~0.5 per sedan)
 // CAM_POSITION = angolo 3/4 front-right, abbastanza lontano per vedere tutta l'auto
-const CAM_TARGET   = [0, 0.5, 0]
+const CAM_TARGET = [0, 0.5, 0]
 const CAM_POSITION = [3.2, 2.1, 3.2]
 
 // ── DEBUG MODE ────────────────────────────────────────────────────
 // Imposta su true per attivare helpers 3D e overlay con stats live
-const DEBUG = false
+const DEBUG = true
 
 // ── Helpers di debug (visibili solo in modalità DEBUG) ────────────
 function DebugHelpers({ controlsRef }) {
   const { camera } = useThree()
   const camMarkerRef = useRef()
-  const [stats, setStats] = useState({ pos: [0,0,0], target: [0,0,0], polar: 0, dist: 0 })
+  const [stats, setStats] = useState({ pos: [0, 0, 0], target: [0, 0, 0], polar: 0, dist: 0 })
 
   useFrame(() => {
     if (!camera) return
     const pos = camera.position
     const tgt = controlsRef.current?.target ?? { x: 0, y: 0, z: 0 }
     const dx = pos.x - tgt.x, dy = pos.y - tgt.y, dz = pos.z - tgt.z
-    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz)
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
     const polar = dist > 0 ? Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI) : 0
 
     if (camMarkerRef.current) {
@@ -114,10 +114,10 @@ function DebugHelpers({ controlsRef }) {
     }
 
     setStats({
-      pos:    [pos.x.toFixed(2), pos.y.toFixed(2), pos.z.toFixed(2)],
+      pos: [pos.x.toFixed(2), pos.y.toFixed(2), pos.z.toFixed(2)],
       target: [tgt.x.toFixed(2), tgt.y.toFixed(2), tgt.z.toFixed(2)],
-      polar:  polar.toFixed(1),
-      dist:   dist.toFixed(2),
+      polar: polar.toFixed(1),
+      dist: dist.toFixed(2),
     })
   })
 
@@ -272,7 +272,7 @@ function Car3DViewer({
     setGlbExists(false)
     fetch(`/models/cars/${vehicleType}.glb`, { method: 'HEAD' })
       .then(r => { if (r.ok) setGlbExists(true) })
-      .catch(() => {})
+      .catch(() => { })
   }, [vehicleType])
 
   const useGLB = glbExists && gltfReady
