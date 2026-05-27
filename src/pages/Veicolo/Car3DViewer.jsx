@@ -27,10 +27,17 @@ async function tryLoadGLTF() {
 
 
 // ── Componente GLB (caricato solo se il file esiste) ──────────────
-function GLBModel({ type, color }) {
+function GLBModel({ type, color, autoRotate }) {
   const { scene } = useGLTF(`/models/cars/${type}.glb`)
+  const [transform, setTransform] = useState({ scale: 1, position: [0, 0, 0] })
+
   useEffect(() => {
     if (!scene) return
+
+    // Ripristina sempre la scala e posizione originaria del modello cacheato per evitare calcoli ricorsivi
+    scene.scale.setScalar(1)
+    scene.position.set(0, 0, 0)
+    scene.rotation.set(0, 0, 0)
 
     // 1. Centra e scala il modello dinamicamente per adattarlo alla camera
     const box = new Box3().setFromObject(scene)
@@ -40,12 +47,16 @@ function GLBModel({ type, color }) {
     // Vogliamo che la dimensione massima (la lunghezza dell'auto) sia uniforme (circa 2.2 unità)
     const maxDim = Math.max(size.x, size.y, size.z)
     const targetScale = 2.2 / maxDim
-    scene.scale.setScalar(targetScale)
 
     // Centra l'auto sugli assi X e Z, ed allinea la base delle ruote al terreno (-0.45)
-    scene.position.x = -center.x * targetScale
-    scene.position.z = -center.z * targetScale
-    scene.position.y = -box.min.y * targetScale - 0.45
+    const posX = -center.x * targetScale
+    const posZ = -center.z * targetScale
+    const posY = -box.min.y * targetScale - 0.45
+
+    setTransform({
+      scale: targetScale,
+      position: [posX, posY, posZ]
+    })
 
     // 2. Applica il colore scelto e abilita ombre
     scene.traverse(child => {
@@ -61,8 +72,17 @@ function GLBModel({ type, color }) {
   }, [scene, color])
 
   const ref = useRef()
-  useFrame((_, delta) => { if (ref.current) ref.current.rotation.y += delta * 0.08 })
-  return <primitive ref={ref} object={scene} />
+  useFrame((_, delta) => {
+    if (autoRotate && ref.current) {
+      ref.current.rotation.y += delta * 0.45
+    }
+  })
+
+  return (
+    <group ref={ref} scale={transform.scale} position={transform.position}>
+      <primitive object={scene} />
+    </group>
+  )
 }
 
 // ── Scene ─────────────────────────────────────────────────────────
@@ -76,7 +96,7 @@ function CarScene({ type, color, autoRotate, useGLB }) {
 
       <Suspense fallback={<ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />}>
         {useGLB && useGLTF
-          ? <GLBModel type={type} color={color} />
+          ? <GLBModel type={type} color={color} autoRotate={autoRotate} />
           : <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
         }
         <ContactShadows position={[0, -0.86, 0]} opacity={0.28} scale={7} blur={2.5} />
