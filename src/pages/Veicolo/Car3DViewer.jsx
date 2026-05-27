@@ -7,7 +7,7 @@
  */
 import { Suspense, useRef, useEffect, useState, useCallback, lazy } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
+import { OrbitControls, ContactShadows } from '@react-three/drei'
 import { motion } from 'framer-motion'
 import ProceduralCarRotating from './ProceduralCar'
 
@@ -48,11 +48,10 @@ function GLBModel({ type, color }) {
 function CarScene({ type, color, autoRotate, useGLB }) {
   return (
     <>
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[4, 6, 4]} intensity={1.2} castShadow
+      <ambientLight intensity={0.85} />
+      <directionalLight position={[4, 6, 4]} intensity={1.3} castShadow
         shadow-mapSize-width={512} shadow-mapSize-height={512} />
-      <directionalLight position={[-3, 3, -3]} intensity={0.4} />
-      <Environment preset="city" />
+      <directionalLight position={[-3, 3, -3]} intensity={0.6} />
 
       <Suspense fallback={<ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />}>
         {useGLB && useGLTF
