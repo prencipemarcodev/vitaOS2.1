@@ -6,6 +6,7 @@
  * Se viene trovato un .glb, lo usa al posto del modello procedurale (upgrade automatico).
  */
 import { Suspense, useRef, useEffect, useState, useCallback, lazy } from 'react'
+import { Box3, Vector3 } from 'three'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, ContactShadows } from '@react-three/drei'
 import { motion } from 'framer-motion'
@@ -29,6 +30,24 @@ async function tryLoadGLTF() {
 function GLBModel({ type, color }) {
   const { scene } = useGLTF(`/models/cars/${type}.glb`)
   useEffect(() => {
+    if (!scene) return
+
+    // 1. Centra e scala il modello dinamicamente per adattarlo alla camera
+    const box = new Box3().setFromObject(scene)
+    const size = box.getSize(new Vector3())
+    const center = box.getCenter(new Vector3())
+
+    // Vogliamo che la dimensione massima (la lunghezza dell'auto) sia uniforme (circa 2.2 unità)
+    const maxDim = Math.max(size.x, size.y, size.z)
+    const targetScale = 2.2 / maxDim
+    scene.scale.setScalar(targetScale)
+
+    // Centra l'auto sugli assi X e Z, ed allinea la base delle ruote al terreno (-0.45)
+    scene.position.x = -center.x * targetScale
+    scene.position.z = -center.z * targetScale
+    scene.position.y = -box.min.y * targetScale - 0.45
+
+    // 2. Applica il colore scelto e abilita ombre
     scene.traverse(child => {
       if (!child.isMesh) return
       const n = child.name.toLowerCase()
@@ -36,9 +55,11 @@ function GLBModel({ type, color }) {
         child.material = child.material.clone()
         child.material.color.set(color)
         child.castShadow = true
+        child.receiveShadow = true
       }
     })
   }, [scene, color])
+
   const ref = useRef()
   useFrame((_, delta) => { if (ref.current) ref.current.rotation.y += delta * 0.08 })
   return <primitive ref={ref} object={scene} />
