@@ -20,11 +20,10 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
   
   const containerRef = useRef(null)
   const mapRef = useRef(null)
-  const tileLayerRef = useRef(null)
   const polylineRef = useRef(null)
   const markerRef = useRef(null)
 
-  // Inizializza mappa
+  // Inizializza mappa Leaflet
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
@@ -36,15 +35,11 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
       scrollWheelZoom: !isLive,
     })
 
-    // Scegliamo le tessere iniziali in base al tema attivo nell'app store
-    const initialUrl = theme === 'dark'
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png' // CartoDB Dark Matter
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'    // CartoDB Voyager
-
-    tileLayerRef.current = L.tileLayer(initialUrl, {
+    // Usiamo il server ufficiale OpenStreetMap (tile.openstreetmap.org)
+    // Questo server è al 100% gratuito e non viene MAI bloccato dagli adblocker/content-blocker su Safari e Mobile!
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; CartoDB'
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapRef.current)
 
     polylineRef.current = L.polyline([], {
@@ -64,7 +59,7 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
       fillOpacity: 1,
     }).addTo(mapRef.current)
 
-    // Forza ricalcolo dopo un attimo per sicurezza
+    // Forza ricalcolo immediato per evitare mappa grigia
     setTimeout(() => {
       if (mapRef.current) {
         mapRef.current.invalidateSize()
@@ -77,18 +72,7 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
     }
   }, [])
 
-  // Sincronizza dinamicamente il tema della mappa con quello di VitaOS in tempo reale
-  useEffect(() => {
-    if (!tileLayerRef.current) return
-    const newUrl = theme === 'dark'
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-    
-    tileLayerRef.current.setUrl(newUrl)
-  }, [theme])
-
-  // Fix definitivo per mappa grigia: monitora i cambi di dimensione del contenitore
-  // ed esegue il fitBounds/setView iniziale SOLO quando il contenitore ha una dimensione reale > 0
+  // Monitora le dimensioni del contenitore (ResizeObserver) per un dimensionamento perfetto nei modal
   useEffect(() => {
     if (!containerRef.current || !mapRef.current) return
 
@@ -121,19 +105,14 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
       }
     }
 
-    const resizeObserver = new ResizeObserver(() => {
-      handleResize()
-    })
-
+    const resizeObserver = new ResizeObserver(handleResize)
     resizeObserver.observe(containerRef.current)
-    
-    // Esegui subito se la dimensione è già disponibile
     handleResize()
 
     return () => resizeObserver.disconnect()
   }, [polyline, livePosition, isLive])
 
-  // Aggiorna polyline e posizione in tempo reale
+  // Aggiorna percorso e posizione in tempo reale
   useEffect(() => {
     if (!mapRef.current) return
 
@@ -165,9 +144,22 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
   return (
     <div
       ref={containerRef}
-      className="relative z-0 shadow-inner bg-gray-100 dark:bg-zinc-900"
-      style={{ height, width: '100%', borderRadius: 'var(--radius-xl)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}
-    />
+      className="relative w-full z-0 overflow-hidden shadow-inner bg-gray-100 dark:bg-zinc-900"
+      style={{ height, borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-subtle)' }}
+    >
+      {/* 
+        HACK DI DESIGN PREMIUM:
+        Per garantire il tema scuro senza usare domini esterni potenzialmente bloccati,
+        applichiamo un filtro CSS invertitore SOLO al pannello delle tessere stradali (tile-pane).
+        In questo modo, la mappa si trasforma in uno splendido stile dark, ma la nostra linea arancione
+        e il marker verde NON vengono invertiti e conservano i loro colori brillanti originali!
+      */}
+      <style>{`
+        .dark .leaflet-tile-pane {
+          filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.2) !important;
+        }
+      `}</style>
+    </div>
   )
 }
 
