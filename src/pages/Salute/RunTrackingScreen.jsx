@@ -242,7 +242,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   else {
     content = (
       <div className="flex flex-col h-full bg-[var(--bg-base)]">
-        <header className="px-6 pb-4 flex items-center justify-between bg-white border-b border-[var(--border-subtle)]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
+        <header className="mx-4 my-3 px-5 py-3.5 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border border-[var(--border-subtle)] rounded-full shadow-md shrink-0 z-10" style={{ marginTop: 'calc(env(safe-area-inset-top, 20px) + 8px)' }}>
           <div className="flex items-center gap-2">
             <div className={clsx("w-2 h-2 rounded-full", status === 'running' ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
             <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{status === 'running' ? 'GPS Attivo' : 'In pausa'}</span>
@@ -336,17 +336,17 @@ function RunTrackingScreen({ onFinish, onCancel }) {
           </AnimatePresence>
         </div>
 
-        <footer className="p-8 bg-white border-t border-[var(--border-subtle)] flex items-center justify-center gap-6">
+        <footer className="mx-4 mb-6 p-4 flex items-center justify-center gap-6 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border border-[var(--border-subtle)] rounded-full shadow-lg shrink-0 z-10" style={{ marginBottom: 'calc(env(safe-area-inset-bottom, 20px) + 4px)' }}>
           {status === 'running' ? (
             <>
-              <button onClick={() => setIsFocusMode(true)} className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-[var(--text-muted)] active:scale-90 transition-transform"><Activity size={20} /></button>
-              <button onClick={pause} className="w-16 h-16 rounded-full border-2 border-orange-500 flex items-center justify-center text-orange-500 active:scale-90 transition-transform"><Pause size={24} /></button>
-              <button onClick={pause} className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform"><Square size={24} /></button>
+              <button onClick={() => setIsFocusMode(true)} className="w-12 h-12 rounded-full bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] active:scale-90 transition-all"><Activity size={20} /></button>
+              <button onClick={pause} className="w-16 h-16 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary)] active:scale-90 transition-all"><Pause size={24} /></button>
+              <button onClick={pause} className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg active:scale-90 transition-all"><Square size={24} /></button>
             </>
           ) : (
             <>
-              <button onClick={resume} className="px-8 py-4 bg-orange-500 text-white rounded-2xl font-black flex items-center gap-2 active:scale-95 transition-transform"><Play size={20} fill="currentColor" />Riprendi</button>
-              <button onClick={() => onFinish(tracker)} className="px-8 py-4 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black flex items-center gap-2 active:scale-95 transition-transform"><Zap size={20} />Termina</button>
+              <button onClick={resume} className="px-8 py-4 bg-[var(--color-primary)] text-white rounded-2xl font-black flex items-center gap-2 active:scale-95 transition-all shadow-md"><Play size={20} fill="currentColor" />Riprendi</button>
+              <button onClick={() => onFinish(tracker)} className="px-8 py-4 bg-white border-2 border-red-500 text-red-500 rounded-2xl font-black flex items-center gap-2 active:scale-95 transition-all"><Zap size={20} />Termina</button>
             </>
           )}
         </footer>

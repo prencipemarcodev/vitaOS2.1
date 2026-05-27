@@ -42,6 +42,12 @@ export function RunMap({ polyline = [], livePosition = null, isLive = false, hei
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapRef.current)
 
+    // Imposta una vista iniziale immediata così la mappa NON rimane mai grigia e carica le tessere all'istante
+    const initialCenter = (polyline.length > 0)
+      ? [polyline[0].lat, polyline[0].lng]
+      : (livePosition ? [livePosition.lat, livePosition.lng] : [41.8902, 12.4922]) // default Roma
+    mapRef.current.setView(initialCenter, isLive ? 16 : 14)
+
     polylineRef.current = L.polyline([], {
       color: TRACK_COLOR,
       weight: 5,

@@ -137,7 +137,7 @@ function RunSummaryModal({ isOpen, onClose, tracker }) {
           <button 
             onClick={handleSave}
             disabled={saving}
-            className="flex-[2] py-4 bg-orange-500 text-white rounded-2xl font-black shadow-lg shadow-orange-100 active:scale-95 transition-all disabled:opacity-50"
+            className="flex-[2] py-4 bg-[var(--color-primary)] text-white rounded-2xl font-black shadow-lg active:scale-95 transition-all disabled:opacity-50"
           >
             {saving ? 'Salvataggio...' : 'Salva corsa'}
           </button>
