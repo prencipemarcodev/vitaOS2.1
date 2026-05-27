@@ -7,7 +7,7 @@
  */
 import { Suspense, useRef, useEffect, useState, useCallback } from 'react'
 import { Box3, Vector3, PCFShadowMap } from 'three'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, ContactShadows } from '@react-three/drei'
 import { motion } from 'framer-motion'
 import ProceduralCarRotating from './ProceduralCar'
@@ -85,10 +85,40 @@ function GLBModel({ type, color, autoRotate }) {
   )
 }
 
+// Posizione camera e target ottimali (relativi al centro visivo dell'auto ~Y=0.45)
+const CAM_POSITION = [3.0, 1.9, 3.0]  // angolo 3/4 frontale destra
+const CAM_TARGET   = [0, 0.45, 0]     // centro visivo del modello
+
+// ── Setup imperativo camera + OrbitControls ───────────────────────
+// Risolve la race condition all'init: useEffect garantisce che
+// la camera sia già nel DOM prima di impostare posizione e target.
+function CameraRig({ controlsRef }) {
+  const { camera } = useThree()
+  const initialized = useRef(false)
+
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+    camera.position.set(...CAM_POSITION)
+    camera.lookAt(...CAM_TARGET)
+    camera.updateProjectionMatrix()
+    if (controlsRef.current) {
+      controlsRef.current.target.set(...CAM_TARGET)
+      controlsRef.current.update()
+    }
+  }, [camera, controlsRef])
+
+  return null
+}
+
 // ── Scene ─────────────────────────────────────────────────────────
 function CarScene({ type, color, autoRotate, useGLB }) {
+  const controlsRef = useRef()
+
   return (
     <>
+      <CameraRig controlsRef={controlsRef} />
+
       <ambientLight intensity={1.1} />
       <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow
         shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
@@ -104,14 +134,14 @@ function CarScene({ type, color, autoRotate, useGLB }) {
       </Suspense>
 
       <OrbitControls
+        ref={controlsRef}
         enableZoom={true}
         enablePan={false}
         zoomSpeed={0.6}
-        minDistance={2.5}
+        minDistance={2.0}
         maxDistance={8}
         minPolarAngle={Math.PI / 8}
         maxPolarAngle={Math.PI / 1.9}
-        target={[0, 0.5, 0]}
         autoRotate={false}
         makeDefault
       />
@@ -206,7 +236,7 @@ function Car3DViewer({
     >
       {canvasReady && (
         <Canvas
-          camera={{ position: [3.2, 1.6, 3.2], fov: 42 }}
+          camera={{ position: CAM_POSITION, fov: 42 }}
           shadows
           dpr={[1, 2]}
           gl={{ shadowMapType: PCFShadowMap }}
