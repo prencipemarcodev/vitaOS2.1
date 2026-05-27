@@ -93,7 +93,7 @@ const CAM_POSITION = [3.2, 2.1, 3.2]
 
 // ── DEBUG MODE ────────────────────────────────────────────────────
 // Imposta su true per attivare helpers 3D e overlay con stats live
-const DEBUG = true
+const DEBUG = false
 
 // ── Helpers di debug (visibili solo in modalità DEBUG) ────────────
 function DebugHelpers({ controlsRef }) {
