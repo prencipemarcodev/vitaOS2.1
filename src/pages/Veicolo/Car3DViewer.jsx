@@ -5,8 +5,8 @@
  * Funziona SUBITO senza file esterni grazie a ProceduralCar.
  * Se viene trovato un .glb, lo usa al posto del modello procedurale (upgrade automatico).
  */
-import { Suspense, useRef, useEffect, useState, useCallback, lazy } from 'react'
-import { Box3, Vector3 } from 'three'
+import { Suspense, useRef, useEffect, useState, useCallback } from 'react'
+import { Box3, Vector3, PCFShadowMap } from 'three'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, ContactShadows } from '@react-three/drei'
 import { motion } from 'framer-motion'
@@ -202,6 +202,7 @@ function Car3DViewer({
           camera={{ position: [3.8, 1.8, 3.8], fov: 40 }}
           shadows
           dpr={[1, 1.5]}
+          gl={{ shadowMapType: PCFShadowMap }}
           style={{ width: '100%', height: '100%' }}
         >
           <CarScene type={vehicleType} color={color} autoRotate={autoRotate} useGLB={useGLB} />

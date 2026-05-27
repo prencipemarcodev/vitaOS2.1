@@ -14,6 +14,48 @@ import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useConfirmStore } from '@/store/useConfirmStore'
 
+// ── Mappa intelligente marca/modello → tipo 3D ────────────────────
+const CITY_CAR_MODELS = [
+  'peugeot 107','peugeot 108','peugeot 206','smart','fiat 500','fiat panda','fiat seicento','fiat punto',
+  'toyota aygo','toyota yaris','volkswagen up','seat mii','seat ibiza','renault twingo','renault clio',
+  'opel agila','opel corsa','mini','alfa romeo mito','kia picanto','kia rio','hyundai i10','hyundai i20',
+  'dacia sandero','suzuki swift','mazda 2','ford fiesta','ford ka',
+]
+const HATCHBACK_MODELS = [
+  'golf','polo','astra','civic','focus','megane','307','308','208','308','c3','c4','punto','grande punto',
+  'bravo','giulietta','tipo','clio','zafira','1 serie','2 serie','a1','a3','leon','207','peugeot 207',
+]
+const SUV_MODELS = [
+  'suv','crossover','qashqai','tucson','sportage','tiguan','kuga','hr-v','cr-v','rav4','x-trail',
+  'koleos','duster','karoq','ateca','arona','t-roc','t-cross','captur','mokka','ecosport','puma',
+  'grandland','3008','5008','2008','compass','renegade','500x','stelvio','tonale','levante',
+]
+const SUV_LARGE_MODELS = [
+  'defender','discovery','range rover','x5','x6','x7','q7','q8','glc','gle','gls','ml','gl',
+  'kodiaq','sorento','santa fe','terracan','forester','outback','4runner','land cruiser','pajero',
+  'grand cherokee','wrangler','durango','navigator','expedition','tahoe','yukon','escalade',
+]
+const WAGON_MODELS = [
+  'avant','touring','break','sw','kombi','estate','allroad','4 serie gran coupe','passat variant',
+  'giulia sw','stinger','modelo s',
+]
+const ELECTRIC_MODELS = [
+  'tesla','model 3','model s','model x','model y','id.3','id.4','id.5','ioniq','ioniq 5','ioniq 6',
+  'kona electric','e-tron','taycan','i3','zoe','leaf','mustang mach-e','i4','ix','bz4x',
+]
+
+function guessVehicleType(vehicle) {
+  if (vehicle?.vehicle_type) return vehicle.vehicle_type
+  const name = `${vehicle?.make ?? ''} ${vehicle?.model ?? ''} ${vehicle?.name ?? ''}`.toLowerCase()
+  if (ELECTRIC_MODELS.some(m => name.includes(m))) return 'electric'
+  if (SUV_LARGE_MODELS.some(m => name.includes(m))) return 'suv_large'
+  if (SUV_MODELS.some(m => name.includes(m))) return 'suv'
+  if (WAGON_MODELS.some(m => name.includes(m))) return 'wagon'
+  if (HATCHBACK_MODELS.some(m => name.includes(m))) return 'hatchback'
+  if (CITY_CAR_MODELS.some(m => name.includes(m))) return 'city'
+  return 'sedan'
+}
+
 
 // ── Hotspot Pin ───────────────────────────────────────────────
 function HotspotPin({ label, value, badge, badgeColor, status = 'ok', side = 'left', delay = 0 }) {
@@ -213,30 +255,24 @@ function VehicleDashboard({ vehicle }) {
 
   if (!vehicle) return null
 
+  const vehicleType3D = guessVehicleType(vehicle)
+
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={vehicle.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.25 }}
-        className="space-y-5"
-      >
-        {/* ── Car Viewer ── */}
-        <Card padding="none" className="overflow-hidden">
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--border-subtle)]">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ background: vehicle.color }} />
-              <span className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
-                {vehicle.name}
-              </span>
-            </div>
-            <button onClick={() => setViewerOpen(v => !v)}
-              className="text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              {viewerOpen ? 'Nascondi' : 'Mostra'}
-            </button>
+    <div className="space-y-5">
+      {/* ── Car Viewer (fuori dall'AnimatePresence per evitare rimontaggio Canvas WebGL) ── */}
+      <Card padding="none" className="overflow-hidden">
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: vehicle.color }} />
+            <span className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
+              {vehicle.name}
+            </span>
           </div>
+          <button onClick={() => setViewerOpen(v => !v)}
+            className="text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+            {viewerOpen ? 'Nascondi' : 'Mostra'}
+          </button>
+        </div>
 
           <AnimatePresence>
             {viewerOpen && (
@@ -250,7 +286,7 @@ function VehicleDashboard({ vehicle }) {
                 {/* 3D / SVG Viewer con hotspot overlay */}
                 <div className="relative">
                   <Car3DViewer
-                    vehicleType={vehicle.vehicle_type ?? 'sedan'}
+                    vehicleType={vehicleType3D}
                     color={vehicleColor}
                     onColorChange={setVehicleColor}
                     label={vehicle.name}
@@ -308,6 +344,17 @@ function VehicleDashboard({ vehicle }) {
             )}
           </AnimatePresence>
         </Card>
+
+      {/* ── Resto del contenuto animato al cambio veicolo ── */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={vehicle.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+          className="space-y-5"
+        >
 
         {/* ── Stats ── */}
         <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3"
@@ -526,6 +573,7 @@ function VehicleDashboard({ vehicle }) {
         </div>
       </motion.div>
     </AnimatePresence>
+    </div>
   )
 }
 
