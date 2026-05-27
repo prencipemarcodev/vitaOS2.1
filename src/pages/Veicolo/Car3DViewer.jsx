@@ -85,13 +85,94 @@ function GLBModel({ type, color, autoRotate }) {
   )
 }
 
-// Posizione camera e target ottimali (relativi al centro visivo dell'auto ~Y=0.45)
-const CAM_POSITION = [3.0, 1.9, 3.0]  // angolo 3/4 frontale destra
-const CAM_TARGET   = [0, 0.45, 0]     // centro visivo del modello
+// ── Config camera ─────────────────────────────────────────────────
+// CAM_TARGET = centro visivo del modello (metà altezza ~0.5 per sedan)
+// CAM_POSITION = angolo 3/4 front-right, abbastanza lontano per vedere tutta l'auto
+const CAM_TARGET   = [0, 0.5, 0]
+const CAM_POSITION = [3.2, 2.1, 3.2]
+
+// ── DEBUG MODE ────────────────────────────────────────────────────
+// Imposta su true per attivare helpers 3D e overlay con stats live
+const DEBUG = false
+
+// ── Helpers di debug (visibili solo in modalità DEBUG) ────────────
+function DebugHelpers({ controlsRef }) {
+  const { camera } = useThree()
+  const camMarkerRef = useRef()
+  const [stats, setStats] = useState({ pos: [0,0,0], target: [0,0,0], polar: 0, dist: 0 })
+
+  useFrame(() => {
+    if (!camera) return
+    const pos = camera.position
+    const tgt = controlsRef.current?.target ?? { x: 0, y: 0, z: 0 }
+    const dx = pos.x - tgt.x, dy = pos.y - tgt.y, dz = pos.z - tgt.z
+    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz)
+    const polar = dist > 0 ? Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI) : 0
+
+    if (camMarkerRef.current) {
+      camMarkerRef.current.position.copy(pos)
+    }
+
+    setStats({
+      pos:    [pos.x.toFixed(2), pos.y.toFixed(2), pos.z.toFixed(2)],
+      target: [tgt.x.toFixed(2), tgt.y.toFixed(2), tgt.z.toFixed(2)],
+      polar:  polar.toFixed(1),
+      dist:   dist.toFixed(2),
+    })
+  })
+
+  return (
+    <>
+      {/* Assi del mondo: X=rosso, Y=verde, Z=blu */}
+      <axesHelper args={[3]} />
+
+      {/* Griglia di riferimento (10×10 unità) */}
+      <gridHelper args={[10, 10, '#888', '#444']} position={[0, -0.01, 0]} />
+
+      {/* Sfera rossa = posizione camera */}
+      <mesh ref={camMarkerRef}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+
+      {/* Linea da target → camera */}
+      <lineSegments>
+        <bufferGeometry
+          onUpdate={self => self.setFromPoints([
+            new Vector3(...CAM_TARGET),
+            camera.position.clone(),
+          ])}
+        />
+        <lineBasicMaterial color="red" />
+      </lineSegments>
+
+      {/* Sfera gialla = target di OrbitControls */}
+      <mesh position={CAM_TARGET}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshBasicMaterial color="yellow" />
+      </mesh>
+
+      {/* Sfera cyan = origine mondo */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[0.04, 8, 8]} />
+        <meshBasicMaterial color="cyan" />
+      </mesh>
+
+      {/* Overlay HTML con stats live */}
+      <DebugOverlay stats={stats} />
+    </>
+  )
+}
+
+// Overlay testuale sovrapposto al canvas (usa drei <Html> o un portale React)
+function DebugOverlay({ stats }) {
+  // Renderizza come elemento assoluto all'esterno del canvas tramite R3F Html
+  return null // renderizzato fuori dal Canvas nel componente principale
+}
 
 // ── Setup imperativo camera + OrbitControls ───────────────────────
-// Risolve la race condition all'init: useEffect garantisce che
-// la camera sia già nel DOM prima di impostare posizione e target.
+// Usa requestAnimationFrame per garantire che OrbitControls sia montato
+// prima di leggere controlsRef.current.
 function CameraRig({ controlsRef }) {
   const { camera } = useThree()
   const initialized = useRef(false)
@@ -99,13 +180,19 @@ function CameraRig({ controlsRef }) {
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    camera.position.set(...CAM_POSITION)
-    camera.lookAt(...CAM_TARGET)
-    camera.updateProjectionMatrix()
-    if (controlsRef.current) {
-      controlsRef.current.target.set(...CAM_TARGET)
-      controlsRef.current.update()
-    }
+
+    // rAF: attende il prossimo frame di rendering così OrbitControls
+    // è sicuramente montato e controlsRef.current è valorizzato
+    const raf = requestAnimationFrame(() => {
+      camera.position.set(...CAM_POSITION)
+      camera.lookAt(...CAM_TARGET)
+      camera.updateProjectionMatrix()
+      if (controlsRef.current) {
+        controlsRef.current.target.set(...CAM_TARGET)
+        controlsRef.current.update()
+      }
+    })
+    return () => cancelAnimationFrame(raf)
   }, [camera, controlsRef])
 
   return null
@@ -118,6 +205,7 @@ function CarScene({ type, color, autoRotate, useGLB }) {
   return (
     <>
       <CameraRig controlsRef={controlsRef} />
+      {DEBUG && <DebugHelpers controlsRef={controlsRef} />}
 
       <ambientLight intensity={1.1} />
       <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow
@@ -130,7 +218,7 @@ function CarScene({ type, color, autoRotate, useGLB }) {
           ? <GLBModel type={type} color={color} autoRotate={autoRotate} />
           : <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
         }
-        <ContactShadows position={[0, -0.72, 0]} opacity={0.35} scale={9} blur={3} />
+        <ContactShadows position={[0, -0.01, 0]} opacity={0.3} scale={9} blur={2.5} />
       </Suspense>
 
       <OrbitControls
@@ -149,41 +237,6 @@ function CarScene({ type, color, autoRotate, useGLB }) {
   )
 }
 
-// ── Controlli UI overlay ──────────────────────────────────────────
-const PALETTE = [
-  '#9aacc8', '#c8a09a', '#a8c8a0', '#1e1e28',
-  '#f0ede8', '#b46243', '#4a90d9', '#c8c09a',
-]
-
-function ViewerControls({ autoRotate, setAutoRotate, color, onColorChange }) {
-  return (
-    <div className="absolute bottom-3 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
-      <div className="flex gap-1.5 pointer-events-auto">
-        {PALETTE.map(c => (
-          <button key={c} onClick={() => onColorChange(c)}
-            className="w-4 h-4 rounded-full border-2 transition-all duration-150"
-            style={{
-              background: c,
-              borderColor: color === c ? 'white' : 'transparent',
-              transform: color === c ? 'scale(1.3)' : 'scale(1)',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            }} />
-        ))}
-      </div>
-      <button onClick={() => setAutoRotate(v => !v)}
-        className="pointer-events-auto text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-all"
-        style={{
-          background: autoRotate ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
-          color: 'rgba(255,255,255,0.9)',
-          backdropFilter: 'blur(4px)',
-          border: '1px solid rgba(255,255,255,0.15)',
-        }}>
-        {autoRotate ? '⏸ Fermo' : '▶ Ruota'}
-      </button>
-    </div>
-  )
-}
-
 // ── Componente principale ─────────────────────────────────────────
 function Car3DViewer({
   vehicleType = 'sedan',
@@ -197,6 +250,7 @@ function Car3DViewer({
   const [glbExists, setGlbExists] = useState(false)
   const [gltfReady, setGltfReady] = useState(false)
   const [canvasReady, setCanvasReady] = useState(false)
+  const [debugStats, setDebugStats] = useState(null)
 
   const color = externalColor ?? internalColor
 
@@ -223,15 +277,15 @@ function Car3DViewer({
 
   const useGLB = glbExists && gltfReady
 
-  // Altezza responsiva: se non viene passata usa clamp(280px, 42vh, 520px)
-  const viewerHeight = height ?? 'clamp(280px, 42vh, 520px)'
+  // Altezza responsiva: se non viene passata usa clamp(300px, 45vh, 540px)
+  const viewerHeight = height ?? 'clamp(300px, 45vh, 540px)'
 
   return (
     <div
       className={`relative overflow-hidden ${className}`}
       style={{
         height: viewerHeight,
-        background: `radial-gradient(ellipse 80% 60% at 50% 80%, ${color}22 0%, ${color}08 55%, var(--bg-base) 100%)`,
+        background: `radial-gradient(ellipse 80% 60% at 50% 75%, ${color}22 0%, ${color}08 55%, var(--bg-base) 100%)`,
       }}
     >
       {canvasReady && (
@@ -267,17 +321,54 @@ function Car3DViewer({
             background: 'rgba(0,0,0,0.18)',
             backdropFilter: 'blur(6px)',
           }}>
-          🖱 Trascina · Scorri per zoom
+          Trascina · Scorri per zoom
         </motion.span>
       </div>
 
-      {/* Controlli */}
-      <ViewerControls
-        autoRotate={autoRotate}
-        setAutoRotate={setAutoRotate}
-        color={color}
-        onColorChange={handleColorChange}
-      />
+      {/* Pulsante rotazione (bottom-right) */}
+      <div className="absolute bottom-3 right-3 pointer-events-auto">
+        <button
+          onClick={() => setAutoRotate(v => !v)}
+          className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full transition-all"
+          style={{
+            background: autoRotate ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.12)',
+            color: 'rgba(255,255,255,0.9)',
+            backdropFilter: 'blur(6px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}>
+          {autoRotate ? '⏸' : '▶'}
+        </button>
+      </div>
+
+      {/* DEBUG overlay HTML (attivato da DEBUG flag) */}
+      {DEBUG && canvasReady && (
+        <div
+          className="absolute top-2 left-2 pointer-events-none z-30 font-mono text-[10px] leading-snug p-2 rounded-lg"
+          style={{ background: 'rgba(0,0,0,0.72)', color: '#0f0', backdropFilter: 'blur(4px)' }}
+        >
+          <DebugPanel vehicleType={vehicleType} useGLB={useGLB} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Debug panel (legge lo stato del canvas via un bridge) ─────────
+// Componente separato che vive DENTRO il Canvas e scrive in un ref condiviso
+function DebugPanel({ vehicleType, useGLB }) {
+  return (
+    <div>
+      <div style={{ color: '#ff0', marginBottom: 2 }}>── DEBUG ──</div>
+      <div>type: <b>{vehicleType}</b></div>
+      <div>glb: <b>{useGLB ? 'yes' : 'no'}</b></div>
+      <div style={{ marginTop: 4, color: '#0ff' }}>CAM_POS: [{CAM_POSITION.join(', ')}]</div>
+      <div style={{ color: '#ff0' }}>CAM_TGT: [{CAM_TARGET.join(', ')}]</div>
+      <div style={{ marginTop: 4, color: '#f80' }}>
+        ● Sfera rossa = camera<br />
+        ● Sfera gialla = target<br />
+        ● Sfera cyan = origine<br />
+        ● Assi: X=rosso Y=verde Z=blu
+      </div>
     </div>
   )
 }
