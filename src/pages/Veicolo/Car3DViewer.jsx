@@ -89,26 +89,30 @@ function GLBModel({ type, color, autoRotate }) {
 function CarScene({ type, color, autoRotate, useGLB }) {
   return (
     <>
-      <ambientLight intensity={0.85} />
-      <directionalLight position={[4, 6, 4]} intensity={1.3} castShadow
-        shadow-mapSize-width={512} shadow-mapSize-height={512} />
-      <directionalLight position={[-3, 3, -3]} intensity={0.6} />
+      <ambientLight intensity={1.1} />
+      <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow
+        shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+      <directionalLight position={[-4, 4, -4]} intensity={0.7} />
+      <directionalLight position={[0, 2, -6]} intensity={0.4} />
 
       <Suspense fallback={<ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />}>
         {useGLB && useGLTF
           ? <GLBModel type={type} color={color} autoRotate={autoRotate} />
           : <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
         }
-        <ContactShadows position={[0, -0.86, 0]} opacity={0.28} scale={7} blur={2.5} />
+        <ContactShadows position={[0, -0.72, 0]} opacity={0.35} scale={9} blur={3} />
       </Suspense>
 
       <OrbitControls
-        enableZoom={false}
+        enableZoom={true}
         enablePan={false}
-        minPolarAngle={Math.PI / 6}
-        maxPolarAngle={Math.PI / 2.1}
-        autoRotate={autoRotate && !useGLB} // La rotazione procedurale la gestisce ProceduralCarRotating
-        autoRotateSpeed={0.6}
+        zoomSpeed={0.6}
+        minDistance={2.5}
+        maxDistance={8}
+        minPolarAngle={Math.PI / 8}
+        maxPolarAngle={Math.PI / 1.9}
+        autoRotate={autoRotate && !useGLB}
+        autoRotateSpeed={0.8}
         makeDefault
       />
     </>
@@ -155,7 +159,7 @@ function Car3DViewer({
   vehicleType = 'sedan',
   color: externalColor,
   onColorChange,
-  height = 240,
+  height,          // opzionale: se non passato usa altezza responsiva
   className = '',
 }) {
   const [autoRotate, setAutoRotate] = useState(true)
@@ -189,19 +193,22 @@ function Car3DViewer({
 
   const useGLB = glbExists && gltfReady
 
+  // Altezza responsiva: se non viene passata usa clamp(280px, 42vh, 520px)
+  const viewerHeight = height ?? 'clamp(280px, 42vh, 520px)'
+
   return (
     <div
       className={`relative overflow-hidden ${className}`}
       style={{
-        height,
-        background: `radial-gradient(ellipse 90% 70% at 50% 75%, ${color}1a 0%, ${color}06 55%, var(--bg-base) 100%)`,
+        height: viewerHeight,
+        background: `radial-gradient(ellipse 80% 60% at 50% 80%, ${color}22 0%, ${color}08 55%, var(--bg-base) 100%)`,
       }}
     >
       {canvasReady && (
         <Canvas
-          camera={{ position: [3.8, 1.8, 3.8], fov: 40 }}
+          camera={{ position: [2.8, 1.4, 2.8], fov: 45 }}
           shadows
-          dpr={[1, 1.5]}
+          dpr={[1, 2]}
           gl={{ shadowMapType: PCFShadowMap }}
           style={{ width: '100%', height: '100%' }}
         >
@@ -220,13 +227,17 @@ function Car3DViewer({
       )}
 
       {/* Hint drag */}
-      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 pointer-events-none">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none">
         <motion.span
-          initial={{ opacity: 0 }} animate={{ opacity: [0, 0.6, 0] }}
-          transition={{ duration: 3, delay: 1.5, repeat: 0 }}
-          className="text-[8px] font-bold uppercase tracking-widest whitespace-nowrap"
-          style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Trascina per ruotare
+          initial={{ opacity: 0 }} animate={{ opacity: [0, 0.7, 0] }}
+          transition={{ duration: 3.5, delay: 1.2, repeat: 0 }}
+          className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap px-3 py-1 rounded-full"
+          style={{
+            color: 'rgba(255,255,255,0.7)',
+            background: 'rgba(0,0,0,0.18)',
+            backdropFilter: 'blur(6px)',
+          }}>
+          🖱 Trascina · Scorri per zoom
         </motion.span>
       </div>
 

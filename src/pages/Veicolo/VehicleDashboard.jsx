@@ -290,7 +290,6 @@ function VehicleDashboard({ vehicle }) {
                     color={vehicleColor}
                     onColorChange={setVehicleColor}
                     label={vehicle.name}
-                    height={240}
                     className="mx-0 rounded-none"
                   />
 
