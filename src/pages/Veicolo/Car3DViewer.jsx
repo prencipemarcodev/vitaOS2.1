@@ -17,9 +17,13 @@ async function tryLoadGLTF() {
   try {
     const drei = await import('@react-three/drei')
     useGLTF = drei.useGLTF
+    if (useGLTF && typeof useGLTF.setDecoderPath === 'function') {
+      useGLTF.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/')
+    }
     return true
   } catch { return false }
 }
+
 
 // ── Componente GLB (caricato solo se il file esiste) ──────────────
 function GLBModel({ type, color }) {
