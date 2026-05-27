@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VitaOS · Vehicle 3D Dashboard — Concept Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base: #07070d;
+      --bg-surface: #0f0f1a;
+      --bg-card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text-primary: #f0f0f5;
+      --text-secondary: #9090a8;
+      --text-muted: #5a5a72;
+      --accent-orange: hsl(28, 100%, 60%);
+      --accent-blue: hsl(210, 100%, 65%);
+      --accent-green: hsl(142, 71%, 50%);
+      --accent-purple: hsl(265, 80%, 70%);
+      --accent-red: hsl(0, 84%, 60%);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── PHONE WRAPPER ─── */
+    .phone-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px 80px;
+      min-height: 100vh;
+    }
+
+    .phone {
+      width: 390px;
+      background: var(--bg-base);
+      border-radius: 52px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.8),
+        0 40px 120px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Notch */
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 120px; height: 34px;
+      background: #000;
+      border-radius: 0 0 22px 22px;
+      z-index: 100;
+    }
+
+    .phone-inner {
+      padding: 52px 20px 28px;
+      overflow-y: auto;
+      max-height: 844px;
+      scrollbar-width: none;
+    }
+    .phone-inner::-webkit-scrollbar { display: none; }
+
+    /* ─── HEADER ─── */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+
+    .screen-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .screen-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      font-weight: 500;
+    }
+
+    .header-badge {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ─── 3D CAR VIEWER ─── */
+    .car-viewer {
+      position: relative;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% 60%, rgba(80, 100, 200, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 30% 70%, rgba(200, 150, 50, 0.05) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%),
+        var(--bg-surface);
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      height: 220px;
+      overflow: visible;
+      margin-bottom: 16px;
+      opacity: 0;
+    }
+
+    /* Ground reflection */
+    .car-viewer::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* Car SVG */
+    .car-svg-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 260px;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 30px rgba(100,120,200,0.15));
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateX(-50%) translateY(0px); }
+      50% { transform: translateX(-50%) translateY(-6px); }
+    }
+
+    .car-svg-container svg { width: 100%; height: auto; }
+
+    /* ─── HOTSPOT PINS ─── */
+    .pin {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .pin-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .pin-dot::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      opacity: 0.4;
+      animation: ping 2s ease-in-out infinite;
+    }
+
+    @keyframes ping {
+      0%, 100% { transform: scale(1); opacity: 0.4; }
+      50% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .pin-line {
+      width: 1px;
+      background: linear-gradient(to bottom, currentColor, transparent);
+      opacity: 0.4;
+    }
+
+    .pin-card {
+      background: rgba(12, 12, 22, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    .pin-card-label { color: var(--text-secondary); font-weight: 600; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pin-card-value { color: var(--text-primary); font-weight: 800; font-size: 11px; }
+    .pin-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 2px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Pin positions */
+    .pin-oil { top: 45px; left: 35px; }
+    .pin-oil .pin-dot { background: var(--accent-orange); color: var(--accent-orange); }
+    .pin-oil .pin-line { height: 35px; background: linear-gradient(var(--accent-orange), transparent); }
+    .pin-oil .pin-card { border-color: rgba(255, 150, 50, 0.25); }
+    .pin-oil .pin-card-badge { background: rgba(255,150,50,0.15); color: var(--accent-orange); }
+
+    .pin-km { top: 20px; left: 150px; transform: translateX(-50%); align-items: center; }
+    .pin-km .pin-dot { background: var(--accent-green); color: var(--accent-green); }
+    .pin-km .pin-line { height: 50px; background: linear-gradient(var(--accent-green), transparent); }
+    .pin-km .pin-card { border-color: rgba(50,220,100,0.25); }
+
+    .pin-fuel { top: 30px; right: 30px; align-items: flex-end; }
+    .pin-fuel .pin-dot { background: var(--accent-blue); color: var(--accent-blue); }
+    .pin-fuel .pin-line { height: 40px; background: linear-gradient(var(--accent-blue), transparent); }
+    .pin-fuel .pin-card { border-color: rgba(50,150,255,0.25); }
+
+    .pin-ins { bottom: 35px; left: 55px; flex-direction: column-reverse; }
+    .pin-ins .pin-dot { background: var(--accent-purple); color: var(--accent-purple); }
+    .pin-ins .pin-line { height: 25px; background: linear-gradient(to top, var(--accent-purple), transparent); }
+    .pin-ins .pin-card { margin-top: 0; margin-bottom: 4px; border-color: rgba(180,120,255,0.25); }
+    .pin-ins .pin-card-badge { background: rgba(180,120,255,0.15); color: var(--accent-purple); }
+
+    /* ─── DRAG HINT ─── */
+    .drag-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 14px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ─── HEALTH SECTION ─── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+    }
+
+    .health-score {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent-green);
+      background: rgba(50,220,100,0.08);
+      border: 1px solid rgba(50,220,100,0.2);
+      border-radius: 8px;
+      padding: 3px 8px;
+    }
+
+    /* ─── PROGRESS BARS ─── */
+    .maintenance-list {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      opacity: 0;
+    }
+
+    .maintenance-item {}
+
+    .maintenance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .maintenance-name {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .maintenance-icon {
+      width: 22px; height: 22px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .maintenance-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .progress-track {
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0%;
+      transition: none;
+    }
+
+    /* ─── STATS GRID ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+      opacity: 0;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 8px;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      font-size: 16px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .stat-value {
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+
+    .stat-label {
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── UPCOMING EVENTS ─── */
+    .events-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 16px;
+      opacity: 0;
+    }
+
+    .event-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .event-item:last-child { border-bottom: none; }
+
+    .event-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .event-info { flex: 1; }
+    .event-name { font-size: 12px; font-weight: 700; }
+    .event-date { font-size: 10px; color: var(--text-muted); font-weight: 500; margin-top: 1px; }
+
+    .event-urgency {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    /* ─── ROTATE DEMO ─── */
+    .rotate-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+      margin-bottom: 16px;
+    }
+
+    .rotate-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 16px;
+      color: var(--text-secondary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .rotate-btn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .rotate-btn:active { transform: scale(0.96); }
+
+    /* ─── CAR SVG PATHS ─── */
+    #car-body { fill: url(#bodyGradient); }
+    #car-glass { fill: rgba(150,200,255,0.15); }
+    #car-roof { fill: url(#roofGradient); }
+
+    /* ─── OUTER LAYOUT ─── */
+    .outer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(60,80,160,0.08), transparent 60%);
+    }
+
+    .outer-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 30px;
+    }
+
+    .alternatives-row {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .alt-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      flex: 1;
+      min-width: 180px;
+      max-width: 220px;
+    }
+
+    .alt-number {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .alt-name {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .alt-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .alt-effort {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .effort-dots {
+      display: flex;
+      gap: 2px;
+    }
+
+    .effort-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    .active-dot { background: var(--accent-orange); }
+    .inactive-dot { background: rgba(255,255,255,0.1); }
+
+    .recommended-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(80,200,120,0.1);
+      border: 1px solid rgba(80,200,120,0.25);
+      color: var(--accent-green);
+      font-size: 9px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body>
+
+<div class="outer">
+  <p class="outer-title">VitaOS · Vehicle Dashboard · Concept Mockup</p>
+
+  <!-- PHONE -->
+  <div class="phone-wrapper" style="padding: 0; width: 100%;">
+    <div class="phone">
+      <div class="phone-inner">
+
+        <!-- HEADER -->
+        <div class="screen-header" id="header">
+          <div>
+            <h1 class="screen-title">Veicolo</h1>
+            <p class="screen-subtitle">Dashboard Stato Auto</p>
+          </div>
+          <div class="header-badge">
+            <span style="color: var(--accent-green);">●</span>
+            Synced
+          </div>
+        </div>
+
+        <!-- 3D CAR VIEWER -->
+        <div class="car-viewer" id="car-viewer">
+          <!-- Car SVG (inline, stylized sedan side view) -->
+          <div class="car-svg-container" id="car-model">
+            <svg viewBox="0 0 300 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="bodyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#c8d4e8"/>
+                  <stop offset="50%" stop-color="#9aacc8"/>
+                  <stop offset="100%" stop-color="#6880a0"/>
+                </linearGradient>
+                <linearGradient id="roofGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#d0ddf0"/>
+                  <stop offset="100%" stop-color="#8090b0"/>
+                </linearGradient>
+                <linearGradient id="wheelGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#404050"/>
+                  <stop offset="100%" stop-color="#1a1a28"/>
+                </linearGradient>
+                <radialGradient id="wheelCenter" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#888"/>
+                  <stop offset="100%" stop-color="#333"/>
+                </radialGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Shadow -->
+              <ellipse cx="150" cy="118" rx="120" ry="6" fill="rgba(0,0,0,0.3)" />
+
+              <!-- Body lower -->
+              <path d="M30 85 L30 72 Q32 65 45 60 L55 58 L245 58 L258 62 L270 72 L270 85 L30 85Z" fill="url(#bodyGradient)" />
+
+              <!-- Roof / cabin -->
+              <path d="M80 58 L95 32 Q100 28 108 26 L192 26 Q200 26 205 30 L222 58Z" fill="url(#roofGradient)" />
+
+              <!-- Windshield front -->
+              <path d="M192 26 Q200 26 205 30 L222 58 L200 58Z" fill="rgba(150,200,255,0.22)" stroke="rgba(150,200,255,0.3)" stroke-width="0.5"/>
+
+              <!-- Windshield rear -->
+              <path d="M80 58 L95 32 Q100 28 108 26 L100 58Z" fill="rgba(150,200,255,0.18)" stroke="rgba(150,200,255,0.25)" stroke-width="0.5"/>
+
+              <!-- Windows middle -->
+              <rect x="104" y="30" width="84" height="26" rx="3" fill="rgba(120,180,250,0.18)" stroke="rgba(150,200,255,0.2)" stroke-width="0.5"/>
+
+              <!-- Body accent line -->
+              <path d="M32 72 L268 72" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+              <path d="M32 75 L268 75" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/>
+
+              <!-- Headlight front -->
+              <path d="M255 62 L268 68 L265 74 L250 72 Z" fill="rgba(255,240,180,0.9)" filter="url(#glow)"/>
+              <path d="M253 63 L266 69" stroke="rgba(255,230,150,0.5)" stroke-width="1.5"/>
+
+              <!-- Taillight rear -->
+              <path d="M45 60 L32 67 L33 74 L50 72 Z" fill="rgba(255,60,60,0.8)"/>
+
+              <!-- Door lines -->
+              <path d="M140 58 L140 84" stroke="rgba(0,0,0,0.2)" stroke-width="0.8"/>
+              <path d="M185 58 L185 84" stroke="rgba(0,0,0,0.15)" stroke-width="0.8"/>
+
+              <!-- Door handles -->
+              <rect x="110" y="70" width="20" height="3" rx="1.5" fill="rgba(255,255,255,0.2)"/>
+              <rect x="155" y="70" width="20" height="3" rx="1.5" fill="rgba(255,255,255,0.2)"/>
+
+              <!-- Mirror -->
+              <path d="M235 58 L245 54 L248 57 L238 60 Z" fill="#8090b0"/>
+
+              <!-- Wheels -->
+              <!-- Front wheel -->
+              <circle cx="215" cy="92" r="20" fill="url(#wheelGrad)"/>
+              <circle cx="215" cy="92" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+              <circle cx="215" cy="92" r="8" fill="url(#wheelCenter)"/>
+              <circle cx="215" cy="92" r="3" fill="rgba(255,255,255,0.3)"/>
+              <!-- Spokes -->
+              <line x1="215" y1="77" x2="215" y2="84" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="215" y1="100" x2="215" y2="107" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="200" y1="92" x2="207" y2="92" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="223" y1="92" x2="230" y2="92" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="204" y1="81" x2="209" y2="86" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+              <line x1="221" y1="98" x2="226" y2="103" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+
+              <!-- Rear wheel -->
+              <circle cx="82" cy="92" r="20" fill="url(#wheelGrad)"/>
+              <circle cx="82" cy="92" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+              <circle cx="82" cy="92" r="8" fill="url(#wheelCenter)"/>
+              <circle cx="82" cy="92" r="3" fill="rgba(255,255,255,0.3)"/>
+              <line x1="82" y1="77" x2="82" y2="84" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="82" y1="100" x2="82" y2="107" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="67" y1="92" x2="74" y2="92" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="90" y1="92" x2="97" y2="92" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+              <line x1="71" y1="81" x2="76" y2="86" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+              <line x1="88" y1="98" x2="93" y2="103" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+
+              <!-- Roof shine -->
+              <path d="M110 28 Q150 24 190 28 Q170 32 130 32Z" fill="rgba(255,255,255,0.15)"/>
+            </svg>
+          </div>
+
+          <!-- PIN: Cambio Olio (motore) -->
+          <div class="pin pin-oil" id="pin-oil">
+            <div class="pin-dot"></div>
+            <div class="pin-line"></div>
+            <div class="pin-card">
+              <div class="pin-card-label">🔧 Cambio Olio</div>
+              <div class="pin-card-value">12.400 km fa</div>
+              <div class="pin-card-badge">⚠️ 500km rimasti</div>
+            </div>
+          </div>
+
+          <!-- PIN: KM (cruscotto) -->
+          <div class="pin pin-km" id="pin-km">
+            <div class="pin-dot"></div>
+            <div class="pin-line"></div>
+            <div class="pin-card">
+              <div class="pin-card-label">📍 Odometro</div>
+              <div class="pin-card-value" id="km-counter">0 km</div>
+            </div>
+          </div>
+
+          <!-- PIN: Consumo (carburante) -->
+          <div class="pin pin-fuel" id="pin-fuel">
+            <div class="pin-dot"></div>
+            <div class="pin-line"></div>
+            <div class="pin-card">
+              <div class="pin-card-label" style="text-align:right">⛽ Consumo</div>
+              <div class="pin-card-value" style="text-align:right">6.4 l/100km</div>
+            </div>
+          </div>
+
+          <!-- PIN: Assicurazione -->
+          <div class="pin pin-ins" id="pin-ins">
+            <div class="pin-card">
+              <div class="pin-card-label">🛡️ Assicurazione</div>
+              <div class="pin-card-value">Scade tra 32gg</div>
+              <div class="pin-card-badge" style="background: rgba(180,120,255,0.15); color: var(--accent-purple);">⚠️ Rinnova presto</div>
+            </div>
+            <div class="pin-line"></div>
+            <div class="pin-dot"></div>
+          </div>
+
+          <!-- Drag hint -->
+          <div class="drag-hint">← drag → rotate</div>
+        </div>
+
+        <!-- ROTATE CONTROLS -->
+        <div class="rotate-controls" id="rotate-controls" style="opacity:0">
+          <button class="rotate-btn" id="btn-front" onclick="rotateCar('front')">
+            <span>◀</span> Vista Anteriore
+          </button>
+          <button class="rotate-btn" id="btn-rear" onclick="rotateCar('rear')">
+            Vista Posteriore <span>▶</span>
+          </button>
+        </div>
+
+        <!-- SECTION: SALUTE VEICOLO -->
+        <div class="section-title" id="health-title">
+          Salute Veicolo
+          <span class="health-score">72 / 100</span>
+        </div>
+
+        <div class="maintenance-list" id="maintenance-list">
+          <!-- Oil -->
+          <div class="maintenance-item">
+            <div class="maintenance-header">
+              <div class="maintenance-name">
+                <div class="maintenance-icon" style="background: rgba(255,150,50,0.12);">🔧</div>
+                Cambio Olio
+              </div>
+              <span class="maintenance-meta" style="color: var(--accent-orange);">⚠️ 500km</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="prog-oil" style="background: linear-gradient(90deg, var(--accent-orange), hsl(15,100%,55%));"></div>
+            </div>
+          </div>
+
+          <!-- Tagliando -->
+          <div class="maintenance-item">
+            <div class="maintenance-header">
+              <div class="maintenance-name">
+                <div class="maintenance-icon" style="background: rgba(255,210,50,0.1);">⚙️</div>
+                Tagliando
+              </div>
+              <span class="maintenance-meta" style="color: hsl(43,96%,56%);">~ 2.500km</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="prog-tagliando" style="background: linear-gradient(90deg, hsl(43,96%,56%), hsl(55,100%,55%));"></div>
+            </div>
+          </div>
+
+          <!-- Insurance -->
+          <div class="maintenance-item">
+            <div class="maintenance-header">
+              <div class="maintenance-name">
+                <div class="maintenance-icon" style="background: rgba(180,120,255,0.1);">🛡️</div>
+                Assicurazione RCA
+              </div>
+              <span class="maintenance-meta" style="color: var(--accent-purple);">32 giorni</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="prog-ins" style="background: linear-gradient(90deg, var(--accent-purple), hsl(280,100%,80%));"></div>
+            </div>
+          </div>
+
+          <!-- Bollo -->
+          <div class="maintenance-item">
+            <div class="maintenance-header">
+              <div class="maintenance-name">
+                <div class="maintenance-icon" style="background: rgba(50,200,100,0.1);">📄</div>
+                Bollo Auto
+              </div>
+              <span class="maintenance-meta" style="color: var(--accent-green);">✅ 8 mesi</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="prog-bollo" style="background: linear-gradient(90deg, var(--accent-green), hsl(150,80%,60%));"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">⚡</span>
+            <div class="stat-value" style="color: var(--accent-blue);" id="stat-km">0</div>
+            <div class="stat-label">KM Attuali</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">⛽</span>
+            <div class="stat-value" style="color: var(--accent-orange);">6.4</div>
+            <div class="stat-label">l/100km</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">💶</span>
+            <div class="stat-value" style="color: var(--accent-green);">0.073</div>
+            <div class="stat-label">€/km</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">📊</span>
+            <div class="stat-value" style="color: var(--accent-purple);">€487</div>
+            <div class="stat-label">Spesa Tot.</div>
+          </div>
+        </div>
+
+        <!-- UPCOMING EVENTS -->
+        <div class="section-title" id="events-title" style="margin-top:4px;">Prossime Scadenze</div>
+        <div class="events-card" id="events-card">
+          <div class="event-item">
+            <div class="event-dot" style="background: var(--accent-orange);"></div>
+            <div class="event-info">
+              <div class="event-name">Cambio Olio + Filtri</div>
+              <div class="event-date">Prev. a 125.900 km</div>
+            </div>
+            <div class="event-urgency" style="background: rgba(255,150,50,0.12); color: var(--accent-orange);">⚠️ Urgente</div>
+          </div>
+          <div class="event-item">
+            <div class="event-dot" style="background: var(--accent-purple);"></div>
+            <div class="event-info">
+              <div class="event-name">Rinnovo Assicurazione</div>
+              <div class="event-date">28 Giugno 2026</div>
+            </div>
+            <div class="event-urgency" style="background: rgba(180,120,255,0.1); color: var(--accent-purple);">32 giorni</div>
+          </div>
+          <div class="event-item">
+            <div class="event-dot" style="background: hsl(43,96%,56%);"></div>
+            <div class="event-info">
+              <div class="event-name">Tagliando Completo</div>
+              <div class="event-date">Prev. a 128.000 km</div>
+            </div>
+            <div class="event-urgency" style="background: rgba(255,210,50,0.1); color: hsl(43,96%,56%);">~ 2.500km</div>
+          </div>
+        </div>
+
+      </div><!-- /phone-inner -->
+    </div><!-- /phone -->
+  </div><!-- /phone-wrapper -->
+
+  <!-- ALTERNATIVES -->
+  <div class="alternatives-row">
+    <div class="alt-card">
+      <div class="alt-number">Alt. 1</div>
+      <div class="alt-name">3D WebGL<br/><small style="font-weight:400; color: var(--text-muted);">Three.js + R3F</small></div>
+      <div class="alt-desc">Modello .glb vero con hotspot pinned in 3D, drag to rotate, HDRI lighting.</div>
+      <div class="alt-effort">
+        Effort: 36h
+        <div class="effort-dots">
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alt-card" style="border-color: rgba(50,200,100,0.3);">
+      <div class="alt-number">Alt. 2</div>
+      <div class="alt-name">SVG + Scroll<br/><small style="font-weight:400; color: var(--text-muted);">Anime.js Timeline</small></div>
+      <div class="alt-desc">Blueprint SVG animato sullo scroll. Pin rivelati progressivamente mentre scendi.</div>
+      <div class="alt-effort">
+        Effort: 24h
+        <div class="effort-dots">
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+        </div>
+      </div>
+      <div class="recommended-badge">★ Consigliato</div>
+    </div>
+
+    <div class="alt-card">
+      <div class="alt-number">Alt. 3</div>
+      <div class="alt-name">Spline 3D<br/><small style="font-weight:400; color: var(--text-muted);">No-code 3D</small></div>
+      <div class="alt-desc">Scene 3D da Spline.design embedded come React component. Pronto in 2 giorni.</div>
+      <div class="alt-effort">
+        Effort: 14h
+        <div class="effort-dots">
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alt-card">
+      <div class="alt-number">Alt. 4</div>
+      <div class="alt-name">Cards Animate<br/><small style="font-weight:400; color: var(--text-muted);">Quick Win</small></div>
+      <div class="alt-desc">Upgrade immediato: counter animati, barre progresso, health ring. Zero rischi.</div>
+      <div class="alt-effort">
+        Effort: 12h
+        <div class="effort-dots">
+          <div class="effort-dot active-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+          <div class="effort-dot inactive-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /outer -->
+
+<script>
+  // ─── ENTRY ANIMATIONS ───
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // Header
+    anime({
+      targets: '#header',
+      translateY: [-12, 0],
+      opacity: [0, 1],
+      duration: 600,
+      easing: 'easeOutExpo',
+      delay: 200
+    })
+
+    // Car Viewer
+    anime({
+      targets: '#car-viewer',
+      scale: [0.92, 1],
+      opacity: [0, 1],
+      duration: 700,
+      easing: 'easeOutExpo',
+      delay: 400
+    })
+
+    // Pins staggered
+    anime({
+      targets: ['#pin-oil', '#pin-km', '#pin-fuel', '#pin-ins'],
+      opacity: [0, 1],
+      translateY: [8, 0],
+      delay: anime.stagger(150, { start: 900 }),
+      duration: 500,
+      easing: 'easeOutExpo'
+    })
+
+    // Rotate controls
+    anime({
+      targets: '#rotate-controls',
+      opacity: [0, 1],
+      translateY: [8, 0],
+      duration: 500,
+      delay: 1300,
+      easing: 'easeOutExpo'
+    })
+
+    // Health title + list
+    anime({
+      targets: ['#health-title', '#maintenance-list'],
+      opacity: [0, 1],
+      translateY: [12, 0],
+      delay: anime.stagger(100, { start: 1400 }),
+      duration: 600,
+      easing: 'easeOutExpo'
+    })
+
+    // Progress bars
+    setTimeout(() => {
+      anime({ targets: '#prog-oil', width: ['0%', '88%'], duration: 1200, easing: 'easeOutCubic', delay: 0 })
+      anime({ targets: '#prog-tagliando', width: ['0%', '55%'], duration: 1200, easing: 'easeOutCubic', delay: 100 })
+      anime({ targets: '#prog-ins', width: ['0%', '82%'], duration: 1200, easing: 'easeOutCubic', delay: 200 })
+      anime({ targets: '#prog-bollo', width: ['0%', '33%'], duration: 1200, easing: 'easeOutCubic', delay: 300 })
+    }, 1600)
+
+    // Stats grid
+    anime({
+      targets: '#stats-grid',
+      opacity: [0, 1],
+      translateY: [12, 0],
+      duration: 600,
+      delay: 1800,
+      easing: 'easeOutExpo'
+    })
+
+    // Events
+    anime({
+      targets: ['#events-title', '#events-card'],
+      opacity: [0, 1],
+      translateY: [12, 0],
+      delay: anime.stagger(80, { start: 2000 }),
+      duration: 600,
+      easing: 'easeOutExpo'
+    })
+
+    // KM Counter
+    setTimeout(() => {
+      anime({
+        targets: { km: 0 },
+        km: 125400,
+        round: 1,
+        easing: 'easeOutExpo',
+        duration: 1800,
+        update: function(anim) {
+          const val = Math.round(anim.animations[0].currentValue)
+          document.getElementById('km-counter').textContent = val.toLocaleString('it-IT') + ' km'
+          document.getElementById('stat-km').textContent = (val / 1000).toFixed(0) + 'k'
+        }
+      })
+    }, 900)
+  })
+
+  // ─── DRAG TO ROTATE ───
+  let isDragging = false, startX = 0, currentRot = -10
+  const carModel = document.getElementById('car-model')
+
+  carModel.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX })
+  carModel.addEventListener('touchstart', e => { isDragging = true; startX = e.touches[0].clientX })
+
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return
+    const delta = (e.clientX - startX) * 0.4
+    const rot = Math.max(-30, Math.min(30, currentRot + delta))
+    anime.set(carModel, { rotateY: rot, scaleX: 1 - Math.abs(delta / 500) * 0.05 })
+  })
+
+  window.addEventListener('touchmove', e => {
+    if (!isDragging) return
+    const delta = (e.touches[0].clientX - startX) * 0.4
+    const rot = Math.max(-30, Math.min(30, currentRot + delta))
+    anime.set(carModel, { rotateY: rot })
+  })
+
+  window.addEventListener('mouseup', e => {
+    if (!isDragging) return
+    isDragging = false
+    const delta = (e.clientX - startX) * 0.4
+    currentRot = Math.max(-30, Math.min(30, currentRot + delta))
+    anime({ targets: carModel, scaleX: 1, duration: 300, easing: 'easeOutElastic(1, 0.8)' })
+  })
+
+  window.addEventListener('touchend', e => { isDragging = false })
+
+  // ─── VIEW BUTTONS ───
+  function rotateCar(view) {
+    const targetRot = view === 'front' ? -25 : 25
+    anime({
+      targets: carModel,
+      rotateY: targetRot,
+      duration: 600,
+      easing: 'easeOutExpo',
+      complete: () => { currentRot = targetRot }
+    })
+  }
+</script>
+</body>
+</html>
