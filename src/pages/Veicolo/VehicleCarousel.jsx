@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { Plus, Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
@@ -56,6 +56,16 @@ function VehicleCarousel({ vehicles, activeIndex, onSelect, onAdd, onEdit }) {
     const target = -(clampedIdx * STEP) + (containerW / 2) - (CARD_W / 2)
     animate(x, target, { type: 'spring', stiffness: 320, damping: 32 })
   }, [vehicles.length, x, onSelect, STEP, CARD_W])
+
+  // ── Posizione iniziale al mount ─────────────────────────────
+  // x parte da 0 (left edge): impostiamo subito il centramento
+  // sull'auto attiva dopo il primo render (clientWidth disponibile)
+  useEffect(() => {
+    const containerW = containerRef.current?.clientWidth ?? 360
+    const target = -(activeIndex * STEP) + (containerW / 2) - (CARD_W / 2)
+    x.set(target) // immediato, senza animazione
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // solo al mount
 
   // ── Sync on external activeIndex change ─────────────────────
   const prevIndex = useRef(activeIndex)
