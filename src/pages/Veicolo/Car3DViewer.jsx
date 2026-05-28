@@ -200,86 +200,139 @@ function Loader() {
   )
 }
 
-// ── DiagnosticHotspot: 3D interactive callout pin ─────────────────
-function DiagnosticHotspot({ position, label, value, status, side = 'right', height = 50, width = 30 }) {
-  const statusColor = status === 'danger' ? 'rgb(239, 68, 68)' : status === 'warning' ? 'rgb(245, 158, 11)' : 'rgb(34, 197, 94)'
-  const statusBg = status === 'danger' ? 'rgba(239, 68, 68, 0.15)' : status === 'warning' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(34, 197, 94, 0.15)'
-
+// ── DiagnosticHotspot: premium 3D HUD callout ─────────────────────
+function DiagnosticHotspot({ position, label, icon, value, status, side = 'right' }) {
   const isLeft = side === 'left'
 
+  const colors = {
+    danger:  { dot: '#ef4444', line: 'rgba(239,68,68,0.7)',   card: 'rgba(239,68,68,0.12)',   badge: '#ef4444', text: '#fca5a5' },
+    warning: { dot: '#f59e0b', line: 'rgba(245,158,11,0.7)',  card: 'rgba(245,158,11,0.10)',  badge: '#f59e0b', text: '#fcd34d' },
+    success: { dot: '#22c55e', line: 'rgba(34,197,94,0.7)',   card: 'rgba(34,197,94,0.10)',   badge: '#22c55e', text: '#86efac' },
+  }
+  const c = colors[status] ?? colors.success
+  const badgeLabel = status === 'danger' ? 'ALERT' : status === 'warning' ? 'VERIFICA' : 'OK'
+
+  // Horizontal line length
+  const lineW = 56
+
   return (
-    <Html position={position} center distanceFactor={4.5} portal={null}>
-      <div className="relative pointer-events-none select-none animate-fadeIn" style={{ width: 0, height: 0 }}>
-        {/* Pulsing 3D Dot */}
-        <div 
-          className="absolute -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full flex items-center justify-center"
-          style={{ 
-            background: 'rgba(255, 255, 255, 0.8)',
-            boxShadow: `0 0 10px ${statusColor}`,
-          }}
-        >
-          <div className="w-1.5 h-1.5 rounded-full" style={{ background: statusColor }} />
-          <div 
-            className="absolute inset-0 rounded-full animate-ping opacity-60" 
-            style={{ border: `1px solid ${statusColor}` }} 
-          />
+    <Html position={position} center distanceFactor={4.5} zIndexRange={[10, 20]}>
+      <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none', userSelect: 'none' }}>
+
+        {/* ── Center dot (origin point on car) ── */}
+        <div style={{
+          position: 'absolute',
+          left: -6, top: -6,
+          width: 12, height: 12,
+          borderRadius: '50%',
+          background: c.dot,
+          boxShadow: `0 0 0 3px ${c.dot}33, 0 0 12px ${c.dot}88`,
+          zIndex: 20,
+        }}>
+          {/* outer pulse ring */}
+          <div style={{
+            position: 'absolute', inset: -4,
+            borderRadius: '50%',
+            border: `1.5px solid ${c.dot}`,
+            opacity: 0.6,
+            animation: 'ping 1.8s cubic-bezier(0,0,0.2,1) infinite',
+          }} />
         </div>
 
-        {/* HUD Lines: vertical elbow line */}
-        <svg 
-          className="absolute overflow-visible pointer-events-none"
+        {/* ── Horizontal leader line ── */}
+        <svg
           style={{
-            bottom: 0,
-            left: 0,
-            transform: isLeft ? 'scaleX(-1)' : 'none',
+            position: 'absolute',
+            top: -1,
+            left: isLeft ? -(lineW) : 0,
+            overflow: 'visible',
+            pointerEvents: 'none',
           }}
-          width={width + 10}
-          height={height + 10}
+          width={lineW}
+          height={2}
         >
-          <path
-            d={`M 0 0 L 0 ${-height} L ${width} ${-height}`}
-            fill="none"
-            stroke="rgba(255, 255, 255, 0.35)"
-            strokeWidth="1.5"
-            strokeDasharray="2, 2"
+          <line
+            x1={isLeft ? lineW : 0}
+            y1={1}
+            x2={isLeft ? 0 : lineW}
+            y2={1}
+            stroke={c.line}
+            strokeWidth={1.5}
           />
-          <circle cx={width} cy={-height} r="2" fill="white" />
+          {/* endpoint small square */}
+          <rect
+            x={isLeft ? lineW - 3 : -3}
+            y={-2}
+            width={5}
+            height={5}
+            fill={c.dot}
+            rx={1}
+          />
         </svg>
 
-        {/* Callout Card */}
-        <div 
-          className="absolute pointer-events-auto"
-          style={{
-            bottom: height - 14,
-            left: isLeft ? -width - 150 : width + 6,
-            width: 144,
-          }}
-        >
-          <div 
-            className="p-2 rounded-xl flex flex-col gap-0.5 border text-left"
-            style={{
-              background: 'rgba(15, 15, 25, 0.85)',
-              borderColor: 'rgba(255, 255, 255, 0.12)',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            <p className="text-[8px] font-black uppercase tracking-wider text-[#9aacc8] leading-none mb-0.5">
-              {label}
-            </p>
-            <div className="flex items-center justify-between gap-1.5">
-              <p className="text-[10px] font-extrabold text-white truncate max-w-[95px] leading-tight">
-                {value}
-              </p>
-              <span 
-                className="text-[7px] font-black uppercase tracking-wide px-1 py-0.5 rounded shrink-0"
-                style={{ background: statusBg, color: statusColor }}
-              >
-                {status === 'danger' ? 'ALERT' : status === 'warning' ? 'CHECK' : 'OK'}
+        {/* ── Callout card ── */}
+        <div style={{
+          position: 'absolute',
+          top: -22,
+          left: isLeft ? -(lineW + 152) : lineW + 8,
+          width: 148,
+          pointerEvents: 'auto',
+        }}>
+          <div style={{
+            padding: '7px 9px 8px',
+            borderRadius: 10,
+            background: 'rgba(8, 8, 18, 0.88)',
+            border: `1px solid ${c.dot}30`,
+            backdropFilter: 'blur(12px)',
+            boxShadow: `0 2px 16px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.04)`,
+          }}>
+            {/* Header row: icon + label + badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+              {/* Colored icon dot */}
+              <div style={{
+                width: 18, height: 18, borderRadius: 5,
+                background: c.card,
+                border: `1px solid ${c.dot}44`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <span style={{ fontSize: 9, color: c.text }}>{icon}</span>
+              </div>
+              <span style={{
+                fontSize: 8, fontWeight: 900, letterSpacing: '0.08em',
+                textTransform: 'uppercase', color: 'rgba(154,172,200,0.85)',
+                flex: 1, lineHeight: 1,
+              }}>
+                {label}
+              </span>
+              <span style={{
+                fontSize: 7, fontWeight: 900, letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                padding: '1px 4px',
+                borderRadius: 4,
+                background: c.card,
+                color: c.badge,
+                border: `1px solid ${c.dot}40`,
+                flexShrink: 0,
+              }}>
+                {badgeLabel}
               </span>
             </div>
+            {/* Value */}
+            <p style={{
+              margin: 0,
+              fontSize: 12,
+              fontWeight: 800,
+              color: '#fff',
+              lineHeight: 1.2,
+              paddingLeft: 23,
+              letterSpacing: '-0.01em',
+            }}>
+              {value}
+            </p>
           </div>
         </div>
+
       </div>
     </Html>
   )
@@ -314,45 +367,41 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
       {/* HUD Diagnostic Hotspots */}
       {diagnosticData && (
         <>
-          {/* 1. Cambio Olio (Vano Motore) - Front-Center-Left */}
+          {/* 1. Stato Olio — Vano motore anteriore, sopra al cofano, a sinistra */}
           <DiagnosticHotspot
-            position={[-0.2, 0.35, 0.85]}
+            position={[-0.55, 0.62, 0.6]}
             label="Stato Olio"
+            icon="◎"
             value={diagnosticData.oil?.label || 'Monitorato'}
             status={diagnosticData.oil?.status || 'success'}
             side="left"
-            height={60}
-            width={40}
           />
-          {/* 2. Rifornimento / Ricarica (Sportello posteriore) - Rear-Right */}
+          {/* 2. Rifornimento — Fiancata posteriore destra */}
           <DiagnosticHotspot
-            position={[0.75, 0.25, -0.95]}
-            label={type === 'electric' ? 'Stato Ricarica' : 'Rifornimento'}
-            value={diagnosticData.fuel?.label || 'Monitorato'}
-            status={diagnosticData.fuel?.status || 'success'}
+            position={[0.82, 0.18, -0.55]}
+            label={type === 'electric' ? 'Ricarica' : 'Rifornimento'}
+            icon={type === 'electric' ? '⚡' : '⛽'}
+            value={diagnosticData.fuel?.label || 'Nessun dato'}
+            status={diagnosticData.fuel?.status || 'warning'}
             side="right"
-            height={45}
-            width={35}
           />
-          {/* 3. Acqua Tergicristalli (Parabrezza) - Mid-Left */}
+          {/* 3. Tergicristalli — parabrezza/tetto anteriore */}
           <DiagnosticHotspot
-            position={[-0.4, 0.55, 0.3]}
+            position={[0.0, 0.82, 0.28]}
             label="Tergicristalli"
+            icon="◈"
             value={diagnosticData.wipers?.label || 'Livello OK'}
             status={diagnosticData.wipers?.status || 'success'}
-            side="left"
-            height={50}
-            width={30}
+            side="right"
           />
-          {/* 4. Cambio Gomme (Ruota Anteriore Destra) - Front-Right */}
+          {/* 4. Pneumatici — ruota anteriore destra, in basso */}
           <DiagnosticHotspot
-            position={[0.85, -0.22, 0.65]}
+            position={[0.9, -0.3, 0.5]}
             label="Pneumatici"
-            value={diagnosticData.tires?.label || 'Monitorato'}
+            icon="◉"
+            value={diagnosticData.tires?.label || 'Stato Buono'}
             status={diagnosticData.tires?.status || 'success'}
             side="right"
-            height={55}
-            width={45}
           />
         </>
       )}
