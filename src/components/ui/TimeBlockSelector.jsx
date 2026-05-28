@@ -707,7 +707,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                   transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                   className={clsx(
                     "p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative shrink-0 snap-start flex flex-col justify-between",
-                    mode === 'study' ? "w-[280px] sm:w-[310px]" : "w-[215px] sm:w-[230px]"
+                    mode === 'study' ? "w-[330px] sm:w-[360px]" : "w-[215px] sm:w-[230px]"
                   )}
                 >
                   <div className="space-y-4">
