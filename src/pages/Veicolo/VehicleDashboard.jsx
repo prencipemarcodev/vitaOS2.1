@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Car, Plus, Trash2, TrendingUp, Gauge, Droplet,
-  Wrench, Shield, FileText, AlertTriangle, ArrowLeftRight
+  Wrench, Shield, FileText, AlertTriangle, ArrowLeftRight,
+  ChevronLeft, ChevronRight, Pencil
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Button from '@/components/ui/Button'
@@ -119,7 +120,13 @@ function MaintenanceBar({ label, icon: Icon, pct, color, note, delay = 0 }) {
 // ─────────────────────────────────────────────────────────────
 // VehicleDashboard — main component
 // ─────────────────────────────────────────────────────────────
-function VehicleDashboard({ vehicle }) {
+function VehicleDashboard({
+  vehicle,
+  vehicles = [],
+  activeIndex = 0,
+  onSelect,
+  onEdit,
+}) {
   const confirm = useConfirmStore(s => s.confirm)
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -257,15 +264,32 @@ function VehicleDashboard({ vehicle }) {
 
   const vehicleType3D = guessVehicleType(vehicle)
 
+    const touchStartX = useRef(0)
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && activeIndex < vehicles.length - 1) {
+        onSelect?.(activeIndex + 1)
+      } else if (diff < 0 && activeIndex > 0) {
+        onSelect?.(activeIndex - 1)
+      }
+    }
+  }
+
   return (
     <div className="space-y-5">
-      {/* ── Car Viewer (fuori dall'AnimatePresence per evitare rimontaggio Canvas WebGL) ── */}
-      <Card padding="none" className="overflow-hidden">
+      {/* ── Car Viewer con controlli 3D e navigazione ── */}
+      <Card padding="none" className="overflow-hidden relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--border-subtle)]">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ background: vehicle.color }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: vehicle.color }} />
             <span className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
-              {vehicle.name}
+              Visualizzazione 3D
             </span>
           </div>
           <button onClick={() => setViewerOpen(v => !v)}
@@ -274,38 +298,90 @@ function VehicleDashboard({ vehicle }) {
           </button>
         </div>
 
-          <AnimatePresence>
-            {viewerOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                style={{ overflow: 'hidden' }}
-              >
-                {/* 3D / SVG Viewer con hotspot overlay */}
-                <div className="relative">
-                  <Car3DViewer
-                    vehicleType={vehicleType3D}
-                    color={vehicleColor}
-                    onColorChange={setVehicleColor}
-                    label={vehicle.name}
-                    className="mx-0 rounded-none"
-                  />
+        <AnimatePresence>
+          {viewerOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              style={{ overflow: 'hidden' }}
+              className="relative animate-fadeIn"
+            >
+              {/* 3D Viewer */}
+              <Car3DViewer
+                vehicleType={vehicleType3D}
+                color={vehicleColor}
+                onColorChange={setVehicleColor}
+                label={vehicle.name}
+                className="mx-0 rounded-none"
+              />
 
-                  {!hasData && !loading && (
-                    <div className="absolute inset-x-0 bottom-4 flex flex-col items-center justify-center z-10 pointer-events-none">
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] bg-[var(--bg-surface)]/85 border border-[var(--border-subtle)]/50 backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-[var(--shadow-sm)]">
-                        Registra spesa per sbloccare la telemetria
-                      </p>
-                    </div>
+              {/* Scheda Dettagli Veicolo Fluttuante (Top-Left) */}
+              <div className="absolute top-4 left-4 z-20 pointer-events-auto">
+                <div className="bg-[var(--bg-surface)]/85 backdrop-blur-md border border-[var(--border-subtle)]/70 p-4 rounded-2xl shadow-[var(--shadow-md)] text-left min-w-[190px] flex flex-col gap-1.5 select-none">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-black text-[var(--text-primary)] leading-tight truncate max-w-[120px]">
+                      {vehicle.name}
+                    </p>
+                    <button
+                      onClick={() => onEdit?.(vehicle)}
+                      className="p-1 rounded bg-black/5 dark:bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      title="Modifica veicolo"
+                      type="button"
+                    >
+                      <Pencil size={11} />
+                    </button>
+                  </div>
+                  {(vehicle.brand || vehicle.model) && (
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider leading-none">
+                      {[vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' · ')}
+                    </p>
                   )}
+                  {vehicle.plate && (
+                    <span className="inline-block self-start mt-0.5 px-2 py-0.5 bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded font-mono text-[9px] font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                      {vehicle.plate}
+                    </span>
+                  )}
+                  <span className="inline-block self-start mt-0.5 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-[var(--color-primary-ghost)] text-[var(--color-primary)]">
+                    {vehicle.fuel_type === 'gasoline' ? 'Benzina' :
+                     vehicle.fuel_type === 'diesel' ? 'Diesel' :
+                     vehicle.fuel_type === 'electric' ? 'Elettrico' : 'Ibrido'}
+                  </span>
                 </div>
-                <div className="h-px bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent mx-4" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Card>
+              </div>
+
+              {/* Frecce di navigazione Fluttuanti */}
+              {vehicles.length > 1 && (
+                <>
+                  {activeIndex > 0 && (
+                    <button
+                      onClick={() => onSelect?.(activeIndex - 1)}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-[var(--bg-surface)]/80 hover:bg-[var(--bg-surface)] backdrop-blur border border-[var(--border-subtle)]/50 flex items-center justify-center text-[var(--text-primary)] shadow-sm transition-all hover:scale-105 active:scale-95"
+                      title="Veicolo precedente"
+                      type="button"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                  )}
+                  {activeIndex < vehicles.length - 1 && (
+                    <button
+                      onClick={() => onSelect?.(activeIndex + 1)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-[var(--bg-surface)]/80 hover:bg-[var(--bg-surface)] backdrop-blur border border-[var(--border-subtle)]/50 flex items-center justify-center text-[var(--text-primary)] shadow-sm transition-all hover:scale-105 active:scale-95"
+                      title="Veicolo successivo"
+                      type="button"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  )}
+                </>
+              )}
+
+              <div className="h-px bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent mx-4" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
 
       {/* ── Resto del contenuto animato al cambio veicolo ── */}
       <AnimatePresence mode="wait">

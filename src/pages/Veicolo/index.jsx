@@ -7,7 +7,6 @@ import Header from '@/components/layout/Header'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import VehicleCarousel from './VehicleCarousel'
 import VehicleDashboard from './VehicleDashboard'
 import AddVehicleModal from './AddVehicleModal'
 import { useConfirmStore } from '@/store/useConfirmStore'
@@ -201,18 +200,15 @@ function Veicolo() {
 
       <PageWrapper>
         <div className="space-y-1">
-          {/* ── Carousel ── */}
-          <VehicleCarousel
-            vehicles={vehicles}
-            activeIndex={activeIndex}
-            onSelect={setActiveIndex}
-            onAdd={handleOpenAdd}
-            onEdit={handleOpenEdit}
-          />
-
-          {/* ── Dashboard per auto attiva ── */}
+          {/* ── Dashboard per auto attiva con visualizzatore 3D come elemento principale ── */}
           {activeVehicle && (
-            <VehicleDashboard vehicle={activeVehicle} />
+            <VehicleDashboard
+              vehicle={activeVehicle}
+              vehicles={vehicles}
+              activeIndex={activeIndex}
+              onSelect={setActiveIndex}
+              onEdit={handleOpenEdit}
+            />
           )}
         </div>
       </PageWrapper>
