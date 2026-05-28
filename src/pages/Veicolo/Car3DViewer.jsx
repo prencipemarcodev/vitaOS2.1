@@ -7,7 +7,7 @@
 import { Suspense, useRef, useEffect, useState, useCallback } from 'react'
 import { Box3, Vector3, PCFShadowMap } from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, ContactShadows } from '@react-three/drei'
+import { OrbitControls, ContactShadows, Html, useProgress } from '@react-three/drei'
 import ProceduralCarRotating from './ProceduralCar'
 
 // ── Lazy: GLB model (solo se il file esiste) ──────────────────────
@@ -149,6 +149,37 @@ function DebugHelpers3D({ controlsRef, position, target }) {
   )
 }
 
+// ── Loading Bar Overlay inside Canvas ─────────────────────────────
+function Loader() {
+  const { progress } = useProgress()
+  return (
+    <Html center>
+      <div 
+        className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-[var(--shadow-lg)] min-w-[200px]"
+        style={{
+          background: 'rgba(26, 26, 36, 0.85)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+        }}
+      >
+        <div className="w-full bg-[rgba(255,255,255,0.08)] h-1.5 rounded-full overflow-hidden relative mb-2.5">
+          <div 
+            className="bg-[var(--color-primary)] h-full transition-all duration-300 rounded-full" 
+            style={{ 
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, var(--color-primary) 0%, #4af 100%)'
+            }} 
+          />
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-widest text-[#9aacc8]">
+          Caricamento... {progress.toFixed(0)}%
+        </span>
+      </div>
+    </Html>
+  )
+}
+
 // ── Scene ─────────────────────────────────────────────────────────
 function CarScene({ type, color, autoRotate, useGLB, position, target, fov, applySignal }) {
   const controlsRef = useRef()
@@ -164,7 +195,7 @@ function CarScene({ type, color, autoRotate, useGLB, position, target, fov, appl
       <directionalLight position={[-4, 4, -4]} intensity={0.7} />
       <directionalLight position={[0, 2, -6]} intensity={0.4} />
 
-      <Suspense fallback={<ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />}>
+      <Suspense fallback={<Loader />}>
         {useGLB && useGLTF
           ? <GLBModel type={type} color={color} autoRotate={autoRotate} />
           : <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
@@ -342,10 +373,8 @@ function Car3DViewer({
   }, [])
 
   useEffect(() => {
-    setGlbExists(false)
-    fetch(`/models/cars/${vehicleType}.glb`, { method: 'HEAD' })
-      .then(r => { if (r.ok) setGlbExists(true) })
-      .catch(() => { })
+    const VEHICLE_GLB_TYPES = ['city', 'hatchback', 'sedan', 'wagon', 'suv', 'suv_large', 'electric']
+    setGlbExists(VEHICLE_GLB_TYPES.includes(vehicleType))
   }, [vehicleType])
 
   const useGLB = glbExists && gltfReady

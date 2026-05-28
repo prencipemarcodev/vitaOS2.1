@@ -191,11 +191,10 @@ function ResetSection() {
 
       // Rimuovi tutti i dati locali specifici di VitaOS dal localStorage
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('vitaos_')) {
+        if (key.startsWith('vitaos_') || key.startsWith('vitaos-')) {
           localStorage.removeItem(key)
         }
       })
-      localStorage.removeItem('vitaos-app')
 
       setOnboardingCompleted(false)
       setShowReset(false)

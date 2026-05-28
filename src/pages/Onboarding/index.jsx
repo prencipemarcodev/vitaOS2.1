@@ -10,9 +10,11 @@ import StepIdentita from './StepIdentita'
 import StepReddito from './StepReddito'
 import StepOrariLavoro from './StepOrariLavoro'
 import StepOrariStudioGym from './StepOrariStudioGym'
+import StepCalendario from './StepCalendario'
 import StepSaldoIniziale from './StepSaldoIniziale'
 import StepPrimoRisparmio from './StepPrimoRisparmio'
 import StepVeicolo from './StepVeicolo'
+import StepNotifiche from './StepNotifiche'
 import StepDone from './StepDone'
 
 const STEPS = [
@@ -20,9 +22,11 @@ const STEPS = [
   { id: 'reddito',     label: 'Reddito',          component: StepReddito },
   { id: 'lavoro',      label: 'Orari lavoro',     component: StepOrariLavoro },
   { id: 'studio_gym',  label: 'Studio & Palestra', component: StepOrariStudioGym },
+  { id: 'calendario',  label: 'Calendario & Ferie', component: StepCalendario },
   { id: 'saldo',       label: 'Saldo iniziale',   component: StepSaldoIniziale },
   { id: 'risparmio',   label: 'Primo risparmio',  component: StepPrimoRisparmio },
   { id: 'veicolo',     label: 'Il tuo Garage',    component: StepVeicolo },
+  { id: 'notifiche',   label: 'Promemoria',       component: StepNotifiche },
   { id: 'done',        label: 'Pronti!',          component: StepDone },
 ]
 
@@ -59,14 +63,19 @@ function Onboarding() {
     study_schedule: userConfig?.study_schedule || {},
     gym_schedule: userConfig?.gym_schedule || {},
 
-    // Step 4 — Saldo
+    // Step 4 — Calendario & Ferie
+    patron_saint_date: userConfig?.patron_saint_date || '',
+    annual_leave_days: userConfig?.annual_leave_days ?? 26,
+    recurring_events: [],
+
+    // Step 5 — Saldo
     initial_bank_balance: userConfig?.initial_bank_balance || '',
     initial_cash_balance: userConfig?.initial_cash_balance || '',
 
-    // Step 5 — Primo risparmio (opzionale)
+    // Step 6 — Primo risparmio (opzionale)
     first_plan: null,
 
-    // Step 6 — Veicolo (opzionale)
+    // Step 7 — Veicolo (opzionale)
     has_vehicle: null,      // null | true | false
     vehicle_type: null,     // city | hatchback | sedan | wagon | suv | suv_large | electric
     vehicle_color: '#9aacc8',
@@ -82,43 +91,62 @@ function Onboarding() {
   }, [])
 
   // ── Salva dati dello step corrente su Supabase ──
-  const saveStepData = useCallback(async (stepIndex) => {
+  const saveStepData = useCallback(async (stepId) => {
     if (!configId) return
 
-    const stepSaveMap = {
-      0: {
+    let data = null
+
+    if (stepId === 'identita') {
+      data = {
         first_name: formData.first_name,
         last_name: formData.last_name,
-      },
-      1: {
+      }
+    } else if (stepId === 'reddito') {
+      data = {
         monthly_net_income: parseFloat(formData.monthly_net_income) || 0,
         has_thirteenth: formData.has_thirteenth,
         has_fourteenth: formData.has_fourteenth,
         thirteenth_month: formData.thirteenth_month,
         fourteenth_month: formData.fourteenth_month,
         savings_target_pct: formData.savings_target_pct,
-      },
-      2: {
+      }
+    } else if (stepId === 'lavoro') {
+      data = {
         work_schedule: formData.work_schedule,
         daily_hours: calculateDailyHours(formData.work_schedule),
-      },
-      3: {
+      }
+    } else if (stepId === 'studio_gym') {
+      data = {
         study_schedule: formData.study_schedule,
         gym_schedule: formData.gym_schedule,
-      },
-      4: {
+      }
+    } else if (stepId === 'calendario') {
+      data = {
+        patron_saint_date: formData.patron_saint_date || null,
+        annual_leave_days: formData.annual_leave_days ?? 26,
+      }
+      
+      // Salva le ricorrenze annuali se presenti
+      if (formData.recurring_events && formData.recurring_events.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          // Cancella eventi ricorrenti esistenti per prevenire duplicati
+          await supabase.from('recurring_events').delete().eq('user_id', user.id)
+          
+          // Inserisci i nuovi eventi
+          const payload = formData.recurring_events.map(ev => ({
+            ...ev,
+            user_id: user.id
+          }))
+          await supabase.from('recurring_events').insert(payload)
+        }
+      }
+    } else if (stepId === 'saldo') {
+      data = {
         initial_bank_balance: parseFloat(formData.initial_bank_balance) || 0,
         initial_cash_balance: parseFloat(formData.initial_cash_balance) || 0,
-      },
-    }
-
-    const data = { ...stepSaveMap[stepIndex], onboarding_step: stepIndex + 1 }
-    if (data && configId) {
-      await supabase.from('user_config').update(data).eq('id', configId)
-    }
-
-    // Step 6 (Primo risparmio)
-    if (stepIndex === 5 && formData.first_plan) {
+      }
+    } else if (stepId === 'risparmio' && formData.first_plan) {
       const plan = formData.first_plan
       if (plan.name && plan.target_amount) {
         const { data: { user } } = await supabase.auth.getUser()
@@ -132,10 +160,7 @@ function Onboarding() {
           is_active: true,
         })
       }
-    }
-
-    // Step 7 (Veicolo)
-    if (stepIndex === 6 && formData.has_vehicle === true && formData.vehicle_type) {
+    } else if (stepId === 'veicolo' && formData.has_vehicle === true && formData.vehicle_type) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         // Controlla se esiste già un veicolo creato in questo onboarding
@@ -156,11 +181,21 @@ function Onboarding() {
         }
       }
     }
+
+    const currentStepIndex = STEPS.findIndex(s => s.id === stepId)
+    const updatePayload = { 
+      ...data, 
+      onboarding_step: currentStepIndex + 1 
+    }
+
+    if (configId) {
+      await supabase.from('user_config').update(updatePayload).eq('id', configId)
+    }
   }, [configId, formData])
 
   // ── Navigazione step ──
   const goNext = async () => {
-    await saveStepData(currentStep)
+    await saveStepData(STEPS[currentStep].id)
     if (currentStep < STEPS.length - 1) {
       setDirection(1)
       setCurrentStep((s) => s + 1)
@@ -191,9 +226,9 @@ function Onboarding() {
   }
 
   const handleFinish = async () => {
-    await saveStepData(currentStep)
+    await saveStepData(STEPS[currentStep].id)
     if (configId) {
-      await supabase.from('user_config').update({ onboarding_completed: true, onboarding_step: 7 }).eq('id', configId)
+      await supabase.from('user_config').update({ onboarding_completed: true, onboarding_step: STEPS.length - 1 }).eq('id', configId)
     }
     setShowOnboardingForce(false)
     setOnboardingCompleted(true)
