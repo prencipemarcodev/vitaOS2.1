@@ -294,9 +294,10 @@ function VehicleDashboard({ vehicle }) {
                   />
 
                   {!hasData && !loading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-base)]/50 backdrop-blur-[2px] z-10">
-                      <Car size={28} className="text-[var(--text-muted)] mb-2 opacity-30" />
-                      <p className="text-xs font-bold text-[var(--text-muted)] opacity-50 text-center px-8">Inserisci rifornimenti per sbloccare la telemetria</p>
+                    <div className="absolute inset-x-0 bottom-4 flex flex-col items-center justify-center z-10 pointer-events-none">
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] bg-[var(--bg-surface)]/85 border border-[var(--border-subtle)]/50 backdrop-blur-sm px-3.5 py-1.5 rounded-full shadow-[var(--shadow-sm)]">
+                        Registra spesa per sbloccare la telemetria
+                      </p>
                     </div>
                   )}
                 </div>

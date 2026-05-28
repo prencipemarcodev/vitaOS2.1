@@ -181,7 +181,7 @@ function Loader() {
 }
 
 // ── Scene ─────────────────────────────────────────────────────────
-function CarScene({ type, color, autoRotate, useGLB, position, target, fov, applySignal }) {
+function CarScene({ type, color, autoRotate, useGLB, glbExists, position, target, fov, applySignal }) {
   const controlsRef = useRef()
 
   return (
@@ -196,10 +196,13 @@ function CarScene({ type, color, autoRotate, useGLB, position, target, fov, appl
       <directionalLight position={[0, 2, -6]} intensity={0.4} />
 
       <Suspense fallback={<Loader />}>
-        {useGLB && useGLTF
-          ? <GLBModel type={type} color={color} autoRotate={autoRotate} />
-          : <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
-        }
+        {useGLB && useGLTF ? (
+          <GLBModel type={type} color={color} autoRotate={autoRotate} />
+        ) : glbExists ? (
+          <Loader />
+        ) : (
+          <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
+        )}
         <ContactShadows position={[0, -0.01, 0]} opacity={0.3} scale={9} blur={2.5} />
       </Suspense>
 
@@ -401,6 +404,7 @@ function Car3DViewer({
             color={color}
             autoRotate={autoRotate}
             useGLB={useGLB}
+            glbExists={glbExists}
             position={camPosition}
             target={camTarget}
             fov={camFov}
