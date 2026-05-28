@@ -110,7 +110,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
             <input
               type="text" placeholder='Es. "La mia Golf" o "Panda rossa"'
               value={name} onChange={e => setName(e.target.value)} required
-              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
             />
           </div>
 
@@ -121,7 +121,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
               <input
                 type="text" placeholder="Es. Volkswagen"
                 value={brand} onChange={e => setBrand(e.target.value)}
-                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               />
             </div>
             <div className="space-y-1">
@@ -129,7 +129,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
               <input
                 type="text" placeholder="Es. Golf 7"
                 value={model} onChange={e => setModel(e.target.value)}
-                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               />
             </div>
           </div>
@@ -141,14 +141,14 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
               <input
                 type="number" min="1900" max={new Date().getFullYear() + 1}
                 value={year} onChange={e => setYear(e.target.value)}
-                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Carburante</label>
               <select
                 value={fuelType} onChange={e => setFuelType(e.target.value)}
-                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               >
                 {FUEL_TYPES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </select>
@@ -191,7 +191,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
             <input
               type="text" placeholder="Es. AB 123 CD"
               value={plate} onChange={e => setPlate(e.target.value.toUpperCase())}
-              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] font-mono tracking-widest"
+              className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] font-mono tracking-widest"
             />
           </div>
 
