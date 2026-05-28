@@ -703,7 +703,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
 
       {/* Dynamic Bands View (Shared for all 3 modes!) */}
       <div className="space-y-2">
-        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin">
+        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin justify-center">
           <AnimatePresence initial={false}>
             {fasce.map((fascia, idx) => {
               const canDelete = fasce.length > 1
@@ -718,7 +718,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: -50, scale: 0.95 }}
                   transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                  className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative shrink-0 snap-start w-[185px] sm:w-[205px] flex flex-col justify-between"
+                  className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative shrink-0 snap-start w-[215px] sm:w-[230px] flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     {/* Top Header Row */}
@@ -763,8 +763,8 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                       </div>
                     </div>
 
-                    {/* Days Selector Row (Wrapping beautifully in 2 rows) */}
-                    <div className="flex flex-wrap gap-1 justify-start">
+                    {/* Days Selector Row (All 7 days on exactly one line!) */}
+                    <div className="flex gap-1 justify-between w-full">
                       {WEEKDAYS.map((day) => {
                         const isSelected = fascia.days.has(day.key)
                         
@@ -784,7 +784,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                             key={day.key}
                             onClick={() => handleDayClick(fascia.id, day.key)}
                             className={clsx(
-                              "h-6 px-1.5 min-w-[23px] rounded text-[9px] font-black transition-all flex items-center justify-center select-none border",
+                              "h-6 flex-1 rounded text-[9px] font-black transition-all flex items-center justify-center select-none border",
                               isSelected
                                 ? "text-white shadow-sm"
                                 : isLocked
