@@ -552,11 +552,11 @@ function VehicleDashboard({
                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Tipo</label>
                       <select value={type} onChange={e => setType(e.target.value)}
                         className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]">
-                        <option value="fuel">⛽ Rifornimento</option>
-                        <option value="maintenance">🔧 Manutenzione</option>
-                        <option value="insurance">🛡️ Assicurazione</option>
-                        <option value="tax">📄 Bollo Auto</option>
-                        <option value="other">🚗 Altro</option>
+                        <option value="fuel">Rifornimento</option>
+                        <option value="maintenance">Manutenzione</option>
+                        <option value="insurance">Assicurazione</option>
+                        <option value="tax">Bollo Auto</option>
+                        <option value="other">Altro</option>
                       </select>
                     </div>
                     <div className="space-y-1">
