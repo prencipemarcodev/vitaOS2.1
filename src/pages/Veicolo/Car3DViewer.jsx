@@ -212,12 +212,32 @@ function ModelReadySignal({ onReady }) {
 // ── DiagnosticHotspot: sistema-native HUD callout, nessuna emoji ───
 function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right', delay = 0, visible: parentVisible = false }) {
   const [visible, setVisible] = useState(false)
+  const rootRef = useRef()    // ref al DOM — aggiornato direttamente da useFrame (zero re-render)
 
   useEffect(() => {
     if (!parentVisible) { setVisible(false); return }
     const t = setTimeout(() => setVisible(true), delay)
     return () => clearTimeout(t)
   }, [parentVisible, delay])
+
+  // ── Depth/facing — ogni frame, manipolazione DOM diretta ──────────
+  useFrame(({ camera }) => {
+    if (!rootRef.current) return
+    const posVec = new Vector3(position[0], position[1], position[2])
+    // Vettore dalla hotspot verso la camera
+    const toCamera = new Vector3().subVectors(camera.position, posVec).normalize()
+    // Normale di superficie approssimata: per un'auto centrata all'origine
+    // il vettore posizione → fuori è una buona approssimazione della normale
+    const normal = posVec.clone().normalize()
+    const dot = normal.dot(toCamera)
+    // dot = 1: punto frontale → opacità piena
+    // dot = 0: punto laterale → transizione
+    // dot = -1: punto sul retro → quasi invisibile
+    const opacity = Math.max(0.06, Math.min(1, dot * 1.9 + 0.22))
+    rootRef.current.style.opacity = opacity.toString()
+    // Disabilita pointer-events quando in secondo piano
+    rootRef.current.style.pointerEvents = opacity < 0.4 ? 'none' : 'none' // sempre none, le card interne gestiscono
+  })
 
   const isLeft = side === 'left'
   const lineW = 52
@@ -238,11 +258,12 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
 
   return (
     <Html position={position} center zIndexRange={[10, 20]} style={{ pointerEvents: 'none' }}>
-      <div style={{
+      <div ref={rootRef} style={{
         position: 'relative', width: 0, height: 0,
         pointerEvents: 'none', userSelect: 'none',
         WebkitFontSmoothing: 'antialiased',
         MozOsxFontSmoothing: 'grayscale',
+        transition: 'opacity 0.18s ease',   // smooth fade in/out durante la rotazione
       }}>
 
         {/* ── Anchor dot on car ── */}
