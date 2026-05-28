@@ -131,28 +131,72 @@ function ResetSection() {
       }
 
       const tables = [
-        'saving_movements', 'saving_plans',
-        'transactions', 'work_sessions', 'absences', 'calendar_events',
-        'recurring_events', 'workout_sessions', 'weight_log', 'gym_schedules',
-        'notes', 'notifications_read', 'sleep_log', 'water_log'
+        'saving_movements', 'saving_plans', 'transactions', 'work_sessions', 
+        'absences', 'calendar_events', 'recurring_events', 'workout_sessions', 
+        'weight_log', 'gym_schedules', 'notes', 'notifications_read', 
+        'sleep_log', 'water_log', 'vehicles', 'vehicle_logs', 
+        'tasks', 'mood_logs', 'subscriptions', 'finance_categories'
       ]
       for (const t of tables) {
-        let query = supabase.from(t).delete()
-        if (t === 'notifications_read') {
-          query = query.neq('id', '00000000-0000-0000-0000-000000000000')
-        } else {
-          query = query.eq('user_id', user.id)
-        }
-        await query
+        await supabase.from(t).delete().eq('user_id', user.id)
       }
 
       if (userConfig?.id) {
         await supabase
           .from('user_config')
-          .update({ onboarding_completed: false })
+          .update({
+            first_name: '',
+            last_name: '',
+            theme: 'light',
+            work_schedule: {
+              "1": {"enabled": true,  "from": "08:30", "to": "17:30"},
+              "2": {"enabled": true,  "from": "08:30", "to": "17:30"},
+              "3": {"enabled": true,  "from": "08:30", "to": "17:30"},
+              "4": {"enabled": true,  "from": "08:30", "to": "17:30"},
+              "5": {"enabled": true,  "from": "08:30", "to": "17:30"},
+              "6": {"enabled": false},
+              "0": {"enabled": false}
+            },
+            daily_hours: 8.0,
+            study_schedule: {},
+            gym_schedule: {},
+            annual_leave_days: 26,
+            sick_days_used: 0,
+            leave_days_used: 0,
+            monthly_net_income: 0,
+            has_thirteenth: true,
+            has_fourteenth: false,
+            thirteenth_month: 12,
+            fourteenth_month: 6,
+            savings_target_pct: 20,
+            patron_saint_date: null,
+            weight_kg: null,
+            weight_updated_at: null,
+            run_monthly_goal_km: 50,
+            workout_weekly_goal: 4,
+            total_run_km_ever: 0,
+            gps_preset: 'balanced',
+            gps_jitter_meters: 6,
+            gps_keepalive: false,
+            gps_keepalive_interval_ms: 2000,
+            initial_bank_balance: 0,
+            initial_cash_balance: 0,
+            custom_accounts: null,
+            onboarding_completed: false,
+            onboarding_step: 0
+          })
           .eq('id', userConfig.id)
           .eq('user_id', user.id)
       }
+
+      // Rimuovi tutti i dati locali specifici di VitaOS dal localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('vitaos_')) {
+          localStorage.removeItem(key)
+        }
+      })
+      localStorage.removeItem('vitaos-app')
+
       setOnboardingCompleted(false)
       setShowReset(false)
       toast.success('Tutti i dati sono stati resettati.')
