@@ -373,9 +373,9 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
       {/* HUD Diagnostic Hotspots — appaiono solo dopo il caricamento */}
       {diagnosticData && (
         <>
-          {/* 1. Olio — cofano anteriore, lato sinistro */}
+          {/* 1. Olio — centro cofano anteriore */}
           <DiagnosticHotspot
-            position={[-0.52, 0.44, 0.72]}
+            position={[-0.15, 0.42, 0.62]}
             label="Stato Olio"
             abbr="OL"
             value={diagnosticData.oil?.label || 'Monitorato'}
@@ -384,9 +384,9 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
             delay={0}
             visible={modelReady}
           />
-          {/* 2. Rifornimento — fiancata posteriore destra, all'altezza sportellino */}
+          {/* 2. Rifornimento — vano carburante posteriore destra */}
           <DiagnosticHotspot
-            position={[0.78, 0.28, -0.60]}
+            position={[0.68, 0.20, -0.52]}
             label={type === 'electric' ? 'Ricarica' : 'Rifornimento'}
             abbr={type === 'electric' ? 'EL' : 'RF'}
             value={diagnosticData.fuel?.label || 'Nessun dato'}
@@ -395,9 +395,9 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
             delay={120}
             visible={modelReady}
           />
-          {/* 3. Tergicristalli — base parabrezza, lato destro */}
+          {/* 3. Tergicristalli — base parabrezza anteriore */}
           <DiagnosticHotspot
-            position={[0.28, 0.62, 0.52]}
+            position={[0.08, 0.50, 0.48]}
             label="Tergicristalli"
             abbr="TC"
             value={diagnosticData.wipers?.label || 'Livello OK'}
@@ -406,9 +406,9 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
             delay={240}
             visible={modelReady}
           />
-          {/* 4. Pneumatici — ruota anteriore destra, basso */}
+          {/* 4. Pneumatici — centro mozzo ruota anteriore destra */}
           <DiagnosticHotspot
-            position={[0.86, -0.28, 0.55]}
+            position={[0.78, -0.30, 0.55]}
             label="Pneumatici"
             abbr="PN"
             value={diagnosticData.tires?.label || 'Stato Buono'}
