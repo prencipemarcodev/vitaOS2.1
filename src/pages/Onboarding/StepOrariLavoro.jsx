@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Clock } from 'lucide-react'
+import { Clock, Info } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import TimeBlockSelector from '@/components/ui/TimeBlockSelector'
 
@@ -46,7 +46,7 @@ function StepOrariLavoro({ formData, updateFormData }) {
 
       {/* Info */}
       <div className="flex items-start gap-3 p-3 rounded-[var(--radius-md)] bg-[var(--bg-elevated)]">
-        <span className="text-lg">💡</span>
+        <Info size={16} className="text-[var(--text-muted)] shrink-0 mt-0.5" />
         <div className="text-xs text-[var(--text-secondary)] space-y-1">
           <p>Clicca su un giorno per attivarlo/disattivarlo.</p>
           <p>Puoi avere orari diversi per ogni giorno.</p>

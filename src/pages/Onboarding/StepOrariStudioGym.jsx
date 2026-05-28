@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Dumbbell, ChevronDown, ChevronUp } from 'lucide-react'
+import { BookOpen, Dumbbell, ChevronDown, ChevronUp, Info } from 'lucide-react'
 import Card from '@/components/ui/Card'
 import TimeBlockSelector from '@/components/ui/TimeBlockSelector'
 
@@ -112,7 +112,7 @@ function StepOrariStudioGym({ formData, updateFormData }) {
 
       {/* Info */}
       <div className="flex items-start gap-3 p-3 rounded-[var(--radius-md)] bg-[var(--bg-elevated)]">
-        <span className="text-lg">💡</span>
+        <Info size={16} className="text-[var(--text-muted)] shrink-0 mt-0.5" />
         <p className="text-xs text-[var(--text-secondary)]">
           Questi orari appariranno come blocchi nel calendario e genereranno notifiche di promemoria.
           Sono completamente opzionali.

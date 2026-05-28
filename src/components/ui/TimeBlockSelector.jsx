@@ -705,7 +705,10 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: -50, scale: 0.95 }}
                   transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                  className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative shrink-0 snap-start w-[215px] sm:w-[230px] flex flex-col justify-between"
+                  className={clsx(
+                    "p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative shrink-0 snap-start flex flex-col justify-between",
+                    mode === 'study' ? "w-[280px] sm:w-[310px]" : "w-[215px] sm:w-[230px]"
+                  )}
                 >
                   <div className="space-y-4">
                     {/* Top Header Row */}
@@ -779,12 +782,12 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
 
                     {/* Knobs Section */}
                     {mode === 'study' ? (
-                      <div className="space-y-3 w-full">
+                      <div className="flex gap-3 w-full items-start">
                         {/* Mattina Section */}
-                        <div className="space-y-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50 w-full flex flex-col items-center">
+                        <div className="flex-1 space-y-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50 flex flex-col items-center">
                           <div className="flex items-center justify-between w-full">
                             <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
-                              🌅 Mattina
+                              Mattina
                             </span>
                             <Toggle
                               size="sm"
@@ -822,10 +825,10 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                         </div>
 
                         {/* Sera Section */}
-                        <div className="space-y-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50 w-full flex flex-col items-center">
+                        <div className="flex-1 space-y-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50 flex flex-col items-center">
                           <div className="flex items-center justify-between w-full">
                             <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
-                              🌃 Sera
+                              Sera
                             </span>
                             <Toggle
                               size="sm"
