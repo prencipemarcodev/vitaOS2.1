@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Check, SkipForward } from 'lucide-react'
+import clsx from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
 import { useSupabaseSync } from '@/hooks/useSupabaseSync'
@@ -238,6 +239,8 @@ function Onboarding() {
 
   const StepComponent = STEPS[currentStep].component
   const isLast = currentStep === STEPS.length - 1
+  const stepId = STEPS[currentStep].id
+  const isWideStep = ['lavoro', 'studio_gym', 'calendario'].includes(stepId)
 
   const slideVariants = {
     enter: (dir) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -304,7 +307,7 @@ function Onboarding() {
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="absolute inset-0 overflow-y-auto px-6 py-4"
           >
-            <div className="max-w-xl mx-auto">
+            <div className={clsx("mx-auto transition-all duration-300", isWideStep ? "max-w-3xl" : "max-w-xl")}>
               <StepComponent
                 formData={formData}
                 updateFormData={updateFormData}
