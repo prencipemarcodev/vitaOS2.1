@@ -237,8 +237,13 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
   }
 
   return (
-    <Html position={position} center distanceFactor={4.5} zIndexRange={[10, 20]}>
-      <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none', userSelect: 'none' }}>
+    <Html position={position} center zIndexRange={[10, 20]} style={{ pointerEvents: 'none' }}>
+      <div style={{
+        position: 'relative', width: 0, height: 0,
+        pointerEvents: 'none', userSelect: 'none',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale',
+      }}>
 
         {/* ── Anchor dot on car ── */}
         <div style={{
@@ -275,7 +280,7 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
           />
         </svg>
 
-        {/* ── Callout Card (system-native style) ── */}
+        {/* ── Callout Card ── */}
         <div style={{
           ...anim,
           position: 'absolute', top: -19,
@@ -283,43 +288,43 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
           width: 140, pointerEvents: 'auto',
         }}>
           <div style={{
-            padding: '5px 8px 6px',
+            padding: '5px 8px 7px',
             borderRadius: 9,
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-subtle)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)',
           }}>
             {/* Header: abbr pill + label + status badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
               {/* Abbr pill — pure CSS, no emoji */}
               <div style={{
-                width: 18, height: 18, borderRadius: 5,
+                width: 20, height: 20, borderRadius: 5,
                 background: c.badge,
                 border: `1px solid ${c.dot}30`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
                 <span style={{
-                  fontSize: 7, fontWeight: 900, color: c.badgeText,
+                  fontSize: 8, fontWeight: 900, color: c.badgeText,
                   letterSpacing: '0.02em', lineHeight: 1,
                 }}>{abbr}</span>
               </div>
               <span style={{
-                fontSize: 8, fontWeight: 800, letterSpacing: '0.07em',
+                fontSize: 9, fontWeight: 800, letterSpacing: '0.07em',
                 textTransform: 'uppercase', color: 'var(--text-muted)',
                 flex: 1, lineHeight: 1,
               }}>{label}</span>
               <span style={{
-                fontSize: 7, fontWeight: 900, letterSpacing: '0.06em',
+                fontSize: 8, fontWeight: 900, letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                padding: '1px 4px', borderRadius: 4,
+                padding: '2px 5px', borderRadius: 4,
                 background: c.badge, color: c.badgeText,
               }}>{c.label}</span>
             </div>
             {/* Value */}
             <p style={{
-              margin: 0, paddingLeft: 23,
-              fontSize: 12, fontWeight: 800,
+              margin: 0, paddingLeft: 25,
+              fontSize: 13, fontWeight: 800,
               color: 'var(--text-primary)',
               lineHeight: 1.25, letterSpacing: '-0.015em',
             }}>{value}</p>
