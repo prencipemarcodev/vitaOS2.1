@@ -2,15 +2,15 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { X, Check } from 'lucide-react'
+import { X, Check, Car, Zap } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { VEHICLE_TYPES } from '../Onboarding/StepVeicolo'
 
 const FUEL_TYPES = [
-  { value: 'gasoline', label: '⛽ Benzina' },
-  { value: 'diesel',   label: '🛢️ Diesel' },
-  { value: 'electric', label: '⚡ Elettrico' },
-  { value: 'hybrid',   label: '🔋 Ibrido' },
+  { value: 'gasoline', label: 'Benzina' },
+  { value: 'diesel',   label: 'Diesel' },
+  { value: 'electric', label: 'Elettrico' },
+  { value: 'hybrid',   label: 'Ibrido' },
 ]
 
 const PALETTE = [
@@ -171,7 +171,9 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
                   }}
                   title={t.label}
                 >
-                  <span className="text-lg">{t.badge ?? '🚗'}</span>
+                  <div className="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center text-[var(--text-primary)] mb-0.5">
+                    {t.id === 'electric' ? <Zap size={15} className="text-amber-500" fill="currentColor" /> : <Car size={16} />}
+                  </div>
                   <span className="text-[8px] font-bold text-[var(--text-muted)] text-center leading-tight line-clamp-1">
                     {t.label.split(' ')[0]}
                   </span>

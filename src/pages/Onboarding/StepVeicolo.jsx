@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Car, Check } from 'lucide-react'
+import { Car, Check, User, Zap } from 'lucide-react'
 
 // ── Categorie auto ──────────────────────────────────────────────
 export const VEHICLE_TYPES = [
@@ -58,7 +58,6 @@ export const VEHICLE_TYPES = [
     modelFile: 'electric.glb',
     svgPath: 'M18 55 L18 44 Q21 38 32 35 L40 33 L172 33 L181 38 L187 46 L187 55 Z M57 33 L66 18 Q70 15 76 14 L132 14 Q138 15 142 18 L152 33 Z',
     aspect: 'balanced',
-    badge: '⚡',
   },
 ]
 
@@ -136,9 +135,9 @@ function StepVeicolo({ formData, updateFormData }) {
         className="flex gap-3"
       >
         {[
-          { value: true, label: 'Sì, ho un\'auto', emoji: '🚗' },
-          { value: false, label: 'No, per ora no', emoji: '🚶' },
-        ].map(({ value, label, emoji }) => (
+          { value: true, label: 'Sì, ho un\'auto', icon: Car },
+          { value: false, label: 'No, per ora no', icon: User },
+        ].map(({ value, label, icon: Icon }) => (
           <button
             key={String(value)}
             onClick={() => updateFormData({ has_vehicle: value, vehicle_type: value ? selected : null })}
@@ -148,7 +147,9 @@ function StepVeicolo({ formData, updateFormData }) {
               background: hasVehicle === value ? 'var(--color-primary-ghost)' : 'var(--bg-surface)',
             }}
           >
-            <span className="text-2xl">{emoji}</span>
+            <div className="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center text-[var(--text-primary)] mb-1">
+              <Icon size={20} />
+            </div>
             <span className="text-xs font-bold text-[var(--text-primary)]">{label}</span>
             {hasVehicle === value && (
               <span className="w-5 h-5 rounded-full flex items-center justify-center"
@@ -186,9 +187,11 @@ function StepVeicolo({ formData, updateFormData }) {
                     background: isSelected ? 'var(--color-primary-ghost)' : 'var(--bg-surface)',
                   }}
                 >
-                  {/* Badge (es. ⚡ per elettrica) */}
-                  {type.badge && (
-                    <span className="absolute top-2 right-2 text-xs">{type.badge}</span>
+                  {/* Badge (es. icona fulmine per elettrica) */}
+                  {type.id === 'electric' && (
+                    <span className="absolute top-2 right-2 text-amber-500">
+                      <Zap size={12} fill="currentColor" />
+                    </span>
                   )}
                   {/* Check */}
                   {isSelected && (
