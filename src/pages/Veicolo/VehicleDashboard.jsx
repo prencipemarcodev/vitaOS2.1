@@ -246,6 +246,52 @@ function VehicleDashboard({
     return Math.min(100, ((stats.maxOdo - oilLog.odometer) / 15000) * 100)
   }, [oilLog, stats.maxOdo])
 
+  const diagnosticData = useMemo(() => {
+    // 1. Cambio Olio: basato su oilPct e oilLog
+    const oilStatus = oilPct > 80 ? 'danger' : oilPct > 60 ? 'warning' : 'success'
+    const oilText = oilLog ? `${Math.round(100 - oilPct)}% ciclo` : 'Monitorato'
+
+    // 2. Rifornimento: cerchiamo l'ultimo log di tipo fuel
+    const lastFuel = logs.find(l => l.type === 'fuel')
+    const fuelText = lastFuel 
+      ? `${format(new Date(lastFuel.date), 'dd MMM', { locale: it })}` 
+      : 'Nessun dato'
+    const fuelStatus = lastFuel ? 'success' : 'warning'
+
+    // 3. Gomme: cerchiamo nei log di manutenzione se c'è "gomm", "pneumatic", "tires", "ruot", "tyre"
+    const tireLog = logs.find(l => 
+      l.type === 'maintenance' && 
+      (l.notes?.toLowerCase().includes('gomm') || 
+       l.notes?.toLowerCase().includes('pneumat') || 
+       l.notes?.toLowerCase().includes('ruot') ||
+       l.notes?.toLowerCase().includes('tyre') ||
+       l.notes?.toLowerCase().includes('tire'))
+    )
+    const tiresText = tireLog 
+      ? `Sost. ${format(new Date(tireLog.date), 'dd/MM/yy')}` 
+      : 'Stato Buono'
+    const tiresStatus = tireLog ? 'success' : 'success'
+
+    // 4. Tergicristalli: cerchiamo se c'è "tergi", "spazzol", "liquid", "acqua"
+    const wiperLog = logs.find(l => 
+      l.notes?.toLowerCase().includes('tergi') || 
+      l.notes?.toLowerCase().includes('spazzol') ||
+      l.notes?.toLowerCase().includes('liquid') || 
+      l.notes?.toLowerCase().includes('acqua')
+    )
+    const wipersText = wiperLog 
+      ? `Rabb. ${format(new Date(wiperLog.date), 'dd/MM/yy')}` 
+      : 'Livello OK'
+    const wipersStatus = wiperLog ? 'success' : 'success'
+
+    return {
+      oil: { status: oilStatus, label: oilText },
+      fuel: { status: fuelStatus, label: fuelText },
+      tires: { status: tiresStatus, label: tiresText },
+      wipers: { status: wipersStatus, label: wipersText }
+    }
+  }, [logs, oilPct, oilLog])
+
   const insuranceEntry = deadlines.find(d => d.type === 'insurance')
   const taxEntry = deadlines.find(d => d.type === 'tax')
   const hasData = logs.length > 0
@@ -316,6 +362,7 @@ function VehicleDashboard({
                 onColorChange={setVehicleColor}
                 label={vehicle.name}
                 className="mx-0 rounded-none"
+                diagnosticData={diagnosticData}
               />
 
               {/* Scheda Dettagli Veicolo Fluttuante (Top-Left) */}

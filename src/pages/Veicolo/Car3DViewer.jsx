@@ -200,8 +200,93 @@ function Loader() {
   )
 }
 
+// ── DiagnosticHotspot: 3D interactive callout pin ─────────────────
+function DiagnosticHotspot({ position, label, value, status, side = 'right', height = 50, width = 30 }) {
+  const statusColor = status === 'danger' ? 'rgb(239, 68, 68)' : status === 'warning' ? 'rgb(245, 158, 11)' : 'rgb(34, 197, 94)'
+  const statusBg = status === 'danger' ? 'rgba(239, 68, 68, 0.15)' : status === 'warning' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(34, 197, 94, 0.15)'
+
+  const isLeft = side === 'left'
+
+  return (
+    <Html position={position} center distanceFactor={4.5} portal={null}>
+      <div className="relative pointer-events-none select-none animate-fadeIn" style={{ width: 0, height: 0 }}>
+        {/* Pulsing 3D Dot */}
+        <div 
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full flex items-center justify-center"
+          style={{ 
+            background: 'rgba(255, 255, 255, 0.8)',
+            boxShadow: `0 0 10px ${statusColor}`,
+          }}
+        >
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: statusColor }} />
+          <div 
+            className="absolute inset-0 rounded-full animate-ping opacity-60" 
+            style={{ border: `1px solid ${statusColor}` }} 
+          />
+        </div>
+
+        {/* HUD Lines: vertical elbow line */}
+        <svg 
+          className="absolute overflow-visible pointer-events-none"
+          style={{
+            bottom: 0,
+            left: 0,
+            transform: isLeft ? 'scaleX(-1)' : 'none',
+          }}
+          width={width + 10}
+          height={height + 10}
+        >
+          <path
+            d={`M 0 0 L 0 ${-height} L ${width} ${-height}`}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.35)"
+            strokeWidth="1.5"
+            strokeDasharray="2, 2"
+          />
+          <circle cx={width} cy={-height} r="2" fill="white" />
+        </svg>
+
+        {/* Callout Card */}
+        <div 
+          className="absolute pointer-events-auto"
+          style={{
+            bottom: height - 14,
+            left: isLeft ? -width - 150 : width + 6,
+            width: 144,
+          }}
+        >
+          <div 
+            className="p-2 rounded-xl flex flex-col gap-0.5 border text-left"
+            style={{
+              background: 'rgba(15, 15, 25, 0.85)',
+              borderColor: 'rgba(255, 255, 255, 0.12)',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <p className="text-[8px] font-black uppercase tracking-wider text-[#9aacc8] leading-none mb-0.5">
+              {label}
+            </p>
+            <div className="flex items-center justify-between gap-1.5">
+              <p className="text-[10px] font-extrabold text-white truncate max-w-[95px] leading-tight">
+                {value}
+              </p>
+              <span 
+                className="text-[7px] font-black uppercase tracking-wide px-1 py-0.5 rounded shrink-0"
+                style={{ background: statusBg, color: statusColor }}
+              >
+                {status === 'danger' ? 'ALERT' : status === 'warning' ? 'CHECK' : 'OK'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Html>
+  )
+}
+
 // ── Scene ─────────────────────────────────────────────────────────
-function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, position, target, fov, applySignal }) {
+function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, position, target, fov, applySignal, diagnosticData }) {
   const controlsRef = useRef()
 
   return (
@@ -225,6 +310,52 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
         )}
         <ContactShadows position={[0, -0.01, 0]} opacity={0.3} scale={9} blur={2.5} />
       </Suspense>
+
+      {/* HUD Diagnostic Hotspots */}
+      {diagnosticData && (
+        <>
+          {/* 1. Cambio Olio (Vano Motore) - Front-Center-Left */}
+          <DiagnosticHotspot
+            position={[-0.2, 0.35, 0.85]}
+            label="Stato Olio"
+            value={diagnosticData.oil?.label || 'Monitorato'}
+            status={diagnosticData.oil?.status || 'success'}
+            side="left"
+            height={60}
+            width={40}
+          />
+          {/* 2. Rifornimento / Ricarica (Sportello posteriore) - Rear-Right */}
+          <DiagnosticHotspot
+            position={[0.75, 0.25, -0.95]}
+            label={type === 'electric' ? 'Stato Ricarica' : 'Rifornimento'}
+            value={diagnosticData.fuel?.label || 'Monitorato'}
+            status={diagnosticData.fuel?.status || 'success'}
+            side="right"
+            height={45}
+            width={35}
+          />
+          {/* 3. Acqua Tergicristalli (Parabrezza) - Mid-Left */}
+          <DiagnosticHotspot
+            position={[-0.4, 0.55, 0.3]}
+            label="Tergicristalli"
+            value={diagnosticData.wipers?.label || 'Livello OK'}
+            status={diagnosticData.wipers?.status || 'success'}
+            side="left"
+            height={50}
+            width={30}
+          />
+          {/* 4. Cambio Gomme (Ruota Anteriore Destra) - Front-Right */}
+          <DiagnosticHotspot
+            position={[0.85, -0.22, 0.65]}
+            label="Pneumatici"
+            value={diagnosticData.tires?.label || 'Monitorato'}
+            status={diagnosticData.tires?.status || 'success'}
+            side="right"
+            height={55}
+            width={45}
+          />
+        </>
+      )}
 
       <OrbitControls
         ref={controlsRef}
@@ -355,6 +486,7 @@ function Car3DViewer({
   onColorChange,
   height,
   className = '',
+  diagnosticData,
 }) {
   // Modello sempre statico — l'utente interagisce manualmente
   const autoRotate = false
@@ -431,6 +563,7 @@ function Car3DViewer({
             target={camTarget}
             fov={camFov}
             applySignal={applySignal}
+            diagnosticData={diagnosticData}
           />
         </Canvas>
       )}
