@@ -181,17 +181,54 @@ function VehicleDashboard({
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      const odometerVal = odometer ? parseInt(odometer) : null
+      const notesVal    = notes.trim() || null
+
+      // ── Determina se il log è una manutenzione specifica ──
+      const notesLow  = notesVal?.toLowerCase() ?? ''
+      const isOilLog  = type === 'maintenance' && (notesLow.includes('olio') || notesLow.includes('oil') || notesLow.includes('cambio olio'))
+      const isTireLog = type === 'maintenance' && (notesLow.includes('gomm') || notesLow.includes('pneumat') || notesLow.includes('ruot') || notesLow.includes('tyre') || notesLow.includes('tire'))
+      const isWiperLog= type === 'maintenance' && (notesLow.includes('tergi') || notesLow.includes('spazzol') || notesLow.includes('wiper'))
+
       const { error } = await supabase.from('vehicle_logs').insert({
-        user_id: user.id,
-        vehicle_id: vehicle.id,
+        user_id:        user.id,
+        vehicle_id:     vehicle.id,
         date, type,
-        amount: parseFloat(amount),
-        odometer: odometer ? parseInt(odometer) : null,
-        liters: type === 'fuel' && liters ? parseFloat(liters) : null,
-        price_per_liter: type === 'fuel' && pricePerLiter ? parseFloat(pricePerLiter) : null,
-        notes: notes.trim() || null,
+        amount:         parseFloat(amount),
+        odometer:       odometerVal,
+        liters:         type === 'fuel' && liters ? parseFloat(liters) : null,
+        price_per_liter:type === 'fuel' && pricePerLiter ? parseFloat(pricePerLiter) : null,
+        notes:          notesVal,
       })
       if (error) throw error
+
+      // ── Auto-aggiorna i campi di manutenzione sul veicolo ──────────
+      const vehicleUpdates = {}
+
+      // Aggiorna current_odometer se il nuovo valore è maggiore
+      if (odometerVal && odometerVal > (vehicle.current_odometer ?? 0)) {
+        vehicleUpdates.current_odometer = odometerVal
+      }
+      // Aggiorna last_oil_change se è un cambio olio
+      if (isOilLog) {
+        vehicleUpdates.last_oil_change_date = date
+        if (odometerVal) vehicleUpdates.last_oil_change_km = odometerVal
+      }
+      // Aggiorna last_tire_change se sono le gomme
+      if (isTireLog) {
+        vehicleUpdates.last_tire_change_date = date
+        if (odometerVal) vehicleUpdates.last_tire_change_km = odometerVal
+      }
+      // Aggiorna last_wiper_change se sono le spazzole
+      if (isWiperLog) {
+        vehicleUpdates.last_wiper_change_date = date
+      }
+
+      if (Object.keys(vehicleUpdates).length > 0) {
+        await supabase.from('vehicles').update(vehicleUpdates).eq('id', vehicle.id).eq('user_id', user.id)
+      }
+
       toast.success('Spesa registrata')
       setShowAddForm(false)
       setAmount(''); setOdometer(''); setLiters(''); setPricePerLiter(''); setNotes('')
@@ -218,7 +255,7 @@ function VehicleDashboard({
   const stats = useMemo(() => {
     const fuelLogs = logs.filter(l => l.type === 'fuel' && l.odometer && l.liters).sort((a, b) => a.odometer - b.odometer)
     const odometers = logs.map(l => l.odometer).filter(o => o && o > 0)
-    const maxOdo = odometers.length > 0 ? Math.max(...odometers) : 0
+    const maxOdo = odometers.length > 0 ? Math.max(...odometers) : (vehicle?.current_odometer ?? 0)
     const minOdo = odometers.length > 0 ? Math.min(...odometers) : 0
     const totalKms = maxOdo - minOdo
     let avgConsumption = 0, costPerKm = 0
@@ -230,94 +267,164 @@ function VehicleDashboard({
     const totalSpent = logs.reduce((s, l) => s + parseFloat(l.amount || 0), 0)
     if (totalKms > 0) costPerKm = totalSpent / totalKms
     return { maxOdo, avgConsumption, costPerKm, totalSpent }
-  }, [logs])
+  }, [logs, vehicle?.current_odometer])
 
   const deadlines = useMemo(() =>
     logs.filter(l => (l.type === 'insurance' || l.type === 'tax') && new Date(l.date) >= new Date())
       .sort((a, b) => new Date(a.date) - new Date(b.date))
   , [logs])
 
-  const oilLog = useMemo(() =>
-    logs.filter(l => l.type === 'maintenance' && l.odometer).sort((a, b) => b.odometer - a.odometer)[0]
-  , [logs])
-
-  const oilPct = useMemo(() => {
-    if (!oilLog || !stats.maxOdo) return 0
-    return Math.min(100, ((stats.maxOdo - oilLog.odometer) / 15000) * 100)
-  }, [oilLog, stats.maxOdo])
-
+  // ── Diagnostica smart — algoritmo preciso ────────────────────────
   const diagnosticData = useMemo(() => {
-    // ── 1. Cambio Olio: basato su km percorsi dall'ultimo cambio ──────
-    const oilStatus = oilPct > 80 ? 'danger' : oilPct > 55 ? 'warning' : 'success'
-    const oilText = oilLog
-      ? oilPct > 80 ? 'Cambio urgente' : oilPct > 55 ? `${Math.round(15000 * (1 - oilPct / 100))} km al cambio` : `${Math.round(15000 * (1 - oilPct / 100))} km OK`
-      : 'Monitorato'
+    // Odometro attuale: prendi il massimo tra i log e il campo vehicle
+    const odometers = logs.map(l => l.odometer).filter(o => o && o > 0)
+    const currentOdo = Math.max(
+      vehicle?.current_odometer ?? 0,
+      odometers.length > 0 ? Math.max(...odometers) : 0
+    )
 
-    // ── 2. Rifornimento: stima basata sull'intervallo medio tra pieni ──
+    // ── 1. OLIO MOTORE ────────────────────────────────────────────
+    const oilIntervalKm = vehicle?.oil_interval_km ?? 15000
+    // last_oil_change_km da vehicle oppure dai log di manutenzione (parola chiave olio)
+    const oilLogsKm = logs
+      .filter(l => l.type === 'maintenance' && l.odometer &&
+        (l.notes?.toLowerCase().includes('olio') || l.notes?.toLowerCase().includes('oil') || l.notes?.toLowerCase().includes('cambio olio')))
+      .map(l => l.odometer)
+    const lastOilKm = Math.max(
+      vehicle?.last_oil_change_km ?? 0,
+      oilLogsKm.length > 0 ? Math.max(...oilLogsKm) : 0
+    )
+    let oilStatus = 'success', oilText = 'Monitorato'
+    if (lastOilKm > 0 && currentOdo > 0) {
+      const kmSinceOil = currentOdo - lastOilKm
+      const kmLeftOil  = oilIntervalKm - kmSinceOil
+      const pctOil     = Math.min(100, (kmSinceOil / oilIntervalKm) * 100)
+      oilStatus = pctOil >= 90 ? 'danger' : pctOil >= 65 ? 'warning' : 'success'
+      oilText   = pctOil >= 100
+        ? `Superato di ${Math.abs(kmLeftOil).toLocaleString('it')} km`
+        : pctOil >= 90
+        ? 'Cambio urgente'
+        : `~${Math.round(kmLeftOil / 100) * 100} km rimasti`
+    } else if (vehicle?.last_oil_change_date) {
+      // fallback: solo data
+      const monthsSince = (Date.now() - new Date(vehicle.last_oil_change_date)) / (1000 * 60 * 60 * 24 * 30)
+      oilStatus = monthsSince > 18 ? 'danger' : monthsSince > 12 ? 'warning' : 'success'
+      oilText   = `${Math.round(monthsSince)} mesi fa`
+    }
+
+    // ── 2. RIFORNIMENTO — algoritmo L/100km preciso ───────────────
     const fuelLogs = logs
       .filter(l => l.type === 'fuel')
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => {
+        // Ordina per odometro se disponibile, altrimenti per data
+        if (a.odometer && b.odometer) return b.odometer - a.odometer
+        return new Date(b.date) - new Date(a.date)
+      })
 
-    let fuelText = 'Nessun dato'
-    let fuelStatus = 'warning'
+    let fuelStatus = 'warning', fuelText = 'Nessun dato'
 
-    if (fuelLogs.length === 0) {
-      fuelText = 'Nessun dato'
-      fuelStatus = 'warning'
+    const fuelWithOdo = fuelLogs.filter(l => l.odometer && l.liters)
+    if (fuelWithOdo.length >= 2) {
+      // Algoritmo preciso: calcola consumo ciclo per ciclo
+      const sorted = [...fuelWithOdo].sort((a, b) => b.odometer - a.odometer)
+      const cycles = []
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const kmFatti = sorted[i].odometer - sorted[i + 1].odometer
+        const litri   = parseFloat(sorted[i + 1].liters) // litri inseriti al rifornimento precedente
+        if (kmFatti > 0 && litri > 0) {
+          cycles.push({ consumption: (litri / kmFatti) * 100, km: kmFatti })
+        }
+      }
+      if (cycles.length > 0) {
+        // Media pesata per km percorsi
+        const totalKmCycles = cycles.reduce((s, c) => s + c.km, 0)
+        const avgL100 = cycles.reduce((s, c) => s + c.consumption * (c.km / totalKmCycles), 0)
+        // Stima litri rimasti nel serbatoio
+        const tankCap = vehicle?.tank_capacity_l ?? 50
+        const lastFuel = sorted[0]
+        const kmDallUltimoRiforn = currentOdo > 0 ? currentOdo - lastFuel.odometer : 0
+        const litriUsati   = (kmDallUltimoRiforn * avgL100) / 100
+        const litriRimasti = Math.max(0, tankCap - litriUsati)
+        const kmAutonomia  = Math.round((litriRimasti / avgL100) * 100)
+        const pctTank = (litriRimasti / tankCap) * 100
+        fuelStatus = pctTank < 15 ? 'danger' : pctTank < 35 ? 'warning' : 'success'
+        fuelText   = pctTank < 5
+          ? 'Rifornire ora'
+          : `~${kmAutonomia} km rimasti`
+      }
+    } else if (fuelLogs.length === 0) {
+      fuelText = 'Nessun dato'; fuelStatus = 'warning'
     } else if (fuelLogs.length === 1) {
-      // Solo un rifornimento: mostriamo la data
       const daysSince = Math.floor((Date.now() - new Date(fuelLogs[0].date)) / 86400000)
       fuelText = `${daysSince}gg fa`
       fuelStatus = daysSince > 20 ? 'warning' : 'success'
     } else {
-      // Calcoliamo l'intervallo medio tra rifornimenti successivi
+      // Fallback intervallo temporale medio
       const intervals = []
       for (let i = 0; i < fuelLogs.length - 1; i++) {
         const d = (new Date(fuelLogs[i].date) - new Date(fuelLogs[i + 1].date)) / 86400000
         if (d > 0) intervals.push(d)
       }
-      const avgInterval = intervals.reduce((s, v) => s + v, 0) / intervals.length
+      const avgInterval   = intervals.reduce((s, v) => s + v, 0) / intervals.length
       const daysSinceLast = (Date.now() - new Date(fuelLogs[0].date)) / 86400000
-      const pctUsed = Math.min(100, (daysSinceLast / avgInterval) * 100)
-      const daysLeft = Math.max(0, Math.round(avgInterval - daysSinceLast))
-
-      if (pctUsed >= 90) {
-        fuelStatus = 'danger'
-        fuelText = daysLeft <= 0 ? 'Rifornire ora' : `${daysLeft}gg al pieno`
-      } else if (pctUsed >= 65) {
-        fuelStatus = 'warning'
-        fuelText = `~${daysLeft}gg al pieno`
-      } else {
-        fuelStatus = 'success'
-        fuelText = `~${daysLeft}gg al pieno`
-      }
+      const pctUsed       = Math.min(100, (daysSinceLast / avgInterval) * 100)
+      const daysLeft      = Math.max(0, Math.round(avgInterval - daysSinceLast))
+      fuelStatus = pctUsed >= 90 ? 'danger' : pctUsed >= 65 ? 'warning' : 'success'
+      fuelText   = pctUsed >= 90 && daysLeft <= 0 ? 'Rifornire ora' : `~${daysLeft}gg al pieno`
     }
 
-    // ── 3. Gomme: ultimo log di manutenzione che menziona gomme ──────
-    const tireLog = logs.find(l =>
-      l.type === 'maintenance' &&
-      (l.notes?.toLowerCase().includes('gomm') ||
-       l.notes?.toLowerCase().includes('pneumat') ||
-       l.notes?.toLowerCase().includes('ruot') ||
-       l.notes?.toLowerCase().includes('tyre') ||
-       l.notes?.toLowerCase().includes('tire'))
+    // ── 3. PNEUMATICI ────────────────────────────────────────────
+    const tireIntervalKm = vehicle?.tire_interval_km ?? 40000
+    const tireLogsKm = logs
+      .filter(l => l.type === 'maintenance' && l.odometer &&
+        (l.notes?.toLowerCase().includes('gomm') || l.notes?.toLowerCase().includes('pneumat') ||
+         l.notes?.toLowerCase().includes('ruot') || l.notes?.toLowerCase().includes('tyre') || l.notes?.toLowerCase().includes('tire')))
+      .map(l => l.odometer)
+    const lastTireKm = Math.max(
+      vehicle?.last_tire_change_km ?? 0,
+      tireLogsKm.length > 0 ? Math.max(...tireLogsKm) : 0
     )
-    const tiresText = tireLog
-      ? `Sost. ${format(new Date(tireLog.date), 'dd/MM/yy')}`
-      : 'Stato Buono'
-    const tiresStatus = tireLog ? 'success' : 'success'
+    const lastTireDate = vehicle?.last_tire_change_date
+    let tiresStatus = 'success', tiresText = 'Stato Buono'
+    if (lastTireKm > 0 && currentOdo > 0) {
+      const kmSinceTire = currentOdo - lastTireKm
+      const kmLeftTire  = tireIntervalKm - kmSinceTire
+      const pctTire     = Math.min(100, (kmSinceTire / tireIntervalKm) * 100)
+      // Considera anche l'età in anni (gomme degradano indipendentemente dai km)
+      const yearsSinceTire = lastTireDate ? (Date.now() - new Date(lastTireDate)) / (365.25 * 86400000) : 0
+      const ageTire = Math.max(pctTire, yearsSinceTire > 6 ? 100 : yearsSinceTire > 4 ? 80 : 0)
+      tiresStatus = ageTire >= 90 ? 'danger' : ageTire >= 65 ? 'warning' : 'success'
+      tiresText   = ageTire >= 100
+        ? 'Sostituzione urgente'
+        : `~${Math.round(kmLeftTire / 100) * 100} km rimasti`
+    } else if (lastTireDate) {
+      const yearsSince = (Date.now() - new Date(lastTireDate)) / (365.25 * 86400000)
+      tiresStatus = yearsSince > 6 ? 'danger' : yearsSince > 4 ? 'warning' : 'success'
+      tiresText   = `Sost. ${format(new Date(lastTireDate), 'MM/yyyy')}`
+    }
 
-    // ── 4. Tergicristalli: ultimo log che menziona liquido/spazzole ──
-    const wiperLog = logs.find(l =>
-      l.notes?.toLowerCase().includes('tergi') ||
-      l.notes?.toLowerCase().includes('spazzol') ||
-      l.notes?.toLowerCase().includes('liquid') ||
-      l.notes?.toLowerCase().includes('acqua')
-    )
-    const wipersText = wiperLog
-      ? `Riabb. ${format(new Date(wiperLog.date), 'dd/MM/yy')}`
-      : 'Livello OK'
-    const wipersStatus = wiperLog ? 'success' : 'success'
+    // ── 4. TERGICRISTALLI ────────────────────────────────────────
+    const wiperIntervalMonths = vehicle?.wiper_interval_months ?? 18
+    // Prendi la data più recente tra vehicle e log
+    const wiperLogDates = logs
+      .filter(l => l.notes?.toLowerCase().includes('tergi') || l.notes?.toLowerCase().includes('spazzol') || l.notes?.toLowerCase().includes('wiper'))
+      .map(l => new Date(l.date).getTime())
+    const vehicleWiperTs = vehicle?.last_wiper_change_date ? new Date(vehicle.last_wiper_change_date).getTime() : 0
+    const lastWiperTs = Math.max(vehicleWiperTs, wiperLogDates.length > 0 ? Math.max(...wiperLogDates) : 0)
+    let wipersStatus = 'success', wipersText = 'Nessun dato'
+    if (lastWiperTs > 0) {
+      const monthsSinceWiper = (Date.now() - lastWiperTs) / (1000 * 60 * 60 * 24 * 30.44)
+      const pctWiper         = Math.min(100, (monthsSinceWiper / wiperIntervalMonths) * 100)
+      wipersStatus = pctWiper >= 90 ? 'danger' : pctWiper >= 65 ? 'warning' : 'success'
+      const mesiRimasti = Math.max(0, Math.round(wiperIntervalMonths - monthsSinceWiper))
+      wipersText = pctWiper >= 100
+        ? 'Sostituzione urgente'
+        : pctWiper >= 90
+        ? `Cambia presto (${mesiRimasti}m)`
+        : `${Math.round(monthsSinceWiper)} mesi fa`
+    } else {
+      wipersText = 'Non registrato'
+    }
 
     return {
       oil:    { status: oilStatus,    label: oilText },
@@ -325,7 +432,7 @@ function VehicleDashboard({
       tires:  { status: tiresStatus,  label: tiresText },
       wipers: { status: wipersStatus, label: wipersText },
     }
-  }, [logs, oilPct, oilLog])
+  }, [logs, vehicle])
 
   const insuranceEntry = deadlines.find(d => d.type === 'insurance')
   const taxEntry = deadlines.find(d => d.type === 'tax')
@@ -515,16 +622,17 @@ function VehicleDashboard({
         </motion.div>
 
         {/* ── Health bars ── */}
-        {hasData && (oilLog || insuranceEntry || taxEntry) && (
+        {hasData && (
           <Card padding="md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">Salute Veicolo</h3>
-              {oilPct > 0 && (
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-lg"
-                  style={{ background: oilPct > 80 ? 'rgba(224,82,82,0.1)' : oilPct > 60 ? 'rgba(212,160,23,0.1)' : 'rgba(61,153,112,0.1)', color: oilPct > 80 ? 'var(--color-danger)' : oilPct > 60 ? 'var(--color-warning)' : 'var(--color-success)' }}>
-                  {oilPct > 80 ? '⚠️ Attenzione' : oilPct > 60 ? '○ Buono' : '✓ Ottimo'}
-                </span>
-              )}
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-lg"
+                style={{
+                  background: diagnosticData.oil?.status === 'danger' ? 'rgba(224,82,82,0.1)' : diagnosticData.oil?.status === 'warning' ? 'rgba(212,160,23,0.1)' : 'rgba(61,153,112,0.1)',
+                  color: diagnosticData.oil?.status === 'danger' ? 'var(--color-danger)' : diagnosticData.oil?.status === 'warning' ? 'var(--color-warning)' : 'var(--color-success)'
+                }}>
+                {diagnosticData.oil?.status === 'danger' ? 'Attenzione' : diagnosticData.oil?.status === 'warning' ? 'Verifica' : 'Ottimo'}
+              </span>
             </div>
             <div className="space-y-3.5">
               {oilLog && <MaintenanceBar label="Cambio Olio" icon={Wrench} pct={oilPct}
@@ -571,6 +679,32 @@ function VehicleDashboard({
                         <option value="other">Altro</option>
                       </select>
                     </div>
+                    {/* Shortcut manutenzione rapida */}
+                    {type === 'maintenance' && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-1.5">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Accesso rapido</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            { label: 'Cambio Olio', note: 'Cambio olio motore' },
+                            { label: 'Cambio Gomme', note: 'Sostituzione pneumatici' },
+                            { label: 'Spazzole Tergi', note: 'Sostituzione spazzole tergicristalli' },
+                            { label: 'Filtro Aria', note: 'Sostituzione filtro aria' },
+                            { label: 'Pastiglie Freno', note: 'Sostituzione pastiglie freno' },
+                          ].map(({ label, note }) => (
+                            <button key={label} type="button"
+                              onClick={() => setNotes(note)}
+                              className="text-[9px] font-bold px-2 py-1 rounded-lg border transition-colors"
+                              style={{
+                                borderColor: notes === note ? 'var(--color-primary)' : 'var(--border-subtle)',
+                                background: notes === note ? 'var(--color-primary-ghost)' : 'var(--bg-base)',
+                                color: notes === note ? 'var(--color-primary)' : 'var(--text-muted)',
+                              }}
+                            >{label}</button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data</label>
                       <input type="date" value={date} onChange={e => setDate(e.target.value)} required
