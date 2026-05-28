@@ -26,6 +26,48 @@ const PALETTE = [
   '#4a90d9', // sky blue
 ]
 
+// ── Mappa intelligente marca/modello → tipo 3D per auto-guesser ──
+const CITY_CAR_MODELS = [
+  'peugeot 107','peugeot 108','peugeot 206','smart','fiat 500','fiat panda','fiat seicento','fiat punto',
+  'toyota aygo','toyota yaris','volkswagen up','seat mii','seat ibiza','renault twingo','renault clio',
+  'opel agila','opel corsa','mini','alfa romeo mito','kia picanto','kia rio','hyundai i10','hyundai i20',
+  'dacia sandero','suzuki swift','mazda 2','ford fiesta','ford ka',
+]
+const HATCHBACK_MODELS = [
+  'golf','polo','astra','civic','focus','megane','307','308','208','308','c3','c4','punto','grande punto',
+  'bravo','giulietta','tipo','clio','zafira','1 serie','2 serie','a1','a3','leon','207','peugeot 207',
+]
+const SUV_MODELS = [
+  'suv','crossover','qashqai','tucson','sportage','tiguan','kuga','hr-v','cr-v','rav4','x-trail',
+  'koleos','duster','karoq','ateca','arona','t-roc','t-cross','captur','mokka','ecosport','puma',
+  'grandland','3008','5008','2008','compass','renegade','500x','stelvio','tonale','levante',
+]
+const SUV_LARGE_MODELS = [
+  'defender','discovery','range rover','x5','x6','x7','q7','q8','glc','gle','gls','ml','gl',
+  'kodiaq','sorento','santa fe','terracan','forester','outback','4runner','land cruiser','pajero',
+  'grand cherokee','wrangler','durango','navigator','expedition','tahoe','yukon','escalade',
+]
+const WAGON_MODELS = [
+  'avant','touring','break','sw','kombi','estate','allroad','4 serie gran coupe','passat variant',
+  'giulia sw','stinger','modelo s',
+]
+const ELECTRIC_MODELS = [
+  'tesla','model 3','model s','model x','model y','id.3','id.4','id.5','ioniq','ioniq 5','ioniq 6',
+  'kona electric','e-tron','taycan','i3','zoe','leaf','mustang mach-e','i4','ix','bz4x',
+]
+
+function guessVehicleTypeFromText(brand, model, name) {
+  const text = `${brand ?? ''} ${model ?? ''} ${name ?? ''}`.toLowerCase()
+  if (!text.trim()) return null
+  if (ELECTRIC_MODELS.some(m => text.includes(m))) return 'electric'
+  if (SUV_LARGE_MODELS.some(m => text.includes(m))) return 'suv_large'
+  if (SUV_MODELS.some(m => text.includes(m))) return 'suv'
+  if (WAGON_MODELS.some(m => text.includes(m))) return 'wagon'
+  if (HATCHBACK_MODELS.some(m => text.includes(m))) return 'hatchback'
+  if (CITY_CAR_MODELS.some(m => text.includes(m))) return 'city'
+  return 'sedan'
+}
+
 function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
   const isEdit = Boolean(vehicle)
   const [name, setName]             = useState(vehicle?.name         ?? '')
@@ -37,6 +79,25 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
   const [vehicleType, setVehicleType] = useState(vehicle?.vehicle_type ?? 'sedan')
   const [plate, setPlate]           = useState(vehicle?.plate        ?? '')
   const [saving, setSaving]         = useState(false)
+
+  // Handlers intelligenti per auto-guesser live
+  const handleNameChange = (val) => {
+    setName(val)
+    const guessed = guessVehicleTypeFromText(brand, model, val)
+    if (guessed) setVehicleType(guessed)
+  }
+
+  const handleBrandChange = (val) => {
+    setBrand(val)
+    const guessed = guessVehicleTypeFromText(val, model, name)
+    if (guessed) setVehicleType(guessed)
+  }
+
+  const handleModelChange = (val) => {
+    setModel(val)
+    const guessed = guessVehicleTypeFromText(brand, val, name)
+    if (guessed) setVehicleType(guessed)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -109,7 +170,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
             <label className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Nome / Soprannome *</label>
             <input
               type="text" placeholder='Es. "La mia Golf" o "Panda rossa"'
-              value={name} onChange={e => setName(e.target.value)} required
+              value={name} onChange={e => handleNameChange(e.target.value)} required
               className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
             />
           </div>
@@ -120,7 +181,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
               <label className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Marca</label>
               <input
                 type="text" placeholder="Es. Volkswagen"
-                value={brand} onChange={e => setBrand(e.target.value)}
+                value={brand} onChange={e => handleBrandChange(e.target.value)}
                 className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               />
             </div>
@@ -128,7 +189,7 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
               <label className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Modello</label>
               <input
                 type="text" placeholder="Es. Golf 7"
-                value={model} onChange={e => setModel(e.target.value)}
+                value={model} onChange={e => handleModelChange(e.target.value)}
                 className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 h-[42px] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
               />
             </div>

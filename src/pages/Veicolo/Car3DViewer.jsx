@@ -30,23 +30,53 @@ function GLBModel({ type, color, autoRotate }) {
 
   useEffect(() => {
     if (!scene) return
+
+    // Se abbiamo già calcolato la trasformazione per questo modello (che viene caricato ed è cacheato),
+    // usiamo quella calcolata all'inizio, evitando di ricalcolare il Box3 sul modello già scalato/posizionato
+    // dal parent group.
+    if (scene.userData.carTransform) {
+      setTransform(scene.userData.carTransform)
+      scene.traverse(child => {
+        if (!child.isMesh) return
+        const n = child.name.toLowerCase()
+        if (['body', 'paint', 'car', 'hull', 'chassis', 'exterior'].some(k => n.includes(k))) {
+          if (!child.userData.materialCloned) {
+            child.material = child.material.clone()
+            child.userData.materialCloned = true
+          }
+          child.material.color.set(color)
+          child.castShadow = true
+          child.receiveShadow = true
+        }
+      })
+      return
+    }
+
+    // Reset local transforms prima del calcolo iniziale del box
     scene.scale.setScalar(1)
     scene.position.set(0, 0, 0)
     scene.rotation.set(0, 0, 0)
+    scene.updateMatrixWorld(true)
+
     const box = new Box3().setFromObject(scene)
     const size = box.getSize(new Vector3())
     const center = box.getCenter(new Vector3())
     const maxDim = Math.max(size.x, size.y, size.z)
     const targetScale = 2.2 / maxDim
-    setTransform({
+    const computedTransform = {
       scale: targetScale,
       position: [-center.x * targetScale, -box.min.y * targetScale - 0.45, -center.z * targetScale]
-    })
+    }
+
+    scene.userData.carTransform = computedTransform
+    setTransform(computedTransform)
+
     scene.traverse(child => {
       if (!child.isMesh) return
       const n = child.name.toLowerCase()
       if (['body', 'paint', 'car', 'hull', 'chassis', 'exterior'].some(k => n.includes(k))) {
         child.material = child.material.clone()
+        child.userData.materialCloned = true
         child.material.color.set(color)
         child.castShadow = true
         child.receiveShadow = true
@@ -70,7 +100,7 @@ function GLBModel({ type, color, autoRotate }) {
 // Valori trovati con il pannello debug e poi dimezzati in distanza (zoom ×2)
 // POS originale [6.20, 4.20, 6.20] → /2 = [3.10, 2.10, 3.10]
 const DEFAULT_CAM_TARGET = [0, 0, 0]   // centro visivo (quasi all'origine)
-const DEFAULT_CAM_POSITION = [3.10, 2.10, 3.10] // metà distanza = zoom doppio
+const DEFAULT_CAM_POSITION = [2.30, 1.60, 2.30] // telecamera più vicina (zoom del 25% maggiore)
 const DEFAULT_FOV = 42
 
 // ── DEBUG MODE ─────────────────────────────────────────────────
@@ -79,40 +109,30 @@ const DEBUG = false
 // ── CameraRig: setup imperativo camera + controls ─────────────────
 // Usa RAF per garantire che OrbitControls sia montato prima di agire.
 // Accetta position e target come prop (aggiornabili dal pannello debug).
-function CameraRig({ controlsRef, position, target, fov, applySignal }) {
+function CameraRig({ controlsRef, vehicleId, position, target, fov, applySignal }) {
   const { camera } = useThree()
-  const initialized = useRef(false)
 
-  // Init al mount
-  useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
-    const raf = requestAnimationFrame(() => {
-      camera.position.set(...position)
-      camera.fov = fov
-      camera.lookAt(...target)
-      camera.updateProjectionMatrix()
-      if (controlsRef.current) {
-        controlsRef.current.target.set(...target)
-        controlsRef.current.update()
-      }
-    })
-    return () => cancelAnimationFrame(raf)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Aggiornamento live (debug panel)
-  useEffect(() => {
-    if (!initialized.current) return
+  const resetCamera = useCallback(() => {
     camera.position.set(...position)
     camera.fov = fov
+    camera.lookAt(...target)
     camera.updateProjectionMatrix()
     if (controlsRef.current) {
       controlsRef.current.target.set(...target)
       controlsRef.current.update()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applySignal])
+  }, [camera, controlsRef, position, target, fov])
+
+  // Reset al cambio di auto (ascolta vehicleId anziché type per resettare anche se la categoria 3D è identica)
+  useEffect(() => {
+    const raf = requestAnimationFrame(resetCamera)
+    return () => cancelAnimationFrame(raf)
+  }, [vehicleId, resetCamera])
+
+  // Aggiornamento live (debug panel)
+  useEffect(() => {
+    resetCamera()
+  }, [applySignal, resetCamera])
 
   return null
 }
@@ -181,12 +201,12 @@ function Loader() {
 }
 
 // ── Scene ─────────────────────────────────────────────────────────
-function CarScene({ type, color, autoRotate, useGLB, glbExists, position, target, fov, applySignal }) {
+function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, position, target, fov, applySignal }) {
   const controlsRef = useRef()
 
   return (
     <>
-      <CameraRig controlsRef={controlsRef} position={position} target={target} fov={fov} applySignal={applySignal} />
+      <CameraRig controlsRef={controlsRef} vehicleId={vehicleId} position={position} target={target} fov={fov} applySignal={applySignal} />
       {DEBUG && <DebugHelpers3D controlsRef={controlsRef} position={position} target={target} />}
 
       <ambientLight intensity={1.1} />
@@ -197,11 +217,11 @@ function CarScene({ type, color, autoRotate, useGLB, glbExists, position, target
 
       <Suspense fallback={<Loader />}>
         {useGLB && useGLTF ? (
-          <GLBModel type={type} color={color} autoRotate={autoRotate} />
+          <GLBModel key={`${vehicleId}_${type}`} type={type} color={color} autoRotate={autoRotate} />
         ) : glbExists ? (
           <Loader />
         ) : (
-          <ProceduralCarRotating type={type} color={color} autoRotate={autoRotate} />
+          <ProceduralCarRotating key={`${vehicleId}_${type}`} type={type} color={color} autoRotate={autoRotate} />
         )}
         <ContactShadows position={[0, -0.01, 0]} opacity={0.3} scale={9} blur={2.5} />
       </Suspense>
@@ -329,6 +349,7 @@ function DebugCameraPanel({ pos, setPos, tgt, setTgt, fov, setFov, onApply }) {
 
 // ── Componente principale ─────────────────────────────────────────
 function Car3DViewer({
+  vehicleId,
   vehicleType = 'sedan',
   color: externalColor,
   onColorChange,
@@ -400,6 +421,7 @@ function Car3DViewer({
           style={{ width: '100%', height: '100%' }}
         >
           <CarScene
+            vehicleId={vehicleId}
             type={vehicleType}
             color={color}
             autoRotate={autoRotate}

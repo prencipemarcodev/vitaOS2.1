@@ -310,6 +310,7 @@ function VehicleDashboard({
             >
               {/* 3D Viewer */}
               <Car3DViewer
+                vehicleId={vehicle.id}
                 vehicleType={vehicleType3D}
                 color={vehicleColor}
                 onColorChange={setVehicleColor}
