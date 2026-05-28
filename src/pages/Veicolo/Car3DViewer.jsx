@@ -4,7 +4,7 @@
  *
  * DEBUG=true → pannello floating con slider live per cam position/target/fov
  */
-import { Suspense, useRef, useEffect, useState, useCallback } from 'react'
+import { Suspense, useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { Box3, Vector3, PCFShadowMap } from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, ContactShadows, Html, useProgress } from '@react-three/drei'
@@ -200,136 +200,129 @@ function Loader() {
   )
 }
 
-// ── DiagnosticHotspot: premium 3D HUD callout ─────────────────────
-function DiagnosticHotspot({ position, label, icon, value, status, side = 'right' }) {
+// ── ModelReadySignal: fires callback on mount (inside Suspense = after model loaded) ──
+function ModelReadySignal({ onReady }) {
+  useEffect(() => {
+    const t = setTimeout(onReady, 120)
+    return () => clearTimeout(t)
+  }, [onReady])
+  return null
+}
+
+// ── DiagnosticHotspot: sistema-native HUD callout, nessuna emoji ───
+function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right', delay = 0, visible: parentVisible = false }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (!parentVisible) { setVisible(false); return }
+    const t = setTimeout(() => setVisible(true), delay)
+    return () => clearTimeout(t)
+  }, [parentVisible, delay])
+
   const isLeft = side === 'left'
+  const lineW = 52
 
-  const colors = {
-    danger:  { dot: '#ef4444', line: 'rgba(239,68,68,0.7)',   card: 'rgba(239,68,68,0.12)',   badge: '#ef4444', text: '#fca5a5' },
-    warning: { dot: '#f59e0b', line: 'rgba(245,158,11,0.7)',  card: 'rgba(245,158,11,0.10)',  badge: '#f59e0b', text: '#fcd34d' },
-    success: { dot: '#22c55e', line: 'rgba(34,197,94,0.7)',   card: 'rgba(34,197,94,0.10)',   badge: '#22c55e', text: '#86efac' },
+  const c = {
+    danger:  { dot: '#ef4444', badge: 'rgba(239,68,68,0.12)', badgeText: '#ef4444', label: 'ALERT' },
+    warning: { dot: '#f59e0b', badge: 'rgba(245,158,11,0.10)', badgeText: '#ca8a04', label: 'VERIFICA' },
+    success: { dot: '#16a34a', badge: 'rgba(22,163,74,0.10)',  badgeText: '#16a34a', label: 'OK' },
+  }[status] ?? { dot: '#16a34a', badge: 'rgba(22,163,74,0.10)', badgeText: '#16a34a', label: 'OK' }
+
+  const anim = {
+    transition: 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+    opacity: visible ? 1 : 0,
+    transform: visible
+      ? 'translateY(0) scale(1)'
+      : `translateY(${isLeft ? '-6px' : '6px'}) scale(0.88)`,
   }
-  const c = colors[status] ?? colors.success
-  const badgeLabel = status === 'danger' ? 'ALERT' : status === 'warning' ? 'VERIFICA' : 'OK'
-
-  // Horizontal line length
-  const lineW = 56
 
   return (
     <Html position={position} center distanceFactor={4.5} zIndexRange={[10, 20]}>
       <div style={{ position: 'relative', width: 0, height: 0, pointerEvents: 'none', userSelect: 'none' }}>
 
-        {/* ── Center dot (origin point on car) ── */}
+        {/* ── Anchor dot on car ── */}
         <div style={{
-          position: 'absolute',
-          left: -6, top: -6,
-          width: 12, height: 12,
-          borderRadius: '50%',
+          ...anim,
+          position: 'absolute', left: -5, top: -5,
+          width: 10, height: 10, borderRadius: '50%',
           background: c.dot,
-          boxShadow: `0 0 0 3px ${c.dot}33, 0 0 12px ${c.dot}88`,
-          zIndex: 20,
+          boxShadow: `0 0 0 3px ${c.dot}28, 0 0 10px ${c.dot}55`,
         }}>
-          {/* outer pulse ring */}
           <div style={{
-            position: 'absolute', inset: -4,
-            borderRadius: '50%',
-            border: `1.5px solid ${c.dot}`,
-            opacity: 0.6,
-            animation: 'ping 1.8s cubic-bezier(0,0,0.2,1) infinite',
+            position: 'absolute', inset: -4, borderRadius: '50%',
+            border: `1px solid ${c.dot}`,
+            opacity: visible ? 0.55 : 0,
+            animation: visible ? 'ping 2s cubic-bezier(0,0,0.2,1) infinite' : 'none',
           }} />
         </div>
 
         {/* ── Horizontal leader line ── */}
-        <svg
-          style={{
-            position: 'absolute',
-            top: -1,
-            left: isLeft ? -(lineW) : 0,
-            overflow: 'visible',
-            pointerEvents: 'none',
-          }}
-          width={lineW}
-          height={2}
-        >
+        <svg style={{
+          ...anim,
+          position: 'absolute', top: -1,
+          left: isLeft ? -lineW : 0,
+          overflow: 'visible', pointerEvents: 'none',
+        }} width={lineW} height={2}>
           <line
-            x1={isLeft ? lineW : 0}
-            y1={1}
-            x2={isLeft ? 0 : lineW}
-            y2={1}
-            stroke={c.line}
-            strokeWidth={1.5}
+            x1={isLeft ? lineW : 0} y1={1}
+            x2={isLeft ? 0 : lineW} y2={1}
+            stroke={c.dot} strokeWidth={1.2} strokeOpacity={0.5}
           />
-          {/* endpoint small square */}
           <rect
-            x={isLeft ? lineW - 3 : -3}
-            y={-2}
-            width={5}
-            height={5}
-            fill={c.dot}
-            rx={1}
+            x={isLeft ? -3 : lineW - 2} y={-2}
+            width={5} height={5}
+            fill={c.dot} rx={1} opacity={0.8}
           />
         </svg>
 
-        {/* ── Callout card ── */}
+        {/* ── Callout Card (system-native style) ── */}
         <div style={{
-          position: 'absolute',
-          top: -22,
-          left: isLeft ? -(lineW + 152) : lineW + 8,
-          width: 148,
-          pointerEvents: 'auto',
+          ...anim,
+          position: 'absolute', top: -19,
+          left: isLeft ? -(lineW + 144) : lineW + 6,
+          width: 140, pointerEvents: 'auto',
         }}>
           <div style={{
-            padding: '7px 9px 8px',
-            borderRadius: 10,
-            background: 'rgba(8, 8, 18, 0.88)',
-            border: `1px solid ${c.dot}30`,
-            backdropFilter: 'blur(12px)',
-            boxShadow: `0 2px 16px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.04)`,
+            padding: '5px 8px 6px',
+            borderRadius: 9,
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)',
           }}>
-            {/* Header row: icon + label + badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-              {/* Colored icon dot */}
+            {/* Header: abbr pill + label + status badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+              {/* Abbr pill — pure CSS, no emoji */}
               <div style={{
                 width: 18, height: 18, borderRadius: 5,
-                background: c.card,
-                border: `1px solid ${c.dot}44`,
+                background: c.badge,
+                border: `1px solid ${c.dot}30`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                <span style={{ fontSize: 9, color: c.text }}>{icon}</span>
+                <span style={{
+                  fontSize: 7, fontWeight: 900, color: c.badgeText,
+                  letterSpacing: '0.02em', lineHeight: 1,
+                }}>{abbr}</span>
               </div>
               <span style={{
-                fontSize: 8, fontWeight: 900, letterSpacing: '0.08em',
-                textTransform: 'uppercase', color: 'rgba(154,172,200,0.85)',
+                fontSize: 8, fontWeight: 800, letterSpacing: '0.07em',
+                textTransform: 'uppercase', color: 'var(--text-muted)',
                 flex: 1, lineHeight: 1,
-              }}>
-                {label}
-              </span>
+              }}>{label}</span>
               <span style={{
                 fontSize: 7, fontWeight: 900, letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                padding: '1px 4px',
-                borderRadius: 4,
-                background: c.card,
-                color: c.badge,
-                border: `1px solid ${c.dot}40`,
-                flexShrink: 0,
-              }}>
-                {badgeLabel}
-              </span>
+                padding: '1px 4px', borderRadius: 4,
+                background: c.badge, color: c.badgeText,
+              }}>{c.label}</span>
             </div>
             {/* Value */}
             <p style={{
-              margin: 0,
-              fontSize: 12,
-              fontWeight: 800,
-              color: '#fff',
-              lineHeight: 1.2,
-              paddingLeft: 23,
-              letterSpacing: '-0.01em',
-            }}>
-              {value}
-            </p>
+              margin: 0, paddingLeft: 23,
+              fontSize: 12, fontWeight: 800,
+              color: 'var(--text-primary)',
+              lineHeight: 1.25, letterSpacing: '-0.015em',
+            }}>{value}</p>
           </div>
         </div>
 
@@ -341,6 +334,12 @@ function DiagnosticHotspot({ position, label, icon, value, status, side = 'right
 // ── Scene ─────────────────────────────────────────────────────────
 function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, position, target, fov, applySignal, diagnosticData }) {
   const controlsRef = useRef()
+  const [modelReady, setModelReady] = useState(false)
+
+  // Reset quando cambia veicolo (così gli hotspot rifanno l'animazione di entrata)
+  useEffect(() => { setModelReady(false) }, [vehicleId])
+
+  const onModelReady = useCallback(() => setModelReady(true), [])
 
   return (
     <>
@@ -362,46 +361,56 @@ function CarScene({ vehicleId, type, color, autoRotate, useGLB, glbExists, posit
           <ProceduralCarRotating key={`${vehicleId}_${type}`} type={type} color={color} autoRotate={autoRotate} />
         )}
         <ContactShadows position={[0, -0.01, 0]} opacity={0.3} scale={9} blur={2.5} />
+        {/* Segnale di avvenuto caricamento modello */}
+        <ModelReadySignal onReady={onModelReady} />
       </Suspense>
 
-      {/* HUD Diagnostic Hotspots */}
+      {/* HUD Diagnostic Hotspots — appaiono solo dopo il caricamento */}
       {diagnosticData && (
         <>
-          {/* 1. Stato Olio — Vano motore anteriore, sopra al cofano, a sinistra */}
+          {/* 1. Olio — cofano anteriore, lato sinistro */}
           <DiagnosticHotspot
-            position={[-0.55, 0.62, 0.6]}
+            position={[-0.52, 0.44, 0.72]}
             label="Stato Olio"
-            icon="◎"
+            abbr="OL"
             value={diagnosticData.oil?.label || 'Monitorato'}
             status={diagnosticData.oil?.status || 'success'}
             side="left"
+            delay={0}
+            visible={modelReady}
           />
-          {/* 2. Rifornimento — Fiancata posteriore destra */}
+          {/* 2. Rifornimento — fiancata posteriore destra, all'altezza sportellino */}
           <DiagnosticHotspot
-            position={[0.82, 0.18, -0.55]}
+            position={[0.78, 0.28, -0.60]}
             label={type === 'electric' ? 'Ricarica' : 'Rifornimento'}
-            icon={type === 'electric' ? '⚡' : '⛽'}
+            abbr={type === 'electric' ? 'EL' : 'RF'}
             value={diagnosticData.fuel?.label || 'Nessun dato'}
             status={diagnosticData.fuel?.status || 'warning'}
             side="right"
+            delay={120}
+            visible={modelReady}
           />
-          {/* 3. Tergicristalli — parabrezza/tetto anteriore */}
+          {/* 3. Tergicristalli — base parabrezza, lato destro */}
           <DiagnosticHotspot
-            position={[0.0, 0.82, 0.28]}
+            position={[0.28, 0.62, 0.52]}
             label="Tergicristalli"
-            icon="◈"
+            abbr="TC"
             value={diagnosticData.wipers?.label || 'Livello OK'}
             status={diagnosticData.wipers?.status || 'success'}
             side="right"
+            delay={240}
+            visible={modelReady}
           />
-          {/* 4. Pneumatici — ruota anteriore destra, in basso */}
+          {/* 4. Pneumatici — ruota anteriore destra, basso */}
           <DiagnosticHotspot
-            position={[0.9, -0.3, 0.5]}
+            position={[0.86, -0.28, 0.55]}
             label="Pneumatici"
-            icon="◉"
+            abbr="PN"
             value={diagnosticData.tires?.label || 'Stato Buono'}
             status={diagnosticData.tires?.status || 'success'}
             side="right"
+            delay={360}
+            visible={modelReady}
           />
         </>
       )}

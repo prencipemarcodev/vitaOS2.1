@@ -247,48 +247,83 @@ function VehicleDashboard({
   }, [oilLog, stats.maxOdo])
 
   const diagnosticData = useMemo(() => {
-    // 1. Cambio Olio: basato su oilPct e oilLog
-    const oilStatus = oilPct > 80 ? 'danger' : oilPct > 60 ? 'warning' : 'success'
-    const oilText = oilLog ? `${Math.round(100 - oilPct)}% ciclo` : 'Monitorato'
+    // ── 1. Cambio Olio: basato su km percorsi dall'ultimo cambio ──────
+    const oilStatus = oilPct > 80 ? 'danger' : oilPct > 55 ? 'warning' : 'success'
+    const oilText = oilLog
+      ? oilPct > 80 ? 'Cambio urgente' : oilPct > 55 ? `${Math.round(15000 * (1 - oilPct / 100))} km al cambio` : `${Math.round(15000 * (1 - oilPct / 100))} km OK`
+      : 'Monitorato'
 
-    // 2. Rifornimento: cerchiamo l'ultimo log di tipo fuel
-    const lastFuel = logs.find(l => l.type === 'fuel')
-    const fuelText = lastFuel 
-      ? `${format(new Date(lastFuel.date), 'dd MMM', { locale: it })}` 
-      : 'Nessun dato'
-    const fuelStatus = lastFuel ? 'success' : 'warning'
+    // ── 2. Rifornimento: stima basata sull'intervallo medio tra pieni ──
+    const fuelLogs = logs
+      .filter(l => l.type === 'fuel')
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
 
-    // 3. Gomme: cerchiamo nei log di manutenzione se c'è "gomm", "pneumatic", "tires", "ruot", "tyre"
-    const tireLog = logs.find(l => 
-      l.type === 'maintenance' && 
-      (l.notes?.toLowerCase().includes('gomm') || 
-       l.notes?.toLowerCase().includes('pneumat') || 
+    let fuelText = 'Nessun dato'
+    let fuelStatus = 'warning'
+
+    if (fuelLogs.length === 0) {
+      fuelText = 'Nessun dato'
+      fuelStatus = 'warning'
+    } else if (fuelLogs.length === 1) {
+      // Solo un rifornimento: mostriamo la data
+      const daysSince = Math.floor((Date.now() - new Date(fuelLogs[0].date)) / 86400000)
+      fuelText = `${daysSince}gg fa`
+      fuelStatus = daysSince > 20 ? 'warning' : 'success'
+    } else {
+      // Calcoliamo l'intervallo medio tra rifornimenti successivi
+      const intervals = []
+      for (let i = 0; i < fuelLogs.length - 1; i++) {
+        const d = (new Date(fuelLogs[i].date) - new Date(fuelLogs[i + 1].date)) / 86400000
+        if (d > 0) intervals.push(d)
+      }
+      const avgInterval = intervals.reduce((s, v) => s + v, 0) / intervals.length
+      const daysSinceLast = (Date.now() - new Date(fuelLogs[0].date)) / 86400000
+      const pctUsed = Math.min(100, (daysSinceLast / avgInterval) * 100)
+      const daysLeft = Math.max(0, Math.round(avgInterval - daysSinceLast))
+
+      if (pctUsed >= 90) {
+        fuelStatus = 'danger'
+        fuelText = daysLeft <= 0 ? 'Rifornire ora' : `${daysLeft}gg al pieno`
+      } else if (pctUsed >= 65) {
+        fuelStatus = 'warning'
+        fuelText = `~${daysLeft}gg al pieno`
+      } else {
+        fuelStatus = 'success'
+        fuelText = `~${daysLeft}gg al pieno`
+      }
+    }
+
+    // ── 3. Gomme: ultimo log di manutenzione che menziona gomme ──────
+    const tireLog = logs.find(l =>
+      l.type === 'maintenance' &&
+      (l.notes?.toLowerCase().includes('gomm') ||
+       l.notes?.toLowerCase().includes('pneumat') ||
        l.notes?.toLowerCase().includes('ruot') ||
        l.notes?.toLowerCase().includes('tyre') ||
        l.notes?.toLowerCase().includes('tire'))
     )
-    const tiresText = tireLog 
-      ? `Sost. ${format(new Date(tireLog.date), 'dd/MM/yy')}` 
+    const tiresText = tireLog
+      ? `Sost. ${format(new Date(tireLog.date), 'dd/MM/yy')}`
       : 'Stato Buono'
     const tiresStatus = tireLog ? 'success' : 'success'
 
-    // 4. Tergicristalli: cerchiamo se c'è "tergi", "spazzol", "liquid", "acqua"
-    const wiperLog = logs.find(l => 
-      l.notes?.toLowerCase().includes('tergi') || 
+    // ── 4. Tergicristalli: ultimo log che menziona liquido/spazzole ──
+    const wiperLog = logs.find(l =>
+      l.notes?.toLowerCase().includes('tergi') ||
       l.notes?.toLowerCase().includes('spazzol') ||
-      l.notes?.toLowerCase().includes('liquid') || 
+      l.notes?.toLowerCase().includes('liquid') ||
       l.notes?.toLowerCase().includes('acqua')
     )
-    const wipersText = wiperLog 
-      ? `Rabb. ${format(new Date(wiperLog.date), 'dd/MM/yy')}` 
+    const wipersText = wiperLog
+      ? `Riabb. ${format(new Date(wiperLog.date), 'dd/MM/yy')}`
       : 'Livello OK'
     const wipersStatus = wiperLog ? 'success' : 'success'
 
     return {
-      oil: { status: oilStatus, label: oilText },
-      fuel: { status: fuelStatus, label: fuelText },
-      tires: { status: tiresStatus, label: tiresText },
-      wipers: { status: wipersStatus, label: wipersText }
+      oil:    { status: oilStatus,    label: oilText },
+      fuel:   { status: fuelStatus,   label: fuelText },
+      tires:  { status: tiresStatus,  label: tiresText },
+      wipers: { status: wipersStatus, label: wipersText },
     }
   }, [logs, oilPct, oilLog])
 
