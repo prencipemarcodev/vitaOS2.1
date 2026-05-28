@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { supabase } from '@/lib/supabase'
 import Card from '@/components/ui/Card'
@@ -38,10 +38,40 @@ function Toggle({ checked, onChange, label, description, icon: Icon, iconColor =
 function WorkSection() {
   const { userConfig, setUserConfig } = useAppStore()
 
-  const save = useCallback(async (field, value) => {
+  const pendingUpdatesRef = useRef({})
+  const timeoutRef = useRef(null)
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  const save = useCallback((field, value) => {
     if (!userConfig?.id) return
+
+    // 1. Instantly update Zustand store so local UI is 100% snappy and updates at 60fps!
     setUserConfig({ ...userConfig, [field]: value })
-    await supabase.from('user_config').update({ [field]: value }).eq('id', userConfig.id)
+
+    // 2. Queue the updates to debounce network request
+    pendingUpdatesRef.current[field] = value
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    timeoutRef.current = setTimeout(async () => {
+      const updates = { ...pendingUpdatesRef.current }
+      pendingUpdatesRef.current = {} // clear queue
+      try {
+        await supabase.from('user_config').update(updates).eq('id', userConfig.id)
+      } catch (err) {
+        console.error('Failed to update config in Supabase:', err)
+      }
+    }, 600) // 600ms debounce
   }, [userConfig, setUserConfig])
 
   return (

@@ -1,17 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { Plus, Trash2 } from 'lucide-react'
-import Toggle from './Toggle'
-
-const DAYS = [
-  { key: '1', label: 'Lun', short: 'L' },
-  { key: '2', label: 'Mar', short: 'M' },
-  { key: '3', label: 'Mer', short: 'M' },
-  { key: '4', label: 'Gio', short: 'G' },
-  { key: '5', label: 'Ven', short: 'V' },
-  { key: '6', label: 'Sab', short: 'S' },
-  { key: '0', label: 'Dom', short: 'D' },
-]
+import { motion, AnimatePresence } from 'framer-motion'
 
 const WEEKDAYS = [
   { key: 0, label: 'Lun', short: 'L' },
@@ -23,7 +13,9 @@ const WEEKDAYS = [
   { key: 6, label: 'Dom', short: 'D' },
 ]
 
-// Bidirectional translation functions
+// ─── 1. Bidirectional translation functions ───
+
+// Work Translation Helpers
 function parseWorkSchedule(value) {
   if (!value || Object.keys(value).length === 0) {
     return [
@@ -62,7 +54,7 @@ function parseWorkSchedule(value) {
     return [
       {
         id: 1,
-        days: new Set([0, 1, 2, 3, 4]), // Mon-Fri
+        days: new Set([0, 1, 2, 3, 4]),
         entry: 8 * 60 + 30,
         exit: 17 * 60 + 30,
       }
@@ -77,7 +69,7 @@ function parseWorkSchedule(value) {
   }))
 }
 
-function convertFasceToSchedule(fasceList) {
+function convertWorkFasceToSchedule(fasceList) {
   const workSchedule = {}
   const dayKeys = ['1', '2', '3', '4', '5', '6', '0']
   dayKeys.forEach(k => {
@@ -103,19 +95,255 @@ function convertFasceToSchedule(fasceList) {
   return workSchedule
 }
 
+// Gym Translation Helpers
+function parseGymSchedule(value) {
+  if (!value || Object.keys(value).length === 0) {
+    return [
+      {
+        id: 1,
+        days: new Set([0, 2, 4]), // Mon, Wed, Fri as default gym days
+        entry: 18 * 60, // 18:00
+        exit: 19 * 60 + 30, // 19:30
+        buffer: 15 // 15 mins default
+      }
+    ]
+  }
+
+  const groups = {}
+  let hasEnabled = false
+
+  for (let d = 0; d < 7; d++) {
+    const dbKey = d === 6 ? '0' : String(d + 1)
+    const dayData = value[dbKey]
+    if (dayData?.enabled && dayData.from && dayData.to) {
+      hasEnabled = true
+      const bufferVal = dayData.buffer_min || 0
+      const key = `${dayData.from}-${dayData.to}-${bufferVal}`
+      if (!groups[key]) {
+        const [fh, fm] = dayData.from.split(':').map(Number)
+        const [th, tm] = dayData.to.split(':').map(Number)
+        groups[key] = {
+          entry: fh * 60 + fm,
+          exit: th * 60 + tm,
+          buffer: bufferVal,
+          days: []
+        }
+      }
+      groups[key].days.push(d)
+    }
+  }
+
+  if (!hasEnabled) {
+    return [
+      {
+        id: 1,
+        days: new Set([0, 2, 4]),
+        entry: 18 * 60,
+        exit: 19 * 60 + 30,
+        buffer: 15
+      }
+    ]
+  }
+
+  return Object.values(groups).map((group, index) => ({
+    id: index + 1,
+    days: new Set(group.days),
+    entry: group.entry,
+    exit: group.exit,
+    buffer: group.buffer
+  }))
+}
+
+function convertGymFasceToSchedule(fasceList) {
+  const gymSchedule = {}
+  const dayKeys = ['1', '2', '3', '4', '5', '6', '0']
+  dayKeys.forEach(k => {
+    gymSchedule[k] = { enabled: false }
+  })
+
+  fasceList.forEach(f => {
+    f.days.forEach(d => {
+      const dbKey = d === 6 ? '0' : String(d + 1)
+      const entryH = Math.floor(f.entry / 60)
+      const entryM = f.entry % 60
+      const exitH = Math.floor(f.exit / 60)
+      const exitM = f.exit % 60
+      const fromStr = `${String(entryH).padStart(2, '0')}:${String(entryM).padStart(2, '0')}`
+      const toStr = `${String(exitH).padStart(2, '0')}:${String(exitM).padStart(2, '0')}`
+      gymSchedule[dbKey] = {
+        enabled: true,
+        from: fromStr,
+        to: toStr,
+        buffer_min: f.buffer || 0
+      }
+    })
+  })
+  return gymSchedule
+}
+
+// Study Translation Helpers
+function parseStudySchedule(value) {
+  if (!value || Object.keys(value).length === 0) {
+    return [
+      {
+        id: 1,
+        days: new Set([0, 1, 2, 3, 4]), // Mon-Fri
+        entry: 9 * 60, // 09:00
+        exit: 12 * 60, // 12:00
+        slot: 'morning'
+      },
+      {
+        id: 2,
+        days: new Set([0, 1, 2, 3, 4]), // Mon-Fri
+        entry: 15 * 60, // 15:00
+        exit: 18 * 60, // 18:00
+        slot: 'evening'
+      }
+    ]
+  }
+
+  const groups = {}
+  let hasEnabled = false
+
+  for (let d = 0; d < 7; d++) {
+    const dbKey = d === 6 ? '0' : String(d + 1)
+    const dayData = value[dbKey]
+    if (dayData?.enabled) {
+      if (dayData.morning?.enabled && dayData.morning.from && dayData.morning.to) {
+        hasEnabled = true
+        const key = `${dayData.morning.from}-${dayData.morning.to}-morning`
+        if (!groups[key]) {
+          const [fh, fm] = dayData.morning.from.split(':').map(Number)
+          const [th, tm] = dayData.morning.to.split(':').map(Number)
+          groups[key] = {
+            entry: fh * 60 + fm,
+            exit: th * 60 + tm,
+            slot: 'morning',
+            days: []
+          }
+        }
+        groups[key].days.push(d)
+      }
+      if (dayData.evening?.enabled && dayData.evening.from && dayData.evening.to) {
+        hasEnabled = true
+        const key = `${dayData.evening.from}-${dayData.evening.to}-evening`
+        if (!groups[key]) {
+          const [fh, fm] = dayData.evening.from.split(':').map(Number)
+          const [th, tm] = dayData.evening.to.split(':').map(Number)
+          groups[key] = {
+            entry: fh * 60 + fm,
+            exit: th * 60 + tm,
+            slot: 'evening',
+            days: []
+          }
+        }
+        groups[key].days.push(d)
+      }
+    }
+  }
+
+  if (!hasEnabled) {
+    return [
+      {
+        id: 1,
+        days: new Set([0, 1, 2, 3, 4]),
+        entry: 9 * 60,
+        exit: 12 * 60,
+        slot: 'morning'
+      },
+      {
+        id: 2,
+        days: new Set([0, 1, 2, 3, 4]),
+        entry: 15 * 60,
+        exit: 18 * 60,
+        slot: 'evening'
+      }
+    ]
+  }
+
+  return Object.values(groups).map((group, index) => ({
+    id: index + 1,
+    days: new Set(group.days),
+    entry: group.entry,
+    exit: group.exit,
+    slot: group.slot
+  }))
+}
+
+function convertStudyFasceToSchedule(fasceList) {
+  const studySchedule = {}
+  const dayKeys = ['1', '2', '3', '4', '5', '6', '0']
+  dayKeys.forEach(k => {
+    studySchedule[k] = {
+      enabled: false,
+      morning: { enabled: false },
+      evening: { enabled: false }
+    }
+  })
+
+  fasceList.forEach(f => {
+    f.days.forEach(d => {
+      const dbKey = d === 6 ? '0' : String(d + 1)
+      const entryH = Math.floor(f.entry / 60)
+      const entryM = f.entry % 60
+      const exitH = Math.floor(f.exit / 60)
+      const exitM = f.exit % 60
+      const fromStr = `${String(entryH).padStart(2, '0')}:${String(entryM).padStart(2, '0')}`
+      const toStr = `${String(exitH).padStart(2, '0')}:${String(exitM).padStart(2, '0')}`
+
+      studySchedule[dbKey].enabled = true
+      if (f.slot === 'morning') {
+        studySchedule[dbKey].morning = {
+          enabled: true,
+          from: fromStr,
+          to: toStr
+        }
+      } else {
+        studySchedule[dbKey].evening = {
+          enabled: true,
+          from: fromStr,
+          to: toStr
+        }
+      }
+    })
+  })
+  return studySchedule
+}
+
+// ─── 2. General Parsing & Conversion Dispatchers ───
+function parseSchedule(mode, val) {
+  if (mode === 'work') return parseWorkSchedule(val)
+  if (mode === 'study') return parseStudySchedule(val)
+  return parseGymSchedule(val)
+}
+
+function convertFasceToSchedule(mode, fasceList) {
+  if (mode === 'work') return convertWorkFasceToSchedule(fasceList)
+  if (mode === 'study') return convertStudyFasceToSchedule(fasceList)
+  return convertGymFasceToSchedule(fasceList)
+}
+
 /**
  * ArcKnob — Premium circular dial time selector.
  */
-function ArcKnob({ value, onChange, label, disabled = false }) {
+function ArcKnob({ value, onChange, label, disabled = false, accentColor = 'var(--color-primary)' }) {
   const svgRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [localValue, setLocalValue] = useState(value)
+
+  // Keep local value in sync with prop when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalValue(value)
+    }
+  }, [value, isDragging])
 
   // Convert minutes (0 - 1440) to angle (135 - 405)
-  const currentAngle = 135 + (value / 1440) * 270
+  const currentAngle = 135 + (localValue / 1440) * 270
 
   // Format time (HH:MM)
-  const hours = Math.floor(value / 60)
-  const minutes = value % 60
+  const hours = Math.floor(localValue / 60)
+  const minutes = localValue % 60
   const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 
   const polarToCartesian = (cx, cy, r, angleInDegrees) => {
@@ -172,6 +400,9 @@ function ArcKnob({ value, onChange, label, disabled = false }) {
       mins = Math.round(mins / 15) * 15
       mins = Math.max(0, Math.min(1440, mins))
 
+      // Update local state instantly for 60fps visual rendering!
+      setLocalValue(mins)
+      // Call parent onChange
       onChange(mins)
     }
 
@@ -224,7 +455,7 @@ function ArcKnob({ value, onChange, label, disabled = false }) {
             <path
               d={valuePath}
               fill="none"
-              stroke="var(--color-primary)"
+              stroke={accentColor}
               strokeWidth="8"
               strokeLinecap="round"
               className="transition-all duration-75"
@@ -237,13 +468,16 @@ function ArcKnob({ value, onChange, label, disabled = false }) {
             cy={thumbPos.y}
             r="8"
             fill="var(--bg-surface)"
-            stroke="var(--color-primary)"
+            stroke={accentColor}
             strokeWidth="3.5"
             className={clsx(
               "shadow-sm transition-all duration-75",
-              isDragging && "fill-[var(--color-primary-light)] scale-110"
+              isDragging && "scale-110"
             )}
-            style={{ transformOrigin: `${thumbPos.x}px ${thumbPos.y}px` }}
+            style={{ 
+              transformOrigin: `${thumbPos.x}px ${thumbPos.y}px`,
+              fill: isDragging ? accentColor : 'var(--bg-surface)'
+            }}
           />
 
           {/* Inner labels */}
@@ -274,34 +508,27 @@ function ArcKnob({ value, onChange, label, disabled = false }) {
  */
 function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
   const accentMap = {
-    work:  { bg: 'rgba(180,98,67,0.08)',  border: 'rgba(180,98,67,0.3)',  dot: 'var(--color-primary)' },
-    study: { bg: 'rgba(155,89,182,0.08)', border: 'rgba(155,89,182,0.3)', dot: '#9b59b6' },
-    gym:   { bg: 'rgba(61,153,112,0.08)', border: 'rgba(61,153,112,0.3)', dot: '#3d9970' },
+    work:  { bg: 'rgba(180,98,67,0.08)',  border: 'rgba(180,98,67,0.3)',  color: 'var(--color-primary)' },
+    study: { bg: 'rgba(155,89,182,0.08)', border: 'rgba(155,89,182,0.3)', color: '#9b59b6' },
+    gym:   { bg: 'rgba(61,153,112,0.08)', border: 'rgba(61,153,112,0.3)', color: '#3d9970' },
   }
   const accent = accentMap[mode]
 
-  // Fasce Orarie (dynamic work bands) local state
-  const [fasce, setFasce] = useState(() => parseWorkSchedule(value))
+  // Dynamic schedules local state
+  const [fasce, setFasce] = useState(() => parseSchedule(mode, value))
 
   // Synchronize when value changes from outside (e.g., store resets)
   useEffect(() => {
-    if (mode === 'work') {
-      const currentConverted = convertFasceToSchedule(fasce)
-      if (JSON.stringify(value) !== JSON.stringify(currentConverted)) {
-        setFasce(parseWorkSchedule(value))
-      }
+    const currentConverted = convertFasceToSchedule(mode, fasce)
+    if (JSON.stringify(value) !== JSON.stringify(currentConverted)) {
+      setFasce(parseSchedule(mode, value))
     }
   }, [value, mode])
 
-  const updateDay = (dayKey, updates) => {
-    onChange({ ...value, [dayKey]: { ...value[dayKey], ...updates } })
-  }
-
-  // Work Schedule Handlers
   const updateFascia = (id, updates) => {
     setFasce(prev => {
       const next = prev.map(f => (f.id === id ? { ...f, ...updates } : f))
-      onChange(convertFasceToSchedule(next))
+      onChange(convertFasceToSchedule(mode, next))
       return next
     })
   }
@@ -324,10 +551,20 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
         return f
       })
     } else {
-      // Find who currently owns this day
-      const otherFascia = fasce.find(f => f.id !== fasciaId && f.days.has(dayIdx))
+      // Find other owner of same day
+      // For study: only conflict if other fascia has the SAME slot
+      // For work/gym: conflict with any other fascia
+      const otherFascia = fasce.find(f => {
+        if (f.id === fasciaId) return false
+        const hasDay = f.days.has(dayIdx)
+        if (mode === 'study') {
+          return hasDay && f.slot === targetFascia.slot
+        }
+        return hasDay
+      })
+
       if (otherFascia && otherFascia.days.size === 1) {
-        // Removing it would leave other fascia with 0 days: ignored
+        // Removing would leave other fascia with 0 days: ignored
         return
       }
 
@@ -347,20 +584,29 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
     }
 
     setFasce(nextFasce)
-    onChange(convertFasceToSchedule(nextFasce))
+    onChange(convertFasceToSchedule(mode, nextFasce))
   }
 
   const handleAddFascia = () => {
+    const defaultSlot = mode === 'study' ? 'morning' : undefined
+    const defaultBuffer = mode === 'gym' ? 15 : undefined
+
     const assignedDays = new Set()
-    fasce.forEach(f => f.days.forEach(d => assignedDays.add(d)))
+    fasce.forEach(f => {
+      if (mode === 'study' && f.slot !== defaultSlot) return
+      f.days.forEach(d => assignedDays.add(d))
+    })
+
     let newDays = [0, 1, 2, 3, 4, 5, 6].filter(d => !assignedDays.has(d))
 
     if (newDays.length === 0) {
-      // All days occupied: try to take Saturday/Sunday (5, 6) if safe
       const candidates = [5, 6]
       const allowedCandidates = []
       candidates.forEach(c => {
-        const owner = fasce.find(f => f.days.has(c))
+        const owner = fasce.find(f => {
+          if (mode === 'study' && f.slot !== defaultSlot) return false
+          return f.days.has(c)
+        })
         if (owner && owner.days.size > 1) {
           allowedCandidates.push(c)
         }
@@ -369,9 +615,11 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
       if (allowedCandidates.length > 0) {
         newDays = allowedCandidates
       } else {
-        // Take any first day that can be safely reassigned
         for (let d = 0; d < 7; d++) {
-          const owner = fasce.find(f => f.days.has(d))
+          const owner = fasce.find(f => {
+            if (mode === 'study' && f.slot !== defaultSlot) return false
+            return f.days.has(d)
+          })
           if (owner && owner.days.size > 1) {
             newDays = [d]
             break
@@ -380,7 +628,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
       }
     }
 
-    if (newDays.length === 0) return // No days can be reassigned (all 1-day bands)
+    if (newDays.length === 0) return
 
     const nextId = Math.max(0, ...fasce.map(f => f.id)) + 1
     const newFascia = {
@@ -388,9 +636,12 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
       days: new Set(newDays),
       entry: 8 * 60 + 30, // 08:30
       exit: 17 * 60 + 30, // 17:30
+      ...(mode === 'study' && { slot: defaultSlot }),
+      ...(mode === 'gym' && { buffer: defaultBuffer })
     }
 
     const updatedFasce = fasce.map(f => {
+      if (mode === 'study' && f.slot !== defaultSlot) return f
       const nextDays = new Set(f.days)
       newDays.forEach(d => nextDays.delete(d))
       return { ...f, days: nextDays }
@@ -398,21 +649,28 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
 
     const nextFasce = [...updatedFasce, newFascia]
     setFasce(nextFasce)
-    onChange(convertFasceToSchedule(nextFasce))
+    onChange(convertFasceToSchedule(mode, nextFasce))
   }
 
   const handleRemoveFascia = (fasciaId) => {
-    if (fasce.length <= 1) return // Rimozione unica fascia rimasta: ignorato
+    if (fasce.length <= 1) return
     const nextFasce = fasce.filter(f => f.id !== fasciaId)
     setFasce(nextFasce)
-    onChange(convertFasceToSchedule(nextFasce))
+    onChange(convertFasceToSchedule(mode, nextFasce))
   }
 
   // Calculate hours dynamically
   let weeklyH = '0.0'
   let monthlyH = '0.0'
 
-  if (mode === 'work') {
+  if (mode === 'study') {
+    let weeklyMins = 0
+    fasce.forEach(f => {
+      weeklyMins += f.days.size * Math.max(0, f.exit - f.entry)
+    })
+    weeklyH = (weeklyMins / 60).toFixed(1)
+    monthlyH = ((weeklyMins / 60) * 4.33).toFixed(1)
+  } else if (mode === 'gym') {
     let weeklyMins = 0
     fasce.forEach(f => {
       weeklyMins += f.days.size * Math.max(0, f.exit - f.entry)
@@ -420,37 +678,13 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
     weeklyH = (weeklyMins / 60).toFixed(1)
     monthlyH = ((weeklyMins / 60) * 4.33).toFixed(1)
   } else {
-    // Original calculation for study & gym
-    const weeklyHours = DAYS.reduce((sum, d) => {
-      const day = value[d.key]
-      if (!day?.enabled) return sum
-
-      let dayMins = 0
-
-      if (mode === 'study') {
-        if (day.morning?.enabled && day.morning.from && day.morning.to) {
-          const [fh, fm] = day.morning.from.split(':').map(Number)
-          const [th, tm] = day.morning.to.split(':').map(Number)
-          dayMins += Math.max((th * 60 + tm) - (fh * 60 + fm), 0)
-        }
-        if (day.evening?.enabled && day.evening.from && day.evening.to) {
-          const [fh, fm] = day.evening.from.split(':').map(Number)
-          const [th, tm] = day.evening.to.split(':').map(Number)
-          dayMins += Math.max((th * 60 + tm) - (fh * 60 + fm), 0)
-        }
-      } else {
-        if (day.from && day.to) {
-          const [fh, fm] = day.from.split(':').map(Number)
-          const [th, tm] = day.to.split(':').map(Number)
-          dayMins = Math.max((th * 60 + tm) - (fh * 60 + fm), 0)
-        }
-      }
-
-      return sum + dayMins
-    }, 0)
-    
-    weeklyH = (weeklyHours / 60).toFixed(1)
-    monthlyH = ((weeklyHours / 60) * (52 / 12)).toFixed(1)
+    // Work Mode
+    let weeklyMins = 0
+    fasce.forEach(f => {
+      weeklyMins += f.days.size * Math.max(0, f.exit - f.entry)
+    })
+    weeklyH = (weeklyMins / 60).toFixed(1)
+    monthlyH = ((weeklyMins / 60) * 4.33).toFixed(1)
   }
 
   return (
@@ -458,19 +692,19 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
       {/* Summary */}
       <div className="flex items-center justify-between text-xs text-[var(--text-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 rounded-xl border border-[var(--border-subtle)]">
         <span>
-          {mode === 'work'
-            ? 'Configura le fasce orarie e trascina le manopole'
-            : 'Attiva i giorni e imposta entrata/uscita'}
+          {mode === 'work' ? 'Configura le fasce orarie e trascina le manopole' :
+           mode === 'study' ? 'Configura le fasce orarie per lo studio e trascina le manopole' :
+           'Configura le fasce orarie per la palestra e trascina le manopole'}
         </span>
         <span className="font-bold text-[var(--text-primary)]">
           {weeklyH}h/sett · {monthlyH}h/mese
         </span>
       </div>
 
-      {mode === 'work' ? (
-        /* Work Bands: Dynamic Bands View */
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
+      {/* Dynamic Bands View (Shared for all 3 modes!) */}
+      <div className="space-y-2">
+        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-thin">
+          <AnimatePresence initial={false}>
             {fasce.map((fascia, idx) => {
               const canDelete = fasce.length > 1
               const activeDaysCount = fascia.days.size
@@ -478,244 +712,174 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
               const fasciaHours = ((activeDaysCount * diffMins) / 60).toFixed(1)
 
               return (
-                <div
+                <motion.div
                   key={fascia.id}
-                  className="p-4 sm:p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative"
+                  initial={{ opacity: 0, x: 50, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -50, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  className="p-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:border-[var(--border-default)] transition-all duration-300 space-y-4 text-left relative shrink-0 snap-start w-[185px] sm:w-[205px] flex flex-col justify-between"
                 >
-                  {/* Top Header Row */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-primary)] bg-[var(--color-primary-ghost)] px-2 py-0.5 rounded-md">
-                        Fascia {idx + 1}
-                      </span>
-                      <span className="text-[10px] font-bold text-[var(--text-secondary)]">
-                        {fasciaHours}h / sett
-                      </span>
+                  <div className="space-y-4">
+                    {/* Top Header Row */}
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span 
+                          className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded text-white"
+                          style={{ backgroundColor: accent.color }}
+                        >
+                          F. {idx + 1}
+                        </span>
+                        
+                        {mode === 'study' && (
+                          <button
+                            onClick={() => updateFascia(fascia.id, { slot: fascia.slot === 'morning' ? 'evening' : 'morning' })}
+                            className={clsx(
+                              "text-[8px] font-black uppercase tracking-wider px-1 py-0.5 rounded transition-colors border",
+                              fascia.slot === 'morning'
+                                ? "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
+                                : "bg-indigo-100/80 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30"
+                            )}
+                            title="Inverti mattina/sera"
+                          >
+                            {fascia.slot === 'morning' ? '🌅 M' : '🌃 S'}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-bold text-[var(--text-secondary)]">
+                          {fasciaHours}h
+                        </span>
+                        {canDelete && (
+                          <button
+                            onClick={() => handleRemoveFascia(fascia.id)}
+                            className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-colors"
+                            title="Rimuovi fascia"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {canDelete && (
-                      <button
-                        onClick={() => handleRemoveFascia(fascia.id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-colors"
-                        title="Rimuovi fascia"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Days Selector Row */}
-                  <div className="flex flex-wrap gap-1.5 justify-start">
-                    {WEEKDAYS.map((day) => {
-                      const isSelected = fascia.days.has(day.key)
-                      const ownerFascia = fasce.find(f => f.id !== fascia.id && f.days.has(day.key))
-                      const isLocked = ownerFascia && ownerFascia.days.size === 1
-                      const isAssignedElsewhere = ownerFascia && !isLocked
-
-                      return (
-                        <button
-                          key={day.key}
-                          onClick={() => handleDayClick(fascia.id, day.key)}
-                          className={clsx(
-                            "h-8 px-3 rounded-full text-xs font-bold transition-all flex items-center gap-1 select-none border",
-                            isSelected
-                              ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-sm"
-                              : isLocked
-                              ? "bg-transparent border-dashed border-[var(--border-subtle)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
-                              : isAssignedElsewhere
-                              ? "bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-secondary)] opacity-60 hover:opacity-100"
-                              : "bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--text-muted)]"
-                          )}
-                          title={
-                            isLocked
-                              ? "Unico giorno rimasto in un'altra fascia (bloccato)"
-                              : isAssignedElsewhere
-                              ? `Assegnato a Fascia ${fasce.indexOf(ownerFascia) + 1}`
-                              : `Seleziona ${day.label}`
+                    {/* Days Selector Row (Wrapping beautifully in 2 rows) */}
+                    <div className="flex flex-wrap gap-1 justify-start">
+                      {WEEKDAYS.map((day) => {
+                        const isSelected = fascia.days.has(day.key)
+                        
+                        const ownerFascia = fasce.find(f => {
+                          if (f.id === fascia.id) return false
+                          const hasDay = f.days.has(day.key)
+                          if (mode === 'study') {
+                            return hasDay && f.slot === fascia.slot
                           }
-                          disabled={isLocked}
-                        >
-                          {day.label}
-                          {isLocked && <span className="text-[10px]">🔒</span>}
-                        </button>
-                      )
-                    })}
+                          return hasDay
+                        })
+                        const isLocked = ownerFascia && ownerFascia.days.size === 1
+                        const isAssignedElsewhere = ownerFascia && !isLocked
+
+                        return (
+                          <button
+                            key={day.key}
+                            onClick={() => handleDayClick(fascia.id, day.key)}
+                            className={clsx(
+                              "h-6 px-1.5 min-w-[23px] rounded text-[9px] font-black transition-all flex items-center justify-center select-none border",
+                              isSelected
+                                ? "text-white shadow-sm"
+                                : isLocked
+                                ? "bg-transparent border-dashed border-[var(--border-subtle)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
+                                : isAssignedElsewhere
+                                ? "bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-secondary)] opacity-60 hover:opacity-100"
+                                : "bg-[var(--bg-base)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--text-muted)]"
+                            )}
+                            style={isSelected ? { backgroundColor: accent.color, borderColor: accent.color } : undefined}
+                            title={
+                              isLocked
+                                ? "Unico giorno rimasto in un'altra fascia"
+                                : isAssignedElsewhere
+                                ? `Assegnato a Fascia ${fasce.indexOf(ownerFascia) + 1}`
+                                : `Seleziona ${day.label}`
+                            }
+                            disabled={isLocked}
+                          >
+                            {day.short}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Knobs Column (Stacked Vertically to save horizontal space!) */}
+                    <div className="flex flex-col items-center gap-3 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50">
+                      <ArcKnob
+                        label={mode === 'work' ? 'DALLE' : mode === 'study' ? 'DALLE' : 'INIZIO'}
+                        value={fascia.entry}
+                        accentColor={accent.color}
+                        onChange={(newEntry) => {
+                          const entryVal = Math.min(newEntry, fascia.exit - 15)
+                          updateFascia(fascia.id, { entry: entryVal })
+                        }}
+                      />
+
+                      <div className="w-10 h-[1px] bg-[var(--border-subtle)] shrink-0" />
+
+                      <ArcKnob
+                        label={mode === 'work' ? 'ALLE' : mode === 'study' ? 'ALLE' : 'FINE'}
+                        value={fascia.exit}
+                        accentColor={accent.color}
+                        onChange={(newExit) => {
+                          const exitVal = Math.max(newExit, fascia.entry + 15)
+                          updateFascia(fascia.id, { exit: exitVal })
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  {/* Knobs Row */}
-                  <div className="flex items-center justify-around gap-2 pt-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50">
-                    <ArcKnob
-                      label="DALLE"
-                      value={fascia.entry}
-                      onChange={(newEntry) => {
-                        const entryVal = Math.min(newEntry, fascia.exit - 15)
-                        updateFascia(fascia.id, { entry: entryVal })
-                      }}
-                    />
-
-                    <div className="h-10 w-[1px] bg-[var(--border-subtle)] shrink-0 hidden sm:block" />
-
-                    <ArcKnob
-                      label="ALLE"
-                      value={fascia.exit}
-                      onChange={(newExit) => {
-                        const exitVal = Math.max(newExit, fascia.entry + 15)
-                        updateFascia(fascia.id, { exit: exitVal })
-                      }}
-                    />
-                  </div>
-                </div>
+                  {/* Gym Buffer Input placed elegantly at the bottom */}
+                  {mode === 'gym' && (
+                    <div className="flex items-center justify-between w-full bg-[var(--bg-base)] px-2.5 py-1.5 rounded-xl border border-[var(--border-subtle)] mt-2">
+                      <span className="text-[8px] font-black text-[var(--text-secondary)] uppercase tracking-wider">Buffer:</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          max={120}
+                          step={5}
+                          value={fascia.buffer || 0}
+                          onChange={(e) => updateFascia(fascia.id, { buffer: parseInt(e.target.value) || 0 })}
+                          className="w-10 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded text-center text-xs font-black text-[var(--text-primary)] focus:outline-none"
+                        />
+                        <span className="text-[9px] font-black text-[var(--text-muted)]">m</span>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
               )
             })}
-          </div>
+          </AnimatePresence>
 
-          {/* Add Fascia Button */}
-          {/* Only render if we can actually add a fascia (meaning there is at least one fascia with size > 1) */}
-          {fasce.some(f => f.days.size > 1) && (
-            <button
-              onClick={handleAddFascia}
-              className="w-full py-4 border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-ghost)] rounded-2xl flex items-center justify-center gap-2 text-sm font-black text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-all duration-300"
-            >
-              <Plus size={16} />
-              Aggiungi fascia oraria
-            </button>
-          )}
-        </div>
-      ) : (
-        /* Traditional Day Grid (Study / Gym) */
-        <div className="flex gap-2 overflow-x-auto pb-2
-          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
-          snap-x snap-mandatory
-          md:grid md:grid-cols-7 md:overflow-visible md:pb-0 md:snap-none">
-          {DAYS.map((d) => {
-            const day = value[d.key] || { enabled: false }
+          {/* Inline dashed card to Add a new Fascia */}
+          {(() => {
+            const defaultSlot = mode === 'study' ? 'morning' : undefined
+            const canAdd = fasce.some(f => {
+              if (mode === 'study' && f.slot !== defaultSlot) return false
+              return f.days.size > 1
+            }) || (mode === 'study' && fasce.some(f => f.slot === 'evening' && f.days.size > 1))
+            
+            if (!canAdd) return null
+
             return (
-              <DayCard
-                key={d.key}
-                dayKey={d.key}
-                label={d.label}
-                day={day}
-                accent={accent}
-                mode={mode}
-                onUpdate={(updates) => updateDay(d.key, updates)}
-              />
+              <button
+                onClick={handleAddFascia}
+                className="snap-start shrink-0 w-[110px] sm:w-[130px] rounded-2xl border-2 border-dashed border-[var(--border-subtle)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-ghost)] flex flex-col items-center justify-center gap-2 text-xs font-black text-[var(--text-secondary)] hover:text-[var(--color-primary)] transition-all duration-300 self-stretch"
+                style={{ hoverColor: accent.color }}
+              >
+                <Plus size={22} className="opacity-60" />
+                <span className="text-[10px] leading-tight text-center">Aggiungi<br/>Fascia</span>
+              </button>
             )
-          })}
+          })()}
         </div>
-      )}
-    </div>
-  )
-}
-
-function DayCard({ dayKey, label, day, accent, mode, onUpdate }) {
-  return (
-    <div
-      className={clsx(
-        'snap-start shrink-0 w-[calc((100vw-var(--page-padding)*2-32px)/4.5)] md:w-auto md:shrink',
-        'rounded-[var(--radius-md)] border p-2 transition-all duration-200 text-center',
-        'flex flex-col gap-1.5 min-h-[100px]',
-        day.enabled
-          ? 'border-[var(--border-default)]'
-          : 'border-[var(--border-subtle)] opacity-60'
-      )}
-      style={day.enabled ? { backgroundColor: accent.bg, borderColor: accent.border } : undefined}
-    >
-      {/* Day label + toggle */}
-      <div className="flex flex-col items-center gap-1">
-        <span className={clsx('text-xs font-semibold', day.enabled ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]')}>
-          {label}
-        </span>
-        <Toggle
-          size="sm"
-          checked={!!day.enabled}
-          onChange={(v) => onUpdate({ enabled: v })}
-        />
-      </div>
-
-      {day.enabled ? (
-        <>
-          {mode === 'study' ? (
-            <StudyTimeInputs day={day} accent={accent} onUpdate={onUpdate} />
-          ) : mode === 'gym' ? (
-            <GymTimeInputs day={day} onUpdate={onUpdate} />
-          ) : (
-            <WorkTimeInputs day={day} onUpdate={onUpdate} />
-          )}
-        </>
-      ) : (
-        <span className="text-[10px] text-[var(--text-muted)] mt-auto">off</span>
-      )}
-    </div>
-  )
-}
-
-function TimeInput({ label, value = '', onChange }) {
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[9px] uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
-      <input
-        type="time"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full text-center text-[10px] font-medium bg-transparent border border-[var(--border-subtle)] rounded px-0.5 py-0.5 focus:outline-none focus:border-[var(--color-primary)]"
-      />
-    </div>
-  )
-}
-
-function WorkTimeInputs({ day, onUpdate }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <TimeInput label="Dalle" value={day.from || ''} onChange={(v) => onUpdate({ from: v })} />
-      <TimeInput label="Alle"  value={day.to   || ''} onChange={(v) => onUpdate({ to: v })} />
-    </div>
-  )
-}
-
-function StudyTimeInputs({ day, onUpdate }) {
-  const morning = day.morning || {}
-  const evening = day.evening || {}
-  return (
-    <div className="flex flex-col gap-1 text-left">
-      <div className="flex items-center gap-1">
-        <Toggle size="sm" checked={!!morning.enabled} onChange={(v) => onUpdate({ morning: { ...morning, enabled: v } })} />
-        <span className="text-[9px] text-[var(--text-muted)]">Mat</span>
-      </div>
-      {morning.enabled && (
-        <div className="flex flex-col gap-1">
-          <TimeInput label="Da" value={morning.from || ''} onChange={(v) => onUpdate({ morning: { ...morning, from: v } })} />
-          <TimeInput label="A"  value={morning.to   || ''} onChange={(v) => onUpdate({ morning: { ...morning, to: v } })} />
-        </div>
-      )}
-      <div className="flex items-center gap-1">
-        <Toggle size="sm" checked={!!evening.enabled} onChange={(v) => onUpdate({ evening: { ...evening, enabled: v } })} />
-        <span className="text-[9px] text-[var(--text-muted)]">Ser</span>
-      </div>
-      {evening.enabled && (
-        <div className="flex flex-col gap-1">
-          <TimeInput label="Da" value={evening.from || ''} onChange={(v) => onUpdate({ evening: { ...evening, from: v } })} />
-          <TimeInput label="A"  value={evening.to   || ''} onChange={(v) => onUpdate({ evening: { ...evening, to: v } })} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-function GymTimeInputs({ day, onUpdate }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <TimeInput label="Inizio" value={day.from || ''} onChange={(v) => onUpdate({ from: v })} />
-      <TimeInput label="Fine"   value={day.to   || ''} onChange={(v) => onUpdate({ to: v })} />
-      <div className="flex flex-col items-center gap-0.5">
-        <span className="text-[9px] uppercase tracking-wide text-[var(--text-muted)]">Buffer</span>
-        <input
-          type="number"
-          min={0}
-          max={120}
-          value={day.buffer_min || 0}
-          onChange={(e) => onUpdate({ buffer_min: +e.target.value })}
-          className="w-full text-center text-[10px] font-medium bg-transparent border border-[var(--border-subtle)] rounded px-0.5 py-0.5 focus:outline-none focus:border-[var(--color-primary)]"
-        />
       </div>
     </div>
   )
