@@ -400,37 +400,49 @@ function VehicleDashboard({
                 diagnosticData={diagnosticData}
               />
 
-              {/* Scheda Dettagli Veicolo Fluttuante (Top-Left) */}
-              <div className="absolute top-4 left-4 z-20 pointer-events-auto">
-                <div className="bg-[var(--bg-surface)]/85 backdrop-blur-md border border-[var(--border-subtle)]/70 p-4 rounded-2xl shadow-[var(--shadow-md)] text-left min-w-[190px] flex flex-col gap-1.5 select-none">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-black text-[var(--text-primary)] leading-tight truncate max-w-[120px]">
-                      {vehicle.name}
-                    </p>
-                    <button
-                      onClick={() => onEdit?.(vehicle)}
-                      className="p-1 rounded bg-black/5 dark:bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
-                      title="Modifica veicolo"
-                      type="button"
-                    >
-                      <Pencil size={11} />
-                    </button>
+              {/* ── Strip info veicolo — overlay in basso, stile player ── */}
+              <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none select-none"
+                style={{
+                  background: 'linear-gradient(to top, var(--bg-surface) 0%, rgba(var(--bg-surface-rgb, 255,255,255), 0.82) 55%, transparent 100%)',
+                  backdropFilter: 'blur(0px)',
+                  padding: '28px 16px 14px',
+                }}>
+                <div className="flex items-end justify-between gap-3">
+                  {/* Sinistra: nome + marca/modello/anno */}
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: vehicleColor }} />
+                      <p className="text-sm font-black text-[var(--text-primary)] leading-tight truncate">
+                        {vehicle.name}
+                      </p>
+                      <button
+                        onClick={() => onEdit?.(vehicle)}
+                        className="p-1 rounded bg-black/5 dark:bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors pointer-events-auto shrink-0"
+                        title="Modifica veicolo"
+                        type="button"
+                      >
+                        <Pencil size={11} />
+                      </button>
+                    </div>
+                    {(vehicle.brand || vehicle.model) && (
+                      <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider leading-none pl-4">
+                        {[vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
                   </div>
-                  {(vehicle.brand || vehicle.model) && (
-                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider leading-none">
-                      {[vehicle.brand, vehicle.model, vehicle.year].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
-                  {vehicle.plate && (
-                    <span className="inline-block self-start mt-0.5 px-2 py-0.5 bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded font-mono text-[9px] font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                      {vehicle.plate}
+                  {/* Destra: targa + badge carburante */}
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                    {vehicle.plate && (
+                      <span className="px-2 py-0.5 bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded font-mono text-[9px] font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                        {vehicle.plate}
+                      </span>
+                    )}
+                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-[var(--color-primary-ghost)] text-[var(--color-primary)]">
+                      {vehicle.fuel_type === 'gasoline' ? 'Benzina' :
+                       vehicle.fuel_type === 'diesel' ? 'Diesel' :
+                       vehicle.fuel_type === 'electric' ? 'Elettrico' : 'Ibrido'}
                     </span>
-                  )}
-                  <span className="inline-block self-start mt-0.5 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-[var(--color-primary-ghost)] text-[var(--color-primary)]">
-                    {vehicle.fuel_type === 'gasoline' ? 'Benzina' :
-                     vehicle.fuel_type === 'diesel' ? 'Diesel' :
-                     vehicle.fuel_type === 'electric' ? 'Elettrico' : 'Ibrido'}
-                  </span>
+                  </div>
                 </div>
               </div>
 
