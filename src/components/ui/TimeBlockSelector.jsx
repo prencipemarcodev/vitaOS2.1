@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { Plus, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Toggle from './Toggle'
 
 const WEEKDAYS = [
   { key: 0, label: 'Lun', short: 'L' },
@@ -188,16 +189,8 @@ function parseStudySchedule(value) {
       {
         id: 1,
         days: new Set([0, 1, 2, 3, 4]), // Mon-Fri
-        entry: 9 * 60, // 09:00
-        exit: 12 * 60, // 12:00
-        slot: 'morning'
-      },
-      {
-        id: 2,
-        days: new Set([0, 1, 2, 3, 4]), // Mon-Fri
-        entry: 15 * 60, // 15:00
-        exit: 18 * 60, // 18:00
-        slot: 'evening'
+        morning: { enabled: true, entry: 9 * 60, exit: 12 * 60 },
+        evening: { enabled: true, entry: 15 * 60, exit: 18 * 60 }
       }
     ]
   }
@@ -208,37 +201,32 @@ function parseStudySchedule(value) {
   for (let d = 0; d < 7; d++) {
     const dbKey = d === 6 ? '0' : String(d + 1)
     const dayData = value[dbKey]
-    if (dayData?.enabled) {
-      if (dayData.morning?.enabled && dayData.morning.from && dayData.morning.to) {
-        hasEnabled = true
-        const key = `${dayData.morning.from}-${dayData.morning.to}-morning`
-        if (!groups[key]) {
-          const [fh, fm] = dayData.morning.from.split(':').map(Number)
-          const [th, tm] = dayData.morning.to.split(':').map(Number)
-          groups[key] = {
-            entry: fh * 60 + fm,
-            exit: th * 60 + tm,
-            slot: 'morning',
-            days: []
-          }
+    if (dayData?.enabled && (dayData.morning?.enabled || dayData.evening?.enabled)) {
+      hasEnabled = true
+
+      const mEnabled = !!dayData.morning?.enabled
+      const mFrom = dayData.morning?.from || "09:00"
+      const mTo = dayData.morning?.to || "12:00"
+
+      const eEnabled = !!dayData.evening?.enabled
+      const eFrom = dayData.evening?.from || "15:00"
+      const eTo = dayData.evening?.to || "18:00"
+
+      const key = `${mEnabled}-${mFrom}-${mTo}-${eEnabled}-${eFrom}-${eTo}`
+
+      if (!groups[key]) {
+        const [mStartH, mStartM] = mFrom.split(':').map(Number)
+        const [mEndH, mEndM] = mTo.split(':').map(Number)
+        const [eStartH, eStartM] = eFrom.split(':').map(Number)
+        const [eEndH, eEndM] = eTo.split(':').map(Number)
+
+        groups[key] = {
+          morning: { enabled: mEnabled, entry: mStartH * 60 + mStartM, exit: mEndH * 60 + mEndM },
+          evening: { enabled: eEnabled, entry: eStartH * 60 + eStartM, exit: eEndH * 60 + eEndM },
+          days: []
         }
-        groups[key].days.push(d)
       }
-      if (dayData.evening?.enabled && dayData.evening.from && dayData.evening.to) {
-        hasEnabled = true
-        const key = `${dayData.evening.from}-${dayData.evening.to}-evening`
-        if (!groups[key]) {
-          const [fh, fm] = dayData.evening.from.split(':').map(Number)
-          const [th, tm] = dayData.evening.to.split(':').map(Number)
-          groups[key] = {
-            entry: fh * 60 + fm,
-            exit: th * 60 + tm,
-            slot: 'evening',
-            days: []
-          }
-        }
-        groups[key].days.push(d)
-      }
+      groups[key].days.push(d)
     }
   }
 
@@ -247,16 +235,8 @@ function parseStudySchedule(value) {
       {
         id: 1,
         days: new Set([0, 1, 2, 3, 4]),
-        entry: 9 * 60,
-        exit: 12 * 60,
-        slot: 'morning'
-      },
-      {
-        id: 2,
-        days: new Set([0, 1, 2, 3, 4]),
-        entry: 15 * 60,
-        exit: 18 * 60,
-        slot: 'evening'
+        morning: { enabled: true, entry: 9 * 60, exit: 12 * 60 },
+        evening: { enabled: true, entry: 15 * 60, exit: 18 * 60 }
       }
     ]
   }
@@ -264,9 +244,8 @@ function parseStudySchedule(value) {
   return Object.values(groups).map((group, index) => ({
     id: index + 1,
     days: new Set(group.days),
-    entry: group.entry,
-    exit: group.exit,
-    slot: group.slot
+    morning: group.morning,
+    evening: group.evening
   }))
 }
 
@@ -276,33 +255,41 @@ function convertStudyFasceToSchedule(fasceList) {
   dayKeys.forEach(k => {
     studySchedule[k] = {
       enabled: false,
-      morning: { enabled: false },
-      evening: { enabled: false }
+      morning: { enabled: false, from: "09:00", to: "12:00" },
+      evening: { enabled: false, from: "15:00", to: "18:00" }
     }
   })
 
   fasceList.forEach(f => {
     f.days.forEach(d => {
       const dbKey = d === 6 ? '0' : String(d + 1)
-      const entryH = Math.floor(f.entry / 60)
-      const entryM = f.entry % 60
-      const exitH = Math.floor(f.exit / 60)
-      const exitM = f.exit % 60
-      const fromStr = `${String(entryH).padStart(2, '0')}:${String(entryM).padStart(2, '0')}`
-      const toStr = `${String(exitH).padStart(2, '0')}:${String(exitM).padStart(2, '0')}`
 
-      studySchedule[dbKey].enabled = true
-      if (f.slot === 'morning') {
-        studySchedule[dbKey].morning = {
-          enabled: true,
-          from: fromStr,
-          to: toStr
-        }
-      } else {
-        studySchedule[dbKey].evening = {
-          enabled: true,
-          from: fromStr,
-          to: toStr
+      const mEntryH = Math.floor(f.morning.entry / 60)
+      const mEntryM = f.morning.entry % 60
+      const mExitH = Math.floor(f.morning.exit / 60)
+      const mExitM = f.morning.exit % 60
+
+      const eEntryH = Math.floor(f.evening.entry / 60)
+      const eEntryM = f.evening.entry % 60
+      const eExitH = Math.floor(f.evening.exit / 60)
+      const eExitM = f.evening.exit % 60
+
+      const mFromStr = `${String(mEntryH).padStart(2, '0')}:${String(mEntryM).padStart(2, '0')}`
+      const mToStr = `${String(mExitH).padStart(2, '0')}:${String(mExitM).padStart(2, '0')}`
+      const eFromStr = `${String(eEntryH).padStart(2, '0')}:${String(eEntryM).padStart(2, '0')}`
+      const eToStr = `${String(eExitH).padStart(2, '0')}:${String(eExitM).padStart(2, '0')}`
+
+      studySchedule[dbKey] = {
+        enabled: f.morning.enabled || f.evening.enabled,
+        morning: {
+          enabled: f.morning.enabled,
+          from: mFromStr,
+          to: mToStr
+        },
+        evening: {
+          enabled: f.evening.enabled,
+          from: eFromStr,
+          to: eToStr
         }
       }
     })
@@ -551,17 +538,8 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
         return f
       })
     } else {
-      // Find other owner of same day
-      // For study: only conflict if other fascia has the SAME slot
-      // For work/gym: conflict with any other fascia
-      const otherFascia = fasce.find(f => {
-        if (f.id === fasciaId) return false
-        const hasDay = f.days.has(dayIdx)
-        if (mode === 'study') {
-          return hasDay && f.slot === targetFascia.slot
-        }
-        return hasDay
-      })
+      // Find other owner of same day in any fascia
+      const otherFascia = fasce.find(f => f.id !== fasciaId && f.days.has(dayIdx))
 
       if (otherFascia && otherFascia.days.size === 1) {
         // Removing would leave other fascia with 0 days: ignored
@@ -588,12 +566,10 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
   }
 
   const handleAddFascia = () => {
-    const defaultSlot = mode === 'study' ? 'morning' : undefined
     const defaultBuffer = mode === 'gym' ? 15 : undefined
 
     const assignedDays = new Set()
     fasce.forEach(f => {
-      if (mode === 'study' && f.slot !== defaultSlot) return
       f.days.forEach(d => assignedDays.add(d))
     })
 
@@ -603,10 +579,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
       const candidates = [5, 6]
       const allowedCandidates = []
       candidates.forEach(c => {
-        const owner = fasce.find(f => {
-          if (mode === 'study' && f.slot !== defaultSlot) return false
-          return f.days.has(c)
-        })
+        const owner = fasce.find(f => f.days.has(c))
         if (owner && owner.days.size > 1) {
           allowedCandidates.push(c)
         }
@@ -616,10 +589,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
         newDays = allowedCandidates
       } else {
         for (let d = 0; d < 7; d++) {
-          const owner = fasce.find(f => {
-            if (mode === 'study' && f.slot !== defaultSlot) return false
-            return f.days.has(d)
-          })
+          const owner = fasce.find(f => f.days.has(d))
           if (owner && owner.days.size > 1) {
             newDays = [d]
             break
@@ -634,14 +604,20 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
     const newFascia = {
       id: nextId,
       days: new Set(newDays),
-      entry: 8 * 60 + 30, // 08:30
-      exit: 17 * 60 + 30, // 17:30
-      ...(mode === 'study' && { slot: defaultSlot }),
+      ...(mode === 'study'
+        ? {
+            morning: { enabled: true, entry: 9 * 60, exit: 12 * 60 },
+            evening: { enabled: true, entry: 15 * 60, exit: 18 * 60 }
+          }
+        : {
+            entry: 8 * 60 + 30, // 08:30
+            exit: 17 * 60 + 30, // 17:30
+          }
+      ),
       ...(mode === 'gym' && { buffer: defaultBuffer })
     }
 
     const updatedFasce = fasce.map(f => {
-      if (mode === 'study' && f.slot !== defaultSlot) return f
       const nextDays = new Set(f.days)
       newDays.forEach(d => nextDays.delete(d))
       return { ...f, days: nextDays }
@@ -666,19 +642,19 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
   if (mode === 'study') {
     let weeklyMins = 0
     fasce.forEach(f => {
-      weeklyMins += f.days.size * Math.max(0, f.exit - f.entry)
-    })
-    weeklyH = (weeklyMins / 60).toFixed(1)
-    monthlyH = ((weeklyMins / 60) * 4.33).toFixed(1)
-  } else if (mode === 'gym') {
-    let weeklyMins = 0
-    fasce.forEach(f => {
-      weeklyMins += f.days.size * Math.max(0, f.exit - f.entry)
+      let dayMins = 0
+      if (f.morning?.enabled) {
+        dayMins += Math.max(0, f.morning.exit - f.morning.entry)
+      }
+      if (f.evening?.enabled) {
+        dayMins += Math.max(0, f.evening.exit - f.evening.entry)
+      }
+      weeklyMins += f.days.size * dayMins
     })
     weeklyH = (weeklyMins / 60).toFixed(1)
     monthlyH = ((weeklyMins / 60) * 4.33).toFixed(1)
   } else {
-    // Work Mode
+    // Work / Gym Modes
     let weeklyMins = 0
     fasce.forEach(f => {
       weeklyMins += f.days.size * Math.max(0, f.exit - f.entry)
@@ -708,8 +684,19 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
             {fasce.map((fascia, idx) => {
               const canDelete = fasce.length > 1
               const activeDaysCount = fascia.days.size
-              const diffMins = fascia.exit - fascia.entry
-              const fasciaHours = ((activeDaysCount * diffMins) / 60).toFixed(1)
+              
+              let dayMins = 0
+              if (mode === 'study') {
+                if (fascia.morning?.enabled) {
+                  dayMins += Math.max(0, fascia.morning.exit - fascia.morning.entry)
+                }
+                if (fascia.evening?.enabled) {
+                  dayMins += Math.max(0, fascia.evening.exit - fascia.evening.entry)
+                }
+              } else {
+                dayMins = Math.max(0, fascia.exit - fascia.entry)
+              }
+              const fasciaHours = ((activeDaysCount * dayMins) / 60).toFixed(1)
 
               return (
                 <motion.div
@@ -730,21 +717,6 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                         >
                           F. {idx + 1}
                         </span>
-                        
-                        {mode === 'study' && (
-                          <button
-                            onClick={() => updateFascia(fascia.id, { slot: fascia.slot === 'morning' ? 'evening' : 'morning' })}
-                            className={clsx(
-                              "text-[8px] font-black uppercase tracking-wider px-1 py-0.5 rounded transition-colors border",
-                              fascia.slot === 'morning'
-                                ? "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30"
-                                : "bg-indigo-100/80 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30"
-                            )}
-                            title="Inverti mattina/sera"
-                          >
-                            {fascia.slot === 'morning' ? '🌅 M' : '🌃 S'}
-                          </button>
-                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -770,11 +742,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                         
                         const ownerFascia = fasce.find(f => {
                           if (f.id === fascia.id) return false
-                          const hasDay = f.days.has(day.key)
-                          if (mode === 'study') {
-                            return hasDay && f.slot === fascia.slot
-                          }
-                          return hasDay
+                          return f.days.has(day.key)
                         })
                         const isLocked = ownerFascia && ownerFascia.days.size === 1
                         const isAssignedElsewhere = ownerFascia && !isLocked
@@ -809,30 +777,116 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
                       })}
                     </div>
 
-                    {/* Knobs Column (Stacked Vertically to save horizontal space!) */}
-                    <div className="flex flex-col items-center gap-3 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50">
-                      <ArcKnob
-                        label={mode === 'work' ? 'DALLE' : mode === 'study' ? 'DALLE' : 'INIZIO'}
-                        value={fascia.entry}
-                        accentColor={accent.color}
-                        onChange={(newEntry) => {
-                          const entryVal = Math.min(newEntry, fascia.exit - 15)
-                          updateFascia(fascia.id, { entry: entryVal })
-                        }}
-                      />
+                    {/* Knobs Section */}
+                    {mode === 'study' ? (
+                      <div className="space-y-3 w-full">
+                        {/* Mattina Section */}
+                        <div className="space-y-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50 w-full flex flex-col items-center">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                              🌅 Mattina
+                            </span>
+                            <Toggle
+                              size="sm"
+                              checked={fascia.morning?.enabled || false}
+                              onChange={(v) => {
+                                // Prevent disabling both
+                                if (!v && !fascia.evening?.enabled) return
+                                updateFascia(fascia.id, { morning: { ...fascia.morning, enabled: v } })
+                              }}
+                            />
+                          </div>
+                          {fascia.morning?.enabled && (
+                            <div className="flex flex-col items-center gap-3 pt-2 border-t border-[var(--border-subtle)]/30 w-full animate-fadeIn">
+                              <ArcKnob
+                                label="DALLE"
+                                value={fascia.morning.entry}
+                                accentColor="#9b59b6"
+                                onChange={(newEntry) => {
+                                  const entryVal = Math.min(newEntry, fascia.morning.exit - 15)
+                                  updateFascia(fascia.id, { morning: { ...fascia.morning, entry: entryVal } })
+                                }}
+                              />
+                              <div className="w-10 h-[1px] bg-[var(--border-subtle)] shrink-0" />
+                              <ArcKnob
+                                label="ALLE"
+                                value={fascia.morning.exit}
+                                accentColor="#9b59b6"
+                                onChange={(newExit) => {
+                                  const exitVal = Math.max(newExit, fascia.morning.entry + 15)
+                                  updateFascia(fascia.id, { morning: { ...fascia.morning, exit: exitVal } })
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="w-10 h-[1px] bg-[var(--border-subtle)] shrink-0" />
+                        {/* Sera Section */}
+                        <div className="space-y-2 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50 w-full flex flex-col items-center">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+                              🌃 Sera
+                            </span>
+                            <Toggle
+                              size="sm"
+                              checked={fascia.evening?.enabled || false}
+                              onChange={(v) => {
+                                // Prevent disabling both
+                                if (!v && !fascia.morning?.enabled) return
+                                updateFascia(fascia.id, { evening: { ...fascia.evening, enabled: v } })
+                              }}
+                            />
+                          </div>
+                          {fascia.evening?.enabled && (
+                            <div className="flex flex-col items-center gap-3 pt-2 border-t border-[var(--border-subtle)]/30 w-full animate-fadeIn">
+                              <ArcKnob
+                                label="DALLE"
+                                value={fascia.evening.entry}
+                                accentColor="#9b59b6"
+                                onChange={(newEntry) => {
+                                  const entryVal = Math.min(newEntry, fascia.evening.exit - 15)
+                                  updateFascia(fascia.id, { evening: { ...fascia.evening, entry: entryVal } })
+                                }}
+                              />
+                              <div className="w-10 h-[1px] bg-[var(--border-subtle)] shrink-0" />
+                              <ArcKnob
+                                label="ALLE"
+                                value={fascia.evening.exit}
+                                accentColor="#9b59b6"
+                                onChange={(newExit) => {
+                                  const exitVal = Math.max(newExit, fascia.evening.entry + 15)
+                                  updateFascia(fascia.id, { evening: { ...fascia.evening, exit: exitVal } })
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-3 bg-[var(--bg-surface)] rounded-xl p-3 border border-[var(--border-subtle)]/50">
+                        <ArcKnob
+                          label={mode === 'work' ? 'DALLE' : 'INIZIO'}
+                          value={fascia.entry}
+                          accentColor={accent.color}
+                          onChange={(newEntry) => {
+                            const entryVal = Math.min(newEntry, fascia.exit - 15)
+                            updateFascia(fascia.id, { entry: entryVal })
+                          }}
+                        />
 
-                      <ArcKnob
-                        label={mode === 'work' ? 'ALLE' : mode === 'study' ? 'ALLE' : 'FINE'}
-                        value={fascia.exit}
-                        accentColor={accent.color}
-                        onChange={(newExit) => {
-                          const exitVal = Math.max(newExit, fascia.entry + 15)
-                          updateFascia(fascia.id, { exit: exitVal })
-                        }}
-                      />
-                    </div>
+                        <div className="w-10 h-[1px] bg-[var(--border-subtle)] shrink-0" />
+
+                        <ArcKnob
+                          label={mode === 'work' ? 'ALLE' : 'FINE'}
+                          value={fascia.exit}
+                          accentColor={accent.color}
+                          onChange={(newExit) => {
+                            const exitVal = Math.max(newExit, fascia.entry + 15)
+                            updateFascia(fascia.id, { exit: exitVal })
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Gym Buffer Input placed elegantly at the bottom */}
@@ -860,12 +914,7 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
 
           {/* Inline dashed card to Add a new Fascia */}
           {(() => {
-            const defaultSlot = mode === 'study' ? 'morning' : undefined
-            const canAdd = fasce.some(f => {
-              if (mode === 'study' && f.slot !== defaultSlot) return false
-              return f.days.size > 1
-            }) || (mode === 'study' && fasce.some(f => f.slot === 'evening' && f.days.size > 1))
-            
+            const canAdd = fasce.some(f => f.days.size > 1)
             if (!canAdd) return null
 
             return (
