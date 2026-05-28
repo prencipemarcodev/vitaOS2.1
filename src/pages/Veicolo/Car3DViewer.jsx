@@ -305,8 +305,8 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
         <div style={{
           ...anim,
           position: 'absolute', top: -19,
-          left: isLeft ? -(lineW + 144) : lineW + 6,
-          width: 140, pointerEvents: 'auto',
+          left: isLeft ? -(lineW + 148) : lineW + 6,
+          width: 144, pointerEvents: 'auto',
         }}>
           <div style={{
             padding: '5px 8px 7px',
@@ -315,9 +315,8 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
             border: '1px solid var(--border-subtle)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)',
           }}>
-            {/* Header: abbr pill + label + status badge */}
+            {/* Header: abbr pill + label (troncato) — senza badge per evitare overflow */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-              {/* Abbr pill — pure CSS, no emoji */}
               <div style={{
                 width: 20, height: 20, borderRadius: 5,
                 background: c.badge,
@@ -331,24 +330,28 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
                 }}>{abbr}</span>
               </div>
               <span style={{
-                fontSize: 9, fontWeight: 800, letterSpacing: '0.07em',
+                fontSize: 8, fontWeight: 800, letterSpacing: '0.06em',
                 textTransform: 'uppercase', color: 'var(--text-muted)',
                 flex: 1, lineHeight: 1,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>{label}</span>
+            </div>
+            {/* Value row: testo valore + badge stato affiancati */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, paddingLeft: 25 }}>
+              <p style={{
+                margin: 0,
+                fontSize: 12, fontWeight: 800,
+                color: 'var(--text-primary)',
+                lineHeight: 1.25, letterSpacing: '-0.015em',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{value}</p>
               <span style={{
-                fontSize: 8, fontWeight: 900, letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                padding: '2px 5px', borderRadius: 4,
+                fontSize: 7, fontWeight: 900, letterSpacing: '0.04em',
+                textTransform: 'uppercase', flexShrink: 0,
+                padding: '2px 4px', borderRadius: 4,
                 background: c.badge, color: c.badgeText,
               }}>{c.label}</span>
             </div>
-            {/* Value */}
-            <p style={{
-              margin: 0, paddingLeft: 25,
-              fontSize: 13, fontWeight: 800,
-              color: 'var(--text-primary)',
-              lineHeight: 1.25, letterSpacing: '-0.015em',
-            }}>{value}</p>
           </div>
         </div>
 
