@@ -24,7 +24,7 @@ import { getAccounts } from '@/lib/accounts'
 function PlanCard({ plan, onEdit }) {
   const confirm = useConfirmStore(s => s.confirm)
   const { updatePlan, removePlan, addMovement, movements } = useSavingsStore()
-  const { transactions, categories, addTransaction } = useFinanceStore()
+  const { transactions, categories, addTransaction, setCumulativeBalance, cumulativeBalance } = useFinanceStore()
   const { userConfig } = useAppStore()
   const { addNotification } = useNotificationStore()
   const { pushError } = useNotifications()
@@ -137,6 +137,8 @@ function PlanCard({ plan, onEdit }) {
       
       if (tx) {
         addTransaction(tx)
+        const delta = type === 'deposit' ? -amount : amount
+        setCumulativeBalance(cumulativeBalance + delta)
       }
       
       toast.success(type === 'deposit' ? `Depositati ${formatCurrency(amount)}` : `Prelevati ${formatCurrency(amount)}`)

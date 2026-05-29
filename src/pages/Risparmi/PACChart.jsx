@@ -82,7 +82,7 @@ export default function PACChart({ plan, movements = [] }) {
   }, [plan, movements])
 
   return (
-    <div className="h-32 w-full mt-4">
+    <div className="relative h-32 w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>

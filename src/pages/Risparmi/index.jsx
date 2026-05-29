@@ -72,7 +72,7 @@ function Risparmi() {
                   <p className="text-xs mt-1 opacity-70">Crea il tuo primo obiettivo di risparmio</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:overflow-y-auto pr-1 pb-4">
+                <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-4 lg:overflow-y-auto pr-1 pb-4">
                   {plans.map(plan => (
                     <PlanCard
                       key={plan.id}
@@ -85,7 +85,7 @@ function Risparmi() {
             </div>
 
             {/* Right Column: Smart Advice */}
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2 lg:h-full lg:overflow-y-auto pr-1 pb-4">
               <SmartAdvicePanel />
             </div>
           </div>
