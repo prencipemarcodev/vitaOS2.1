@@ -305,8 +305,8 @@ function DiagnosticHotspot({ position, label, abbr, value, status, side = 'right
         <div style={{
           ...anim,
           position: 'absolute', top: -19,
-          left: isLeft ? -(lineW + 148) : lineW + 6,
-          width: 144, pointerEvents: 'auto',
+          left: isLeft ? -(lineW + 174) : lineW + 6,
+          width: 170, pointerEvents: 'auto',
         }}>
           <div style={{
             padding: '5px 8px 7px',
