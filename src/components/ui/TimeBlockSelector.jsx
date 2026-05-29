@@ -917,7 +917,9 @@ function TimeBlockSelector({ mode = 'work', value = {}, onChange }) {
 
           {/* Inline dashed card to Add a new Fascia */}
           {(() => {
-            const canAdd = fasce.some(f => f.days.size > 1)
+            // In gym mode: always allow adding a new fascia (up to 7 — one per weekday)
+            // Each fascia represents a different day/time slot (e.g. Martedì 11:00, Venerdì 17:00)
+            const canAdd = fasce.length < 7
             if (!canAdd) return null
 
             return (

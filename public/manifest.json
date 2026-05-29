@@ -1,9 +1,11 @@
 {
+  "id": "/",
   "name": "VitaOS",
   "short_name": "VitaOS",
   "description": "Il tuo personal dashboard per lavoro, finanze, salute e vita.",
   "start_url": "/",
-  "display": "fullscreen",
+  "scope": "/",
+  "display": "standalone",
   "background_color": "#fafaf8",
   "theme_color": "#B46243",
   "orientation": "any",

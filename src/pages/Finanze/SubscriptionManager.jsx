@@ -221,7 +221,7 @@ function SubscriptionManager({ showAddForm, setShowAddForm }) {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Abbonamenti Attivi</p>
-            <p className="text-2xl font-black text-[var(--text-primary)] mt-0.5">{stats.activeCount}</p>
+            <p className="text-xl font-black text-[var(--text-primary)] mt-0.5">{stats.activeCount}</p>
           </div>
         </Card>
 
@@ -231,7 +231,7 @@ function SubscriptionManager({ showAddForm, setShowAddForm }) {
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Costo Mensile Stimato</p>
-            <p className="text-2xl font-black text-[var(--text-primary)] mt-0.5">€ {stats.monthlyTotal.toFixed(2)}</p>
+            <p className="text-lg font-black text-[var(--text-primary)] mt-0.5">€ {stats.monthlyTotal.toFixed(2)}</p>
           </div>
         </Card>
 
@@ -407,10 +407,10 @@ function SubscriptionManager({ showAddForm, setShowAddForm }) {
                 onChange={e => setPaymentMethod(e.target.value)}
                 className="w-full bg-[var(--bg-base)] border border-[var(--border-subtle)] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-ghost)]"
               >
-                <option value="card">💳 Carta</option>
-                <option value="bank">🏦 Addebito Conto</option>
-                <option value="cash">💵 Contanti</option>
-                <option value="other">⚙️ Altro</option>
+                <option value="card">Carta</option>
+                <option value="bank">Addebito Conto</option>
+                <option value="cash">Contanti</option>
+                <option value="other">Altro</option>
               </select>
             </div>
 

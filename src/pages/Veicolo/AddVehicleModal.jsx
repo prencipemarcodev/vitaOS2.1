@@ -107,10 +107,40 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
   const handleBrandChange = (val) => { setBrand(val); const g = guessVehicleTypeFromText(val, model, name); if (g) setVehicleType(g) }
   const handleModelChange = (val) => { setModel(val); const g = guessVehicleTypeFromText(brand, val, name); if (g) setVehicleType(g) }
 
+  // ── Targa: formattatore e validatore ─────────────────────────
+  // Formato italiano standard: AA 123 BB
+  const formatPlate = (raw) => {
+    // Pulisce, uppercase, rimuove spazi e non-alfanumerici
+    const chars = raw.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    let result = ''
+    for (let i = 0; i < Math.min(chars.length, 7); i++) {
+      const ch = chars[i]
+      if (i < 2 || i >= 5) {
+        // Posizioni 0-1 e 5-6: solo lettere
+        if (/[A-Z]/.test(ch)) result += ch
+      } else {
+        // Posizioni 2-4: solo cifre
+        if (/[0-9]/.test(ch)) result += ch
+      }
+    }
+    // Inserisce spazi: AB 123 CD
+    let formatted = ''
+    for (let i = 0; i < result.length; i++) {
+      if (i === 2 || i === 5) formatted += ' '
+      formatted += result[i]
+    }
+    return formatted
+  }
+
+  const isValidPlate = (p) => /^[A-Z]{2} \d{3} [A-Z]{2}$/.test(p)
+  const plateComplete = plate.length === 9  // 'AB 123 CD' = 9 chars
+  const plateError = plate.length > 0 && !isValidPlate(plate)
+
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!name.trim()) { toast.error('Inserisci un nome per il veicolo'); return }
+    if (plate && !isValidPlate(plate)) { toast.error('Targa non valida — formato: AB 123 CD'); return }
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -252,11 +282,34 @@ function AddVehicleModal({ onClose, onSaved, vehicle = null }) {
             </div>
 
             {/* Plate */}
-            <FieldGroup label="Targa (opzionale)">
-              <input type="text" placeholder="Es. AB 123 CD"
-                value={plate} onChange={e => setPlate(e.target.value.toUpperCase())}
-                className={`${inputCls} font-mono tracking-widest`} />
-            </FieldGroup>
+            <div className="space-y-1">
+              <label className={labelCls}>Targa (opzionale)</label>
+              <input
+                type="text"
+                placeholder="AB 123 CD"
+                value={plate}
+                onChange={e => setPlate(formatPlate(e.target.value))}
+                maxLength={9}
+                className={`${inputCls} font-mono tracking-widest`}
+                style={{
+                  borderColor: plateError
+                    ? 'var(--color-danger)'
+                    : plateComplete
+                    ? 'var(--color-success)'
+                    : undefined,
+                }}
+              />
+              {plateError && (
+                <p className="text-[10px] font-bold" style={{ color: 'var(--color-danger)' }}>
+                  Formato non valido — es. AB 123 CD
+                </p>
+              )}
+              {plateComplete && !plateError && (
+                <p className="text-[10px] font-bold" style={{ color: 'var(--color-success)' }}>
+                  Targa valida
+                </p>
+              )}
+            </div>
 
             {/* Color Picker */}
             <div className="space-y-2">
