@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 
 function SmartAdvicePanel() {
   const { plans, addMovement, updatePlan } = useSavingsStore()
-  const { transactions, cumulativeBalance } = useFinanceStore()
+  const { transactions, categories, cumulativeBalance, addTransaction, setCumulativeBalance } = useFinanceStore()
   const { userConfig, selectedMonth } = useAppStore()
   const [applying, setApplying] = useState(false)
 
@@ -39,11 +39,17 @@ function SmartAdvicePanel() {
     setApplying(true)
     try {
       const today = new Date().toISOString().split('T')[0]
+      let totalDeducted = 0
+
+      // Cerca categoria "Risparmi" per le transazioni finanziarie
+      const savingsCategory = categories.find(c => c.name.toLowerCase().includes('risparmi'))
       
       for (const alloc of advice.allocations) {
+        const allocAmount = parseFloat(alloc.amount.toFixed(2))
+
         const payload = {
           plan_id: alloc.plan_id,
-          amount: parseFloat(alloc.amount.toFixed(2)),
+          amount: allocAmount,
           type: 'deposit',
           date: today,
           notes: 'Accantonamento automatico distribuito tramite Smart Advice'
@@ -60,7 +66,7 @@ function SmartAdvicePanel() {
         // 2. Aggiorna il saldo del piano
         const plan = plans.find(p => p.id === alloc.plan_id)
         if (plan) {
-          const newAmount = parseFloat((parseFloat(plan.current_amount || 0) + alloc.amount).toFixed(2))
+          const newAmount = parseFloat((parseFloat(plan.current_amount || 0) + allocAmount).toFixed(2))
           
           const { error: pError } = await supabase
             .from('saving_plans')
@@ -69,11 +75,34 @@ function SmartAdvicePanel() {
             
           if (pError) throw pError
           
-          // 3. Aggiorna lo store Zustand
+          // 3. Registra la transazione finanziaria (scalando il saldo)
+          const { data: tx } = await supabase
+            .from('transactions')
+            .insert({
+              amount: allocAmount,
+              type: 'expense',
+              category: savingsCategory?.name || 'Risparmio',
+              description: `Accantonamento automatico: ${alloc.plan_name}`,
+              payment_method: 'bank',
+              date: today
+            })
+            .select()
+            .single()
+
+          if (tx) addTransaction(tx)
+          totalDeducted += allocAmount
+
+          // 4. Aggiorna lo store Zustand
           addMovement(movementData)
           updatePlan(alloc.plan_id, { current_amount: newAmount })
         }
       }
+
+      // 5. Aggiorna il saldo cumulativo in una sola volta
+      if (totalDeducted > 0) {
+        setCumulativeBalance(cumulativeBalance - totalDeducted)
+      }
+
       toast.success('Distribuzione risparmio applicata con successo! 💰')
     } catch (err) {
       console.error(err)
