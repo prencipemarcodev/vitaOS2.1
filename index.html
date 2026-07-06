@@ -1,53 +1,57 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#B46243" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="VitaOS" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="description" content="VitaOS — Il tuo personal dashboard per lavoro, finanze, salute e vita." />
-    <title>VitaOS</title>
-    <script>
-      // Self-healing mechanism for chunk load and MIME type errors (stale assets cache)
-      window.addEventListener('error', function(e) {
-        var errorMessage = e.message || '';
-        var isMimeError = errorMessage.indexOf('MIME type') !== -1 || 
-                           errorMessage.indexOf('text/html') !== -1 ||
-                           (e.target && e.target.tagName === 'SCRIPT' && !e.target.ok);
-        
-        if (isMimeError) {
-          console.warn('[VitaOS] MIME type error or chunk load failure detected. Forcing reload...', e);
-          var lastReload = sessionStorage.getItem('vitaos-last-chunk-reload');
-          var now = Date.now();
-          if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
-            sessionStorage.setItem('vitaos-last-chunk-reload', now.toString());
-            window.location.reload(true);
-          }
-        }
-      }, true);
 
-      window.addEventListener('unhandledrejection', function(e) {
-        var reason = (e.reason && e.reason.message) || '';
-        if (reason.indexOf('Failed to fetch dynamically imported module') !== -1 || 
-            reason.indexOf('MIME type') !== -1) {
-          console.warn('[VitaOS] Unhandled promise rejection (chunk load failure). Forcing reload...');
-          var lastReload = sessionStorage.getItem('vitaos-last-chunk-reload');
-          var now = Date.now();
-          if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
-            sessionStorage.setItem('vitaos-last-chunk-reload', now.toString());
-            window.location.reload(true);
-          }
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#B46243" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="VitaOS" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="VitaOS — Il tuo personal dashboard per lavoro, finanze, salute e vita." />
+  <title>VitaOS</title>
+  <script>
+    // Self-healing mechanism for chunk load and MIME type errors (stale assets cache)
+    window.addEventListener('error', function (e) {
+      var errorMessage = e.message || '';
+      var isMimeError = errorMessage.indexOf('MIME type') !== -1 ||
+        errorMessage.indexOf('text/html') !== -1 ||
+        (e.target && e.target.tagName === 'SCRIPT' && !e.target.ok);
+
+      if (isMimeError) {
+        console.warn('[VitaOS] MIME type error or chunk load failure detected. Forcing reload...', e);
+        var lastReload = sessionStorage.getItem('vitaos-last-chunk-reload');
+        var now = Date.now();
+        if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
+          sessionStorage.setItem('vitaos-last-chunk-reload', now.toString());
+          window.location.reload(true);
         }
-      });
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+      }
+    }, true);
+
+    window.addEventListener('unhandledrejection', function (e) {
+      var reason = (e.reason && e.reason.message) || '';
+      if (reason.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+        reason.indexOf('MIME type') !== -1) {
+        console.warn('[VitaOS] Unhandled promise rejection (chunk load failure). Forcing reload...');
+        var lastReload = sessionStorage.getItem('vitaos-last-chunk-reload');
+        var now = Date.now();
+        if (!lastReload || (now - parseInt(lastReload, 10) > 10000)) {
+          sessionStorage.setItem('vitaos-last-chunk-reload', now.toString());
+          window.location.reload(true);
+        }
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
