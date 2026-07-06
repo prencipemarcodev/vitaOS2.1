@@ -19,7 +19,7 @@ import BudgetConfig from './BudgetConfig'
 
 
 function FinanceSection() {
-  const { categories, addCategory, removeCategory } = useFinanceStore()
+  const { categories, addCategory, removeCategory, historicalTransactions, setCumulativeBalance } = useFinanceStore()
   const { userConfig, setUserConfig } = useAppStore()
   const { user } = useAuthStore()
   const confirm = useConfirmStore(s => s.confirm)
@@ -85,6 +85,12 @@ function FinanceSection() {
     }
 
     setUserConfig(updatedConfig)
+
+    // Ricalcola cumulativeBalance in tempo reale con i nuovi saldi iniziali
+    const newBaseBalance = updatedAccounts.reduce((sum, acc) => sum + parseFloat(acc.initial_balance || 0), 0)
+    const inc = historicalTransactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+    const exp = historicalTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+    setCumulativeBalance(newBaseBalance + inc - exp)
 
     try {
       const payload = {
