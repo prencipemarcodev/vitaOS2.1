@@ -22,8 +22,8 @@ function StepImportMovimenti({ formData, updateFormData, onFinish }) {
           Storico movimenti
         </h2>
         <p className="text-sm text-[var(--text-secondary)] max-w-sm mx-auto">
-          Carica il PDF del tuo estratto conto: VitaOS estrarrà automaticamente
-          tutti i movimenti e calcolerà il saldo iniziale del tuo conto.
+          Carica il file Excel (.xls, .xlsx) o CSV del tuo estratto conto: VitaOS estrarrà automaticamente
+          tutti i movimenti e calcolerà il saldo iniziale del tuo conto libero.
           Puoi saltare questo passaggio e farlo in seguito dalle Impostazioni.
         </p>
       </div>

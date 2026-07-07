@@ -6,7 +6,8 @@ import {
   ChevronDown, ChevronUp, TrendingUp, TrendingDown,
   Calculator, Landmark, FileUp, ArrowRight, RefreshCw
 } from 'lucide-react'
-import { importFromPDF, getBankImportStats } from '@/lib/pdfImport'
+import { parseExcelStatement } from '@/lib/excelImport'
+import { getBankImportStats } from '@/lib/pdfImport' // riutilizziamo la funzione helper delle statistiche
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useAppStore } from '@/store/useAppStore'
@@ -95,28 +96,28 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
   // ─────────────────────────────────────────────────
   const handleFile = useCallback(async (file) => {
     if (!file) return
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      toast.error('Carica un file PDF valido')
+    const nameLower = file.name.toLowerCase()
+    const isExcel = nameLower.endsWith('.xls') || nameLower.endsWith('.xlsx')
+    const isCSV = nameLower.endsWith('.csv')
+
+    if (!isExcel && !isCSV) {
+      toast.error('Carica un file Excel (.xls, .xlsx) o CSV valido')
       return
     }
 
     setFileName(file.name)
     setParsed(null)
     setImportResult(null)
-    setPdfProgress({ done: 0, total: 1 })
     setStep(STEP.PROCESSING)
 
     try {
-      const result = await importFromPDF(
-        file,
-        categories,
-        (done, total) => setPdfProgress({ done, total })
-      )
+      // Parsing sincrono/Promise locale (SheetJS)
+      const result = await parseExcelStatement(file, categories)
       setParsed(result)
       setStep(STEP.PREVIEW)
     } catch (err) {
-      console.error('PDF parse error:', err)
-      toast.error(`Errore elaborazione PDF: ${err.message || err}`)
+      console.error('File parse error:', err)
+      toast.error(`Errore elaborazione file: ${err.message || err}`)
       setStep(STEP.UPLOAD)
     }
   }, [categories])
@@ -243,10 +244,10 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/15 mb-4">
                 <FileUp size={14} className="text-[var(--color-primary)] mt-0.5 shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-[var(--text-primary)]">Import estratto conto PDF</p>
+                  <p className="text-xs font-bold text-[var(--text-primary)]">Import estratto conto Excel / CSV</p>
                   <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
-                    Carica il PDF del tuo estratto conto. Il sistema estrarrà automaticamente tutti i movimenti,
-                    rileverà gli accantonamenti nel Salvadanaio e calcolerà il saldo iniziale del conto libero.
+                    Carica il file Excel (.xls, .xlsx) o CSV del tuo estratto conto.
+                    Il sistema rileverà automaticamente tutti i movimenti, estrarrà gli accantonamenti e calcolerà il saldo iniziale del conto libero.
                   </p>
                 </div>
               </div>
@@ -268,7 +269,7 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".xls,.xlsx,.csv"
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files[0])}
               />
@@ -284,13 +285,13 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[var(--text-primary)]">
-                    {isDragging ? 'Rilascia il PDF qui' : 'Trascina il PDF qui'}
+                    {isDragging ? 'Rilascia il file qui' : 'Trascina il file qui'}
                   </p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">oppure clicca per selezionarlo</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">Excel (.xls, .xlsx) o file CSV</p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
                   <FileText size={10} className="text-[var(--text-muted)]" />
-                  <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">PDF Estratto Conto</span>
+                  <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Excel / CSV</span>
                 </div>
               </motion.div>
             </div>
@@ -306,49 +307,20 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="py-8 space-y-6 text-center"
+            className="py-12 space-y-6 text-center"
           >
             <div className="relative w-16 h-16 mx-auto">
               <div className="absolute inset-0 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center">
-                <FileText size={24} className="text-[var(--color-primary)]" />
+                <Loader2 size={24} className="text-[var(--color-primary)] animate-spin" />
               </div>
-              <motion.div
-                className="absolute inset-0 rounded-2xl border-2 border-[var(--color-primary)]/40"
-                animate={{ scale: [1, 1.15, 1], opacity: [1, 0, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-              />
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-black text-[var(--text-primary)]">Elaborazione PDF in corso…</p>
+              <p className="text-sm font-black text-[var(--text-primary)]">Analisi del foglio di calcolo…</p>
               <p className="text-[10px] text-[var(--text-muted)]">
-                Analisi pagina {pdfProgress.done} di {pdfProgress.total}
+                Lettura righe e corrispondenza colonne in corso
               </p>
             </div>
-
-            <div className="max-w-xs mx-auto space-y-2">
-              <div className="w-full h-2 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-[var(--color-primary)]"
-                  initial={{ width: '0%' }}
-                  animate={{
-                    width: pdfProgress.total > 0
-                      ? `${Math.round((pdfProgress.done / pdfProgress.total) * 100)}%`
-                      : '10%'
-                  }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                />
-              </div>
-              <p className="text-[10px] text-[var(--text-muted)] font-mono">
-                {pdfProgress.total > 0
-                  ? `${Math.round((pdfProgress.done / pdfProgress.total) * 100)}%`
-                  : 'Inizializzazione...'}
-              </p>
-            </div>
-
-            <p className="text-[9px] text-[var(--text-muted)] opacity-60">
-              Questo richiede qualche secondo, non chiudere la finestra
-            </p>
           </motion.div>
         )}
 
