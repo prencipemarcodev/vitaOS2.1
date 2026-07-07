@@ -14,10 +14,11 @@
  */
 
 import * as pdfjsLib from 'pdfjs-dist'
+import PDFWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker'
 
-// Configura il worker di pdf.js tramite il CDN ufficiale corrispondente alla versione installata.
-// Questo evita problemi di bundling/resolving locali con Vite sia in sviluppo che in produzione.
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+// Inizializza il worker in modo nativo tramite Vite usando workerPort.
+// Questo crea un vero Worker del browser locale senza problemi di cross-origin o CDN.
+pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker()
 
 // ── Regex principale: rileva una riga di transazione ──────────────────────────
 // Formato: DD.MM.YYYY [testo...] € [-]X,XX
