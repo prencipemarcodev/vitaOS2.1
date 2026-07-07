@@ -68,7 +68,8 @@ export async function extractTextFromPDF(file, onProgress) {
     // Raggruppa i frammenti per coordinata Y (con tolleranza 3pt per la stessa riga)
     const lineMap = new Map()
 
-    for (const item of content.items) {
+    const items = content && Array.isArray(content.items) ? content.items : []
+    for (const item of items) {
       if (!item.str) continue
       const y = Math.round(item.transform[5] / 3) * 3  // snap a griglia 3pt
       const x = item.transform[4]
@@ -144,9 +145,12 @@ export function parseBankStatementText(text, categories = []) {
   const errors = []
 
   // Mappa categorie dell'utente (lowercase) per matching veloce
+  const safeCategories = Array.isArray(categories) ? categories : []
   const catMap = {}
-  for (const cat of categories) {
-    catMap[cat.name.toLowerCase().trim()] = cat
+  for (const cat of safeCategories) {
+    if (cat && cat.name) {
+      catMap[cat.name.toLowerCase().trim()] = cat
+    }
   }
 
   // Reset del lastIndex per sicurezza
@@ -180,7 +184,7 @@ export function parseBankStatementText(text, categories = []) {
       // Ricerca parziale
       if (!matchedCat && catKey) {
         for (const [key, cat] of Object.entries(catMap)) {
-          if (cat.type === type && (key.includes(catKey) || catKey.includes(key))) {
+          if (cat && cat.type === type && (key.includes(catKey) || catKey.includes(key))) {
             matchedCat = cat
             break
           }
@@ -189,7 +193,7 @@ export function parseBankStatementText(text, categories = []) {
 
       // Fallback: prima categoria del tipo corretto
       if (!matchedCat) {
-        matchedCat = categories.find(c => c.type === type) || null
+        matchedCat = safeCategories.find(c => c && c.type === type) || null
       }
 
       rows.push({
