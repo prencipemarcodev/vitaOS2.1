@@ -6,7 +6,7 @@
  *
  * Esempi reali:
  *   23.06.2026 Cotrap Bari SI Trasporti varie € -2,60
- *   28.05.2026 Bonifico istantaneo disposto da CILIBERTÌ LIBERO SI Stipendi e pensioni € 500,00
+ *   28.05.2026 Bonifico istantaneo disposto da Xxxxxx Xxxxxxx SI Stipendi e pensioni € 500,00
  *   05.06.2026 Accantonamento sul Salvadanaio SI Investimenti, BDR e Salvadanaio € -151,00
  *
  * I movimenti verso/dal Salvadanaio (BDR) sono transferimenti interni e vengono
@@ -27,7 +27,7 @@ const TX_LINE_RE = /(\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4})\s+([\s\S]*?)\s+€\s*([
 
 // ── Keywords che identificano movimenti verso/dal Salvadanaio ─────────────────
 const SAVINGS_DESC_KW = ['accantonamento', 'salvadanaio', 'arrotondamento operazioni', 'movimento salvadanaio']
-const SAVINGS_CAT_KW  = ['bdr', 'salvadanaio', 'investimenti', 'disinvestimenti']
+const SAVINGS_CAT_KW = ['bdr', 'salvadanaio', 'investimenti', 'disinvestimenti']
 
 /**
  * Determina se un movimento è un trasferimento verso/dal Salvadanaio (BDR).
@@ -39,7 +39,7 @@ const SAVINGS_CAT_KW  = ['bdr', 'salvadanaio', 'investimenti', 'disinvestimenti'
  */
 export function isSavingsTransaction(description, rawCategory) {
   const desc = (description || '').toLowerCase()
-  const cat  = (rawCategory  || '').toLowerCase()
+  const cat = (rawCategory || '').toLowerCase()
   return (
     SAVINGS_DESC_KW.some(kw => desc.includes(kw)) ||
     SAVINGS_CAT_KW.some(kw => cat.includes(kw))
