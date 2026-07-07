@@ -170,7 +170,7 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
       for (let i = 0; i < payload.length; i += BATCH_SIZE) {
         const batch = payload.slice(i, i + BATCH_SIZE)
         const { data, error } = await supabase
-          .from('finance_transactions')
+          .from('transactions')
           .insert(batch)
           .select()
 
@@ -181,7 +181,7 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
 
       // 3. Ricarica tutte le transazioni
       const { data: freshTx } = await supabase
-        .from('finance_transactions')
+        .from('transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('date', { ascending: false })
