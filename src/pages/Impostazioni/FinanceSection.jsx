@@ -16,6 +16,7 @@ import { getAccounts } from '@/lib/accounts'
 import { toast } from 'sonner'
 
 import BudgetConfig from './BudgetConfig'
+import BankImportPanel from './BankImportPanel'
 
 
 function FinanceSection() {
@@ -190,6 +191,18 @@ function FinanceSection() {
 
   return (
     <div className="space-y-6">
+
+      {/* Import Estratto Conto */}
+      <Card padding="lg" className="space-y-4">
+        <div>
+          <p className="text-sm font-black text-[var(--text-primary)]">Importa Estratto Conto</p>
+          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-0.5">
+            Carica il PDF del tuo estratto conto per importare lo storico dei movimenti
+            e calcolare automaticamente il saldo iniziale.
+          </p>
+        </div>
+        <BankImportPanel compact={false} />
+      </Card>
 
       <BudgetConfig />
 

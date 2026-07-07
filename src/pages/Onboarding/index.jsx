@@ -13,6 +13,7 @@ import StepOrariLavoro from './StepOrariLavoro'
 import StepOrariStudioGym from './StepOrariStudioGym'
 import StepCalendario from './StepCalendario'
 import StepSaldoIniziale from './StepSaldoIniziale'
+import StepImportMovimenti from './StepImportMovimenti'
 import StepPrimoRisparmio from './StepPrimoRisparmio'
 import StepVeicolo from './StepVeicolo'
 import StepNotifiche from './StepNotifiche'
@@ -25,6 +26,7 @@ const STEPS = [
   { id: 'studio_gym',  label: 'Studio & Palestra', component: StepOrariStudioGym },
   { id: 'calendario',  label: 'Calendario & Ferie', component: StepCalendario },
   { id: 'saldo',       label: 'Saldo iniziale',   component: StepSaldoIniziale },
+  { id: 'import_movimenti', label: 'Storico movimenti', component: StepImportMovimenti },
   { id: 'risparmio',   label: 'Primo risparmio',  component: StepPrimoRisparmio },
   { id: 'veicolo',     label: 'Il tuo Garage',    component: StepVeicolo },
   { id: 'notifiche',   label: 'Promemoria',       component: StepNotifiche },

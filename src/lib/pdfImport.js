@@ -6,8 +6,11 @@
  *
  * Esempi reali:
  *   23.06.2026 Cotrap Bari SI Trasporti varie € -2,60
- *   28.05.2026 Bonifico istantaneo disposto da Cognome Nome SI Stipendi e pensioni € 500,00
+ *   28.05.2026 Bonifico istantaneo disposto da CILIBERTÌ LIBERO SI Stipendi e pensioni € 500,00
  *   05.06.2026 Accantonamento sul Salvadanaio SI Investimenti, BDR e Salvadanaio € -151,00
+ *
+ * I movimenti verso/dal Salvadanaio (BDR) sono transferimenti interni e vengono
+ * separati dai movimenti regolari con il flag _is_savings.
  */
 
 import * as pdfjsLib from 'pdfjs-dist'
@@ -18,7 +21,28 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
 // ── Regex principale: rileva una riga di transazione ──────────────────────────
 // Formato: DD.MM.YYYY [testo...] € [-]X,XX
 // Il segno può stare dentro l'importo oppure manca (sempre positivo)
-const TX_LINE_RE = /(\d{2}\.\d{2}\.\d{4})\s+([\s\S]*?)\s+€\s*([-+]?[\d.]+,\d{2})/g
+const TX_LINE_RE = /(\.\d{2}\.\d{4}|\d{2}\.\d{2}\.\d{4})\s+([\s\S]*?)\s+€\s*([-+]?[\d.]+,\d{2})/g
+
+// ── Keywords che identificano movimenti verso/dal Salvadanaio ─────────────────
+const SAVINGS_DESC_KW = ['accantonamento', 'salvadanaio', 'arrotondamento operazioni', 'movimento salvadanaio']
+const SAVINGS_CAT_KW  = ['bdr', 'salvadanaio', 'investimenti', 'disinvestimenti']
+
+/**
+ * Determina se un movimento è un trasferimento verso/dal Salvadanaio (BDR).
+ * Questi sono trasferimenti interni e non vere entrate/uscite.
+ *
+ * @param {string} description
+ * @param {string} rawCategory
+ * @returns {boolean}
+ */
+export function isSavingsTransaction(description, rawCategory) {
+  const desc = (description || '').toLowerCase()
+  const cat  = (rawCategory  || '').toLowerCase()
+  return (
+    SAVINGS_DESC_KW.some(kw => desc.includes(kw)) ||
+    SAVINGS_CAT_KW.some(kw => cat.includes(kw))
+  )
+}
 
 /**
  * Estrae il testo grezzo da un file PDF mantenendo l'ordine delle righe.
@@ -177,6 +201,7 @@ export function parseBankStatementText(text, categories = []) {
         payment_method: 'bank',
         _raw_category: rawCategory,
         _cat_matched: !!matchedCat && catKey !== '',
+        _is_savings: isSavingsTransaction(description, rawCategory),
       })
     } catch (e) {
       errors.push({ line: lineCount, message: `Errore parsing: ${e.message}`, raw: match[0] })
