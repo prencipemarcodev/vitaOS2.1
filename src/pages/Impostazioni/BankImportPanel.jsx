@@ -116,7 +116,7 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
       setStep(STEP.PREVIEW)
     } catch (err) {
       console.error('PDF parse error:', err)
-      toast.error('Errore durante l\'elaborazione del PDF. Assicurati che sia un estratto conto valido.')
+      toast.error(`Errore elaborazione PDF: ${err.message || err}`)
       setStep(STEP.UPLOAD)
     }
   }, [categories])
