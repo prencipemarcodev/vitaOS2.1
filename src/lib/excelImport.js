@@ -115,10 +115,10 @@ export function parseExcelStatement(file, categories = []) {
           // Normalizza in stringhe per la ricerca
           const cells = r.map(c => String(c || '').toLowerCase().trim())
           
-          // Cerca colonne chiave
+          // Cerca colonne chiave gestendo in modo sicuro eventuali elementi undefined (array sparsi)
           const dateIdx = cells.findIndex(c => c === 'data')
           const descIdx = cells.findIndex(c => c === 'operazione' || c === 'descrizione' || c === 'dettagli')
-          const catIdx = cells.findIndex(c => c.includes('categoria'))
+          const catIdx = cells.findIndex(c => c && typeof c === 'string' && c.includes('categoria'))
           const amountIdx = cells.findIndex(c => c === 'importo' || c === 'valore' || c === 'ammontare')
 
           if (dateIdx !== -1 && amountIdx !== -1) {

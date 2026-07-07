@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import {
   Upload, FileText, AlertCircle, CheckCircle2, X,
   ChevronDown, ChevronUp, TrendingUp, TrendingDown,
-  Calculator, Landmark, FileUp, ArrowRight, RefreshCw
+  Calculator, Landmark, FileUp, ArrowRight, RefreshCw,
+  Loader2
 } from 'lucide-react'
 import { parseExcelStatement } from '@/lib/excelImport'
 import { getBankImportStats } from '@/lib/pdfImport' // riutilizziamo la funzione helper delle statistiche
@@ -24,11 +25,11 @@ const BATCH_SIZE = 25
 // Step IDs
 // ─────────────────────────────────────────────────
 const STEP = {
-  UPLOAD:     'upload',
+  UPLOAD: 'upload',
   PROCESSING: 'processing',
-  PREVIEW:    'preview',
-  IMPORTING:  'importing',
-  DONE:       'done',
+  PREVIEW: 'preview',
+  IMPORTING: 'importing',
+  DONE: 'done',
 }
 
 export default function BankImportPanel({ onImportDone, compact = false }) {
@@ -42,44 +43,44 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
 
   // ── Netto delle transazioni GIÀ presenti nel DB ──
   // Incluse nella formula del saldo iniziale per profili già in uso.
-  const existingIncome  = historicalTransactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
+  const existingIncome = historicalTransactions.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
   const existingExpense = historicalTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount || 0), 0)
-  const existingNet     = existingIncome - existingExpense
-  const hasExistingTx  = historicalTransactions.length > 0
+  const existingNet = existingIncome - existingExpense
+  const hasExistingTx = historicalTransactions.length > 0
 
   // ── State ──
-  const [step, setStep]                     = useState(STEP.UPLOAD)
-  const [isDragging, setIsDragging]         = useState(false)
-  const [fileName, setFileName]             = useState(null)
-  const [parsed, setParsed]                 = useState(null)
-  const [pdfProgress, setPdfProgress]       = useState({ done: 0, total: 1 })
+  const [step, setStep] = useState(STEP.UPLOAD)
+  const [isDragging, setIsDragging] = useState(false)
+  const [fileName, setFileName] = useState(null)
+  const [parsed, setParsed] = useState(null)
+  const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 1 })
   // Pre-compila con saldo inserito nello step precedente (onboarding)
   const [currentBalance, setCurrentBalance] = useState(
     userConfig?.initial_bank_balance ? String(userConfig.initial_bank_balance) : ''
   )
   const [selectedAccount, setSelectedAccount] = useState(accounts[0]?.id || 'bank')
-  const [showErrors, setShowErrors]           = useState(false)
-  const [showPreview, setShowPreview]         = useState(true)
-  const [importProgress, setImportProgress]   = useState({ done: 0, total: 0 })
-  const [importResult, setImportResult]       = useState(null)
+  const [showErrors, setShowErrors] = useState(false)
+  const [showPreview, setShowPreview] = useState(true)
+  const [importProgress, setImportProgress] = useState({ done: 0, total: 0 })
+  const [importResult, setImportResult] = useState(null)
 
   // ── Derived (solo quando parsed è disponibile) ──
   const stats = parsed ? getBankImportStats(parsed.rows, parsed.errors) : null
 
   // Separa movimenti Salvadanaio dai movimenti regolari
-  const savingsRows  = parsed?.rows.filter(r => r._is_savings)  ?? []
-  const regularRows  = parsed?.rows.filter(r => !r._is_savings) ?? []
+  const savingsRows = parsed?.rows.filter(r => r._is_savings) ?? []
+  const regularRows = parsed?.rows.filter(r => !r._is_savings) ?? []
 
   // Netto salvadanaio: accantonato = uscite verso savings - entrate da savings
-  const savingsIncome      = savingsRows.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0)
-  const savingsExpense     = savingsRows.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0)
+  const savingsIncome = savingsRows.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0)
+  const savingsExpense = savingsRows.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0)
   const savingsAccumulated = savingsExpense - savingsIncome   // positivo = denaro in savings
   const hasSavingsMovements = savingsRows.length > 0
 
   // Netto movimenti regolari (no savings)
-  const regularIncome  = regularRows.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0)
+  const regularIncome = regularRows.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0)
   const regularExpense = regularRows.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0)
-  const regularNet     = regularIncome - regularExpense
+  const regularNet = regularIncome - regularExpense
 
   const currentBalVal = currentBalance !== '' ? parseFloat(currentBalance.replace(',', '.')) : null
 
@@ -155,12 +156,12 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
       // 2. Insert solo movimenti regolari in batch con progress tracking
       // I movimenti BDR/Salvadanaio sono trasferimenti interni → esclusi
       const payload = regularRows.map(row => ({
-        user_id:        user.id,
-        date:           row.date,
-        description:    row.description,
-        amount:         row.amount,
-        type:           row.type,
-        category:       row.category,
+        user_id: user.id,
+        date: row.date,
+        description: row.description,
+        amount: row.amount,
+        type: row.type,
+        category: row.category,
         payment_method: selectedAccount,
       }))
 
