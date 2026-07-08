@@ -31,6 +31,7 @@ function StepImportMovimenti({ formData, updateFormData, onFinish }) {
       {/* Panel */}
       <BankImportPanel
         compact={false}
+        isOnboarding={true}
         onImportDone={() => {
           // Segna che l'import è stato effettuato, ma non forza avanzamento
           updateFormData({ bank_import_done: true })

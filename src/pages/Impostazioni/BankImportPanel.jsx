@@ -5,11 +5,12 @@ import {
   Upload, FileText, AlertCircle, CheckCircle2, X,
   ChevronDown, ChevronUp, TrendingUp, TrendingDown,
   Calculator, Landmark, FileUp, ArrowRight, RefreshCw,
-  Loader2
+  Loader2, PiggyBank
 } from 'lucide-react'
 import { parseExcelStatement } from '@/lib/excelImport'
 import { getBankImportStats } from '@/lib/pdfImport' // riutilizziamo la funzione helper delle statistiche
 import { useFinanceStore } from '@/store/useFinanceStore'
+import { useSavingsStore } from '@/store/useSavingsStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useAppStore } from '@/store/useAppStore'
 import { getAccounts } from '@/lib/accounts'
@@ -84,12 +85,12 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
 
   const currentBalVal = currentBalance !== '' ? parseFloat(currentBalance.replace(',', '.')) : null
 
-  // Formula saldo iniziale (solo movimenti regolari + tx esistenti):
-  //   saldo_iniziale = saldo_libero_oggi − netto_regular − netto_già_tracciato
-  // L'utente deve inserire il saldo LIBERO (escluso salvadanaio)
+  // Formula saldo iniziale (movimenti totali dell'estratto conto + tx esistenti):
+  //   saldo_iniziale = saldo_libero_oggi − netto_totale_movimenti − netto_già_tracciato
+  // Gli accantonamenti al salvadanaio riducono la liquidità e vanno considerati nella variazione.
   const computedInitial =
-    currentBalVal !== null && !isNaN(currentBalVal)
-      ? currentBalVal - regularNet - existingNet
+    currentBalVal !== null && !isNaN(currentBalVal) && stats
+      ? currentBalVal - stats.netBalance - existingNet
       : null
 
   // ─────────────────────────────────────────────────
@@ -200,6 +201,80 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
         const inc = freshTx.filter(t => t.type === 'income').reduce((s, t) => s + parseFloat(t.amount), 0)
         const exp = freshTx.filter(t => t.type === 'expense').reduce((s, t) => s + parseFloat(t.amount), 0)
         setCumulativeBalance(baseBalance + inc - exp)
+      }
+
+      // 5. Se ci sono risparmi accantonati rilevati, inseriamo/aggiorniamo il piano speciale "Salvadanaio (Non allocato)"
+      if (savingsAccumulated > 0) {
+        try {
+          // Controlla se esiste già un piano speciale per non duplicarlo
+          const { data: existingPlan, error: checkErr } = await supabase
+            .from('saving_plans')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('name', 'Salvadanaio (Non allocato)')
+            .maybeSingle()
+
+          if (!checkErr) {
+            if (!existingPlan) {
+              // Crea il piano di risparmio speciale
+              const { data: newPlan, error: insertErr } = await supabase
+                .from('saving_plans')
+                .insert({
+                  user_id: user.id,
+                  name: 'Salvadanaio (Non allocato)',
+                  target_amount: 0,
+                  current_amount: savingsAccumulated,
+                  type: 'piggy_bank',
+                  icon: 'PiggyBank',
+                  color: '#9b59b6',
+                  is_active: true
+                })
+                .select()
+                .single()
+
+              if (!insertErr && newPlan) {
+                // Crea il relativo movimento storico
+                await supabase.from('saving_movements').insert({
+                  plan_id: newPlan.id,
+                  amount: savingsAccumulated,
+                  type: 'deposit',
+                  date: new Date().toISOString().split('T')[0],
+                  notes: 'Saldo iniziale da importazione estratto conto'
+                })
+              }
+            } else {
+              // Aggiorna il piano esistente sommandolo
+              const newAmount = parseFloat(existingPlan.current_amount || 0) + savingsAccumulated
+              const { error: updateErr } = await supabase
+                .from('saving_plans')
+                .update({ current_amount: newAmount })
+                .eq('id', existingPlan.id)
+
+              if (!updateErr) {
+                await supabase.from('saving_movements').insert({
+                  plan_id: existingPlan.id,
+                  amount: savingsAccumulated,
+                  type: 'deposit',
+                  date: new Date().toISOString().split('T')[0],
+                  notes: 'Accumulo integrato da importazione estratto conto'
+                })
+              }
+            }
+          }
+
+          // Ricarica i piani di risparmio nello store globale `useSavingsStore`
+          const { data: updatedPlans } = await supabase
+            .from('saving_plans')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at')
+          
+          if (updatedPlans) {
+            useSavingsStore.getState().setPlans(updatedPlans)
+          }
+        } catch (saveErr) {
+          console.error("Errore salvataggio piano speciale Salvadanaio:", saveErr)
+        }
       }
 
       setImportResult({
@@ -377,9 +452,9 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
                 <p className="text-xs font-black text-[var(--text-primary)]">{regularRows.length}</p>
               </div>
               {hasSavingsMovements && (
-                <div className="p-3 rounded-2xl bg-amber-500/8 border border-amber-500/20 text-center">
+                <div className="p-3 rounded-2xl bg-amber-500/8 border border-amber-500/20 text-center flex flex-col justify-center items-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <span className="text-[9px]">🐷</span>
+                    <PiggyBank size={10} className="text-amber-500" />
                     <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500">Salvadanaio</span>
                   </div>
                   <p className="text-xs font-black text-[var(--text-primary)]">
@@ -391,8 +466,8 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
 
             {/* Banner Salvadanaio */}
             {hasSavingsMovements && (
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-amber-500/6 border border-amber-500/20">
-                <span className="text-base shrink-0">🐷</span>
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-amber-500/6 border border-amber-500/20 text-left">
+                <PiggyBank size={16} className="text-amber-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="text-xs font-black text-[var(--text-primary)]">
                     Rilevati {savingsRows.length} movimenti Salvadanaio
@@ -742,11 +817,11 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="p-4 rounded-2xl bg-amber-500/6 border border-amber-500/20 space-y-3"
+                className="p-4 rounded-2xl bg-amber-500/6 border border-amber-500/20 space-y-3 text-left"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/12 flex items-center justify-center text-lg shrink-0">
-                    🐷
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/12 flex items-center justify-center shrink-0">
+                    <PiggyBank size={18} className="text-amber-500" />
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-black text-[var(--text-primary)]">
@@ -758,13 +833,20 @@ export default function BankImportPanel({ onImportDone, compact = false }) {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => navigate('/risparmi')}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-xs font-bold text-amber-500 transition-all"
-                >
-                  <span>🐷</span>
-                  Vai ai Risparmi · distribuisci €{importResult.savingsAccumulated.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                </button>
+
+                {isOnboarding ? (
+                  <div className="text-center py-2 px-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-[9px] text-amber-600 font-bold leading-normal">
+                    Una volta completato l&apos;onboarding, troverai questi €{importResult.savingsAccumulated.toLocaleString('it-IT', { minimumFractionDigits: 2 })} nella sezione <strong>Risparmi</strong> pronti da ripartire.
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => navigate('/risparmi')}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-xs font-bold text-amber-500 transition-all"
+                  >
+                    <PiggyBank size={14} className="text-amber-500" />
+                    Vai ai Risparmi · distribuisci €{importResult.savingsAccumulated.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                  </button>
+                )}
               </motion.div>
             )}
 
