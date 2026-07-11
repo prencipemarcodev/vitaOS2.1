@@ -52,7 +52,7 @@ export default function BustePaga() {
   // Calcola statistiche storiche complessive
   const stats = useMemo(() => {
     if (!payslips || payslips.length === 0) return { avgNet: 0, totalTfr: 0, totalTaxes: 0, currentVacation: 0 }
-    
+
     // Ordinate per data decrescente per trovare la busta paga più recente
     const sorted = [...payslips].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     const currentVacation = parseFloat(sorted[0].accrued_vacation || 0)
@@ -70,7 +70,7 @@ export default function BustePaga() {
   const chartData = useMemo(() => {
     if (!payslips || payslips.length === 0) return []
     const sorted = [...payslips].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    
+
     let cumulativeTfr = 0
     return sorted.map(p => {
       cumulativeTfr += parseFloat(p.tfr_amount || 0)
@@ -109,7 +109,7 @@ export default function BustePaga() {
         toast.info("PDF scansionato rilevato. Avvio del riconoscimento del testo (OCR)... Potrebbe richiedere qualche secondo.")
         setParsing(true)
         setProgress({ current: 0, total: 0 })
-        
+
         text = await extractTextViaOCR(selectedFile, (current, total) => {
           setProgress({ current, total })
         })
@@ -208,9 +208,9 @@ export default function BustePaga() {
         // 2. Se abilitato, crea la transazione stornata in Finanze (Stipendio)
         if (createTx) {
           // Trova la categoria 'Stipendio' o simile
-          const salaryCategory = categories.find(c => c.name.toLowerCase().includes('stipend')) || 
-                                 categories.find(c => c.type === 'income')
-          
+          const salaryCategory = categories.find(c => c.name.toLowerCase().includes('stipend')) ||
+            categories.find(c => c.type === 'income')
+
           const txPayload = {
             user_id: user.id,
             amount: parseFloat(formData.netAmount || 0),
@@ -269,7 +269,7 @@ export default function BustePaga() {
       <Header title="Buste Paga" showNotification />
 
       <div className="p-6 max-w-6xl mx-auto space-y-8">
-        
+
         {/* ROW 1: STATS BADGES */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl p-4 shadow-sm flex items-center gap-4">
@@ -331,7 +331,7 @@ export default function BustePaga() {
               </div>
               {parsing && (
                 <div className="w-full max-w-xs bg-[var(--bg-base)] h-2 rounded-full overflow-hidden mt-4">
-                  <div 
+                  <div
                     className="bg-[var(--color-primary)] h-full transition-all duration-300"
                     style={{ width: `${(progress.current / (progress.total || 1)) * 100}%` }}
                   />
@@ -469,15 +469,15 @@ export default function BustePaga() {
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
                     <XAxis dataKey="period" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
                     <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', borderRadius: 12 }} 
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', borderRadius: 12 }}
                       labelStyle={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: 11 }}
                     />
                     <Area type="monotone" dataKey="net" stroke="var(--color-primary)" strokeWidth={2} fillOpacity={1} fill="url(#colorNet)" />
@@ -496,15 +496,15 @@ export default function BustePaga() {
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorTfr" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8e44ad" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#8e44ad" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#8e44ad" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#8e44ad" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
                     <XAxis dataKey="period" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
                     <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', borderRadius: 12 }} 
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', borderRadius: 12 }}
                       labelStyle={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: 11 }}
                     />
                     <Area type="monotone" dataKey="tfr" stroke="#8e44ad" strokeWidth={2} fillOpacity={1} fill="url(#colorTfr)" />
