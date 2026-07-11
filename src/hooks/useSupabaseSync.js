@@ -8,6 +8,8 @@ import { useHealthStore } from '@/store/useHealthStore'
 import { useNoteStore } from '@/store/useNoteStore'
 import { useSavingsStore } from '@/store/useSavingsStore'
 import { useTaskStore } from '@/store/useTaskStore'
+import { usePayslipStore } from '@/store/usePayslipStore'
+
 import { startOfMonth, endOfMonth, format } from 'date-fns'
 import { getAccounts } from '@/lib/accounts'
 
@@ -29,6 +31,8 @@ export function useSupabaseSync() {
   const { setWorkoutSessions, setWeightLog, setGymSchedules, setSleepLog, setWaterLog, setLoading: setHealthLoading } = useHealthStore()
   const { setNotes, setLoading: setNoteLoading } = useNoteStore()
   const { setPlans, setMovements, setLoading: setSavLoading } = useSavingsStore()
+  const { setPayslips, setLoading: setPayslipsLoading } = usePayslipStore()
+
 
   const monthDate = new Date(selectedMonth)
   const monthStart = format(startOfMonth(monthDate), 'yyyy-MM-dd')
@@ -326,6 +330,20 @@ export function useSupabaseSync() {
     setSavLoading(false)
   }, [getAuthUser, setPlans, setMovements, setSavLoading])
 
+  // ── Load payslips ──
+  const loadPayslips = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) return
+    setPayslipsLoading(true)
+    const { data } = await supabase
+      .from('payslips')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false })
+    if (data) setPayslips(data)
+    setPayslipsLoading(false)
+  }, [getAuthUser, setPayslips, setPayslipsLoading])
+
   // ── Initial load ──
   useEffect(() => {
     loadUserConfig()
@@ -333,6 +351,7 @@ export function useSupabaseSync() {
     loadSavings()
     loadHealth()
     loadSleepWater()
+    loadPayslips()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reload month-dependent data when month changes ──
@@ -352,6 +371,7 @@ export function useSupabaseSync() {
       sleepWater: loadSleepWater,
       notes: loadNotes,
       savings: loadSavings,
+      payslips: loadPayslips,
       all: () => {
         loadUserConfig()
         loadCalendar()
@@ -361,6 +381,7 @@ export function useSupabaseSync() {
         loadSleepWater()
         loadNotes()
         loadSavings()
+        loadPayslips()
       },
     },
   }

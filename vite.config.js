@@ -11,4 +11,7 @@ export default defineConfig(({ mode }) => ({
     // Disabilita source maps in produzione per non esporre il codice sorgente (VUL-009)
     sourcemap: mode !== 'production',
   },
+  test: {
+    globals: true,
+  },
 }))

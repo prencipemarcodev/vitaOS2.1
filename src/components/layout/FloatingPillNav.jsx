@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Calendar, FileSignature,
   Wallet, MoreHorizontal, X,
-  PiggyBank, Heart, StickyNote, Settings, Car
+  PiggyBank, Heart, StickyNote, Settings, Car,
+  FileText
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useWorkSessionStore } from '@/store/useWorkSessionStore'
@@ -19,6 +20,7 @@ const MAIN_NAV = [
 ]
 
 const MORE_NAV = [
+  { to: '/buste-paga',   icon: FileText,   label: 'Buste Paga' },
   { to: '/risparmi',     icon: PiggyBank,  label: 'Risparmi' },
   { to: '/salute',       icon: Heart,      label: 'Salute' },
   { to: '/note',         icon: StickyNote, label: 'Note' },

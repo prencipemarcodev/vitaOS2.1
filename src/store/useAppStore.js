@@ -42,16 +42,6 @@ export const useAppStore = create(
           const gps_keepalive_interval_ms = nextConfig.gps_keepalive_interval_ms ?? (localStorage.getItem('vitaos_gps_gps_keepalive_interval_ms') ? parseInt(localStorage.getItem('vitaos_gps_gps_keepalive_interval_ms')) : 2000)
 
           let custom_accounts = nextConfig.custom_accounts
-          if (custom_accounts === undefined || custom_accounts === null) {
-            const localAcc = localStorage.getItem('vitaos_custom_accounts')
-            if (localAcc) {
-              try {
-                custom_accounts = JSON.parse(localAcc)
-              } catch (e) {
-                console.error("Errore nel parsing locale dei conti:", e)
-              }
-            }
-          }
 
           // Ulteriore salvaguardia se custom_accounts è rimasto una stringa
           if (typeof custom_accounts === 'string') {
@@ -74,15 +64,6 @@ export const useAppStore = create(
           }
           if ('gps_keepalive_interval_ms' in nextConfig && nextConfig.gps_keepalive_interval_ms !== undefined) {
             localStorage.setItem('vitaos_gps_gps_keepalive_interval_ms', nextConfig.gps_keepalive_interval_ms.toString())
-          }
-          if ('custom_accounts' in nextConfig && nextConfig.custom_accounts !== undefined && nextConfig.custom_accounts !== null) {
-            let toSave = nextConfig.custom_accounts
-            if (typeof toSave === 'string') {
-              try { toSave = JSON.parse(toSave) } catch (e) {}
-            }
-            if (Array.isArray(toSave)) {
-              localStorage.setItem('vitaos_custom_accounts', JSON.stringify(toSave))
-            }
           }
 
           const liquidity_safety_threshold = nextConfig.liquidity_safety_threshold !== undefined ? parseFloat(nextConfig.liquidity_safety_threshold) : 200

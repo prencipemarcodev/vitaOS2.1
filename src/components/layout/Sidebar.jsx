@@ -2,7 +2,8 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Calendar, FileSignature, Wallet,
-  PiggyBank, Heart, StickyNote, Settings, LogIn, Car
+  PiggyBank, Heart, StickyNote, Settings, LogIn, Car,
+  FileText
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { to: '/',             icon: LayoutDashboard, label: 'Overview',      id: '1' },
   { to: '/calendario',   icon: Calendar,        label: 'Calendario',    id: '2' },
   { to: '/firme',        icon: FileSignature,   label: 'Firme',         id: '3' },
+  { to: '/buste-paga',   icon: FileText,        label: 'Buste Paga',    id: '3b' },
   { to: '/finanze',      icon: Wallet,          label: 'Finanze',       id: '4' },
   { to: '/risparmi',     icon: PiggyBank,       label: 'Risparmi',      id: '5' },
   { to: '/veicolo',      icon: Car,             label: 'Veicolo',       id: '5b' },

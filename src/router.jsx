@@ -6,6 +6,7 @@ import Skeleton from '@/components/ui/Skeleton'
 const Overview     = lazy(() => import('@/pages/Overview'))
 const Calendario   = lazy(() => import('@/pages/Calendario'))
 const Firme        = lazy(() => import('@/pages/Firme'))
+const BustePaga    = lazy(() => import('@/pages/BustePaga'))
 const Finanze      = lazy(() => import('@/pages/Finanze'))
 const Risparmi     = lazy(() => import('@/pages/Risparmi'))
 const Salute       = lazy(() => import('@/pages/Salute'))
@@ -31,6 +32,7 @@ function AppRouter() {
         <Route path="/"             element={<Overview />} />
         <Route path="/calendario"   element={<Calendario />} />
         <Route path="/firme"        element={<Firme />} />
+        <Route path="/buste-paga"   element={<BustePaga />} />
         <Route path="/finanze"      element={<Finanze />} />
         <Route path="/risparmi"     element={<Risparmi />} />
         <Route path="/salute/*"     element={<Salute />} />

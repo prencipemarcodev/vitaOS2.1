@@ -107,16 +107,14 @@ function FinanceSection() {
         .eq('id', userConfig.id)
 
       if (error) {
-        localStorage.setItem('vitaos_custom_accounts', JSON.stringify(customClean))
-        console.warn("Failed remote update, synced to local storage", error)
-        toast.info("Configurazione salvata localmente! 💳")
+        console.error("Failed remote update:", error)
+        toast.error("Errore nel salvataggio dei conti sul server. Riprova più tardi. 💳")
       } else {
         toast.success("Configurazione conti salvata! 💳")
       }
     } catch (e) {
-      localStorage.setItem('vitaos_custom_accounts', JSON.stringify(customClean))
       console.error("Failed accounts save:", e)
-      toast.info("Configurazione salvata localmente! 💳")
+      toast.error("Impossibile connettersi al server per salvare i conti. 💳")
     }
   }
 

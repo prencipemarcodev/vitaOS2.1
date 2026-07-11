@@ -28,8 +28,9 @@ function Risparmi() {
   }, [plans])
 
   const totals = useMemo(() => {
-    const total = activePlans.reduce((s, p) => s + parseFloat(p.current_amount || 0), 0)
-    const target = activePlans.reduce((s, p) => s + parseFloat(p.target_amount || 0), 0)
+    const goalPlans = activePlans.filter(p => p.type === 'goal')
+    const total = goalPlans.reduce((s, p) => s + parseFloat(p.current_amount || 0), 0)
+    const target = goalPlans.reduce((s, p) => s + parseFloat(p.target_amount || 0), 0)
     return { total, target, progress: target > 0 ? (total / target) * 100 : 0 }
   }, [activePlans])
 

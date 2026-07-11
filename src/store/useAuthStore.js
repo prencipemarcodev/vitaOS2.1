@@ -5,7 +5,6 @@ export const useAuthStore = create((set) => ({
   session: null,
   user: null,
   loading: true,
-  isAdminMaster: false,
 
   setSession: (session) => set({ 
     session, 
@@ -13,11 +12,9 @@ export const useAuthStore = create((set) => ({
     loading: false 
   }),
 
-  setIsAdminMaster: (val) => set({ isAdminMaster: val }),
-
   signOut: async () => {
     await supabase.auth.signOut()
-    set({ session: null, user: null, loading: false, isAdminMaster: false })
+    set({ session: null, user: null, loading: false })
 
     // ── Svuota tutti gli store per evitare data leak tra utenti ──
     // Importazione lazy per evitare circular deps

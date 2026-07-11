@@ -25,3 +25,10 @@ pnpm-debug.log*
 
 # OS
 .DS_Store
+
+# Private folders
+buste-paga/
+bank/
+mail/
+migration/
+docs/
