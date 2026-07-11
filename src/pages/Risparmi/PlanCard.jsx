@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { Edit2, Trash2, Plus, Minus, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ResponsiveContainer, AreaChart, Area, Tooltip as RechartsTooltip } from 'recharts'
 import { formatCurrency } from '@/lib/formatters'
 import { supabase } from '@/lib/supabase'
 import { useSavingsStore } from '@/store/useSavingsStore'
@@ -69,6 +70,44 @@ function PlanCard({ plan, onEdit, advice = null }) {
   const isQuotaCompletedThisMonth = useMemo(() => {
     return requiredMonthly > 0 && depositedThisMonth >= (requiredMonthly - 0.01)
   }, [requiredMonthly, depositedThisMonth])
+
+  // Calcolo andamento storico cumulativo dei depositi
+  const planMovements = useMemo(() => {
+    const filtered = movements
+      .filter(m => m.plan_id === plan.id)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    const dataPoints = []
+    let balance = 0
+
+    // Punto iniziale a 0
+    dataPoints.push({ label: 'Inizio', val: 0 })
+
+    if (filtered.length === 0) {
+      // Nessun movimento registrato: disegna linea piatta da 0 al valore corrente
+      dataPoints.push({ label: 'Oggi', val: parseFloat(plan.current_amount || 0) })
+      return dataPoints
+    }
+
+    filtered.forEach((m) => {
+      const amt = parseFloat(m.amount || 0)
+      if (m.type === 'deposit') {
+        balance += amt
+      } else if (m.type === 'withdrawal') {
+        balance -= amt
+      }
+      const dateStr = new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+      dataPoints.push({ label: dateStr, val: parseFloat(balance.toFixed(2)) })
+    })
+
+    // Se il valore cumulato differisce dal saldo effettivo attuale del piano, allinealo inserendo il punto finale
+    const actualCurrent = parseFloat(plan.current_amount || 0)
+    if (Math.abs(balance - actualCurrent) > 0.05) {
+      dataPoints.push({ label: 'Oggi', val: actualCurrent })
+    }
+
+    return dataPoints
+  }, [movements, plan.id, plan.current_amount])
 
   const [customAmount, setCustomAmount] = useState('')
   const [method, setMethod] = useState(() => {
@@ -161,19 +200,53 @@ function PlanCard({ plan, onEdit, advice = null }) {
   }
 
   const handleDelete = async () => {
+    const accumulated = parseFloat(plan.current_amount || 0)
     const ok = await confirm({
       title: 'Elimina piano',
-      message: `Vuoi eliminare l'obiettivo "${plan.name}"? Questa azione è irreversibile.`,
+      message: accumulated > 0
+        ? `Vuoi eliminare l'obiettivo "${plan.name}"? Tutti i risparmi accantonati (${formatCurrency(accumulated)}) verranno riaccreditati sul tuo saldo.`
+        : `Vuoi eliminare l'obiettivo "${plan.name}"?`,
       variant: 'danger',
       confirmText: 'Elimina',
       cancelText: 'Annulla'
     })
     if (!ok) return
-    const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id).eq('user_id', user?.id)
-    if (!error) {
-      updatePlan(plan.id, { is_active: false }) // In alternativa removePlan(plan.id)
+
+    try {
+      // 1. Elimina il piano dal DB
+      const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id).eq('user_id', user?.id)
+      if (error) throw error
+
+      // 2. Se c'era del saldo accumulato (> 0), creiamo una transazione di riaccredito (Entrata / "+")
+      if (accumulated > 0) {
+        const today = new Date().toISOString().split('T')[0]
+        const savingsCategory = categories.find(c => c.name.toLowerCase().includes('risparmi'))
+        
+        const { data: tx } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: user?.id,
+            amount: accumulated,
+            type: 'income', // Riaccredito come entrata (+)
+            category: savingsCategory?.name || 'Risparmio',
+            description: `Riaccredito saldo per eliminazione piano: ${plan.name}`,
+            payment_method: 'bank',
+            date: today
+          })
+          .select()
+          .single()
+
+        if (tx) {
+          addTransaction(tx)
+          setCumulativeBalance(cumulativeBalance + accumulated)
+        }
+      }
+
       removePlan(plan.id)
-      toast.success('Piano eliminato')
+      toast.success(accumulated > 0 ? 'Piano eliminato e saldo riaccreditato!' : 'Piano eliminato')
+    } catch (err) {
+      console.error(err)
+      pushError("Errore nell'eliminazione del piano")
     }
   }
 
@@ -273,6 +346,9 @@ function PlanCard({ plan, onEdit, advice = null }) {
             )}
           </div>
         )}
+
+        {/* Sparkline dell'andamento dei depositi */}
+        <PlanSparkline data={planMovements} color={ringColor} />
       </div>
 
       {/* Goal actions */}
@@ -366,3 +442,46 @@ function PlanCard({ plan, onEdit, advice = null }) {
 }
 
 export default PlanCard
+
+function PlanSparkline({ data, color = 'var(--color-primary)' }) {
+  if (data.length <= 1) return null
+
+  // Crea un gradiente ID unico per ciascun piano
+  const gradientId = `colorSpark-${Math.random().toString(36).substr(2, 9)}`
+
+  return (
+    <div className="h-11 w-full mt-3 -mb-1 opacity-70 hover:opacity-100 transition-opacity">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.2}/>
+              <stop offset="95%" stopColor={color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <RechartsTooltip
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                return (
+                  <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-2 py-0.5 rounded-lg shadow-md text-[9px] font-bold text-[var(--text-primary)]">
+                    {payload[0].payload.label}: {formatCurrency(payload[0].value)}
+                  </div>
+                )
+              }
+              return null
+            }}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="val" 
+            stroke={color} 
+            strokeWidth={1.5}
+            fill={`url(#${gradientId})`}
+            dot={false}
+            activeDot={{ r: 3, strokeWidth: 1 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}

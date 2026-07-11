@@ -90,7 +90,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
                 {/* 1. Assenze (Ferie/Malattia) - Badge largo */}
                 {dayAbsence && (
                   <div className={clsx(
-                    'px-1 py-0.5 rounded-md text-[9.5px] font-black uppercase truncate leading-none mb-0.5',
+                    'px-1 py-0.5 rounded-md text-[8.5px] font-black uppercase truncate leading-none mb-0.5',
                     dayAbsence.type === 'ferie' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                   )}>
                     {dayAbsence.type === 'ferie' ? 'Ferie' : 'Malattia'}
@@ -101,7 +101,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
                 {getProgram(day).map((p, i) => (
                   <div 
                     key={i} 
-                    className="px-1 py-0.5 rounded-md text-[9.5px] font-black uppercase truncate leading-none"
+                    className="px-1 py-0.5 rounded-md text-[8.5px] font-black uppercase truncate leading-none"
                     style={{ backgroundColor: `${p.color}15`, color: p.color }}
                   >
                     {p.label}
@@ -114,7 +114,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
                 }).map((re, i) => (
                   <div 
                     key={`re-${i}`} 
-                    className="px-1 py-0.5 bg-purple-100 text-purple-700 rounded-md text-[9.5px] font-black uppercase truncate leading-none"
+                    className="px-1 py-0.5 bg-purple-100 text-purple-700 rounded-md text-[8.5px] font-black uppercase truncate leading-none"
                   >
                     {re.title}
                   </div>
@@ -124,7 +124,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
                 {dayEvents.slice(0, 1).map((e) => (
                   <div 
                     key={e.id} 
-                    className="px-1 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[9.5px] font-black uppercase truncate leading-none"
+                    className="px-1 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[8.5px] font-black uppercase truncate leading-none"
                   >
                     {e.title}
                   </div>
@@ -134,7 +134,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
                 {daySubs.map((sub) => (
                   <div 
                     key={sub.id} 
-                    className="px-1 py-0.5 bg-orange-100 text-orange-700 rounded-md text-[9.5px] font-black uppercase truncate leading-none"
+                    className="px-1 py-0.5 bg-orange-100 text-orange-700 rounded-md text-[8.5px] font-black uppercase truncate leading-none"
                     title={`Rinnovo ${sub.name}: €${parseFloat(sub.amount).toFixed(2)}`}
                   >
                     {sub.name} (€{parseFloat(sub.amount).toFixed(0)})

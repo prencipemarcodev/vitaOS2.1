@@ -123,18 +123,53 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
   }
 
   const handleDelete = async () => {
+    const accumulated = parseFloat(plan.current_amount || 0)
     const ok = await confirm({
       title: 'Elimina piano',
-      message: `Vuoi eliminare il fondo "${plan.name}"? Tutti i risparmi accantonati andranno persi.`,
+      message: accumulated > 0
+        ? `Vuoi eliminare il fondo "${plan.name}"? Tutti i risparmi accantonati (${formatCurrency(accumulated)}) verranno riaccreditati sul tuo saldo.`
+        : `Vuoi eliminare il fondo "${plan.name}"?`,
       variant: 'danger',
       confirmText: 'Elimina',
       cancelText: 'Annulla'
     })
     if (!ok) return
-    const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id).eq('user_id', user?.id)
-    if (!error) {
+
+    try {
+      // 1. Elimina il piano dal DB
+      const { error } = await supabase.from('saving_plans').delete().eq('id', plan.id).eq('user_id', user?.id)
+      if (error) throw error
+
+      // 2. Se c'era del saldo accumulato (> 0), creiamo una transazione di riaccredito (Entrata / "+")
+      if (accumulated > 0) {
+        const today = new Date().toISOString().split('T')[0]
+        const savingsCategory = categories.find(c => c.name.toLowerCase().includes('risparmi'))
+        
+        const { data: tx } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: user?.id,
+            amount: accumulated,
+            type: 'income', // Riaccredito come entrata (+)
+            category: savingsCategory?.name || 'Risparmio',
+            description: `Riaccredito saldo per eliminazione fondo: ${plan.name}`,
+            payment_method: 'bank',
+            date: today
+          })
+          .select()
+          .single()
+
+        if (tx) {
+          addTransaction(tx)
+          setCumulativeBalance(cumulativeBalance + accumulated)
+        }
+      }
+
       removePlan(plan.id)
-      toast.success('Fondo eliminato')
+      toast.success(accumulated > 0 ? 'Fondo eliminato e saldo riaccreditato!' : 'Fondo eliminato')
+    } catch (err) {
+      console.error(err)
+      pushError("Errore nell'eliminazione del fondo")
     }
   }
 
@@ -168,12 +203,7 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
             <span className="text-xs text-[var(--text-muted)] dark:text-stone-500 uppercase tracking-wider block">Saldo attuale</span>
             <span className="font-display text-xl font-medium text-[var(--text-primary)] dark:text-white">{formatCurrency(plan.current_amount)}</span>
           </div>
-          {advice?.safetyThreshold > 0 && (
-            <div className="text-left md:text-right">
-              <span className="text-xs text-[var(--text-muted)] dark:text-stone-500 uppercase tracking-wider block">Soglia minima</span>
-              <span className="font-display text-xl font-medium text-[var(--text-primary)] dark:text-white">{formatCurrency(advice.safetyThreshold)}</span>
-            </div>
-          )}
+
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/30">
               Emergenza
