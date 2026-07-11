@@ -379,7 +379,7 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-[#9b59b6] uppercase">Ricorrenza Annuale</p>
-                        <p className="text-xs font-semibold">🎂 {re.title}</p>
+                        <p className="text-xs font-semibold">{re.title}</p>
                       </div>
                     </div>
                   ))}

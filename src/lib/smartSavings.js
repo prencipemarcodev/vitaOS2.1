@@ -171,6 +171,8 @@ export function calculateSmartAdvice({
 
   plansWithUrgency.forEach(plan => {
     if (remainingBudget <= 0) return
+    if (plan.type === 'goal' && plan.missing <= 0) return
+    
     let amount = 0
     
     if (plan.type === 'piggy_bank' && isLiquidityLow) {
