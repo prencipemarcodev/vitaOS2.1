@@ -10,9 +10,16 @@ export function parsePayslipText(text) {
   // Normalizza le righe
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
   
+  const isCalendarLine = (str) => {
+    return /\b[0-9a-zA-Z]{2}\s*(Lu|Ma|Me|Gi|Ve|Sa|Do|D0|G1|EG)\b/i.test(str)
+  }
+
   // Trova tutti i numeri formattati in stile italiano/europeo in una stringa
   // e ritorna il primo numero valido che non sia un codice gestionale.
   const extractAmount = (str, rangeMin = 0, rangeMax = 999999) => {
+    // Se la riga corrisponde al calendario presenze, la escludiamo a priori
+    if (isCalendarLine(str)) return null
+
     // Trova numeri con virgola o punto per decimali ed eventuali spazi inseriti dall'OCR (es. "433, 00" o "2, 00")
     const matches = str.match(/[-+]?[\d.]+(?:\s*,\s*\d{2})?/g)
     if (!matches) return null
@@ -145,18 +152,68 @@ export function parsePayslipText(text) {
     5, 5000
   ) || scanForKeyword(['trattenuta irpef lorda', 'irpef lorda'], [], 5, 5000) || 0
 
-  // CONTRIBUTI
-  const contributions = scanForKeyword(['totale tratt socali', 'totale tratt sociali', 'tratt socali', 'tratt sociali', 'contributi', 'contrib.'], [], 5, 2000) || 0
+  // CONTRIBUTI (Priorità a "contributi" rispetto ai totali per evitare rumore del calendario)
+  const contributions = scanForKeyword(['contributi', 'contrib.', 'totale tratt sociali', 'tratt sociali', 'totale tratt socali', 'tratt socali'], [], 5, 2000) || 0
 
   // ORE ORDINARIE LAVORATE (Filtriamo per un valore plausibile, es. da 10 a 200 ore)
   const workedHours = scanForKeyword(['ore ordinarie', 'ore ordinare', 'ore ordinari', 'ore ord.'], [], 10, 250) || 
                       scanForKeyword(['ore lavorate', 'ore/og num', 'ore/gog num', 'ore'], ['cod', 'giustificat', 'matr'], 10, 250) || 0
 
-  // FERIE RESIDUE (Escludiamo TFR ed Anzianità, cerchiamo valori tipici di ore ferie residui, es. -50 a 300)
-  const accruedVacation = scanForKeyword(['residuo', 'residui', 'residu', 'restano', 'ferie residue'], ['tfr', 'anzianita', '8801'], -50, 350) || 0
+  // FERIE RESIDUE (Escludiamo contesto TFR, Anzianità ed escludiamo righe con TFR prima)
+  let accruedVacation = 0
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase()
+    const isVacationKeyword = ['residuo', 'residui', 'residu', 'restano', 'ferie residue'].some(kw => line.includes(kw))
+    const hasTfrContext = (i > 0 && lines[i-1].toLowerCase().includes('tfr')) || 
+                          (i > 1 && lines[i-2].toLowerCase().includes('tfr')) || 
+                          line.includes('tfr')
+    const hasExclude = ['anzianita', '8801', 'anno'].some(ex => line.includes(ex))
+    
+    if (isVacationKeyword && !hasTfrContext && !hasExclude) {
+      // Controlla le righe successive
+      for (let j = 1; j <= 4; j++) {
+        if (i + j < lines.length) {
+          const val = extractAmount(lines[i + j], -50, 350)
+          if (val !== null) {
+            accruedVacation = val
+            break
+          }
+        }
+      }
+      if (accruedVacation) break
+    }
+  }
 
-  // QUOTA TFR ACCANTONATO (Cerchiamo un accantonamento mensile tipico, es. da 10€ a 500€, escludendo basi imponibili elevate)
-  const tfrAmount = scanForKeyword(['tfr maturato', 'quota tfr', 'tfr'], ['retribuzione', 'retrbuzione', 'imponibile', 'imponbile', 'residuo', '8801'], 10, 600) || 0
+  // QUOTA TFR ACCANTONATO
+  let tfrAmount = scanForKeyword(['tfr maturato', 'quota tfr', 'tfr'], ['retribuzione', 'retrbuzione', 'imponibile', 'imponbile', 'residuo', '8801'], 10, 600) || 0
+  
+  // Heuristica speciale per TFR in scansioni colonnate:
+  // Se TFR è 0, cerca all'indietro a partire dalla riga "totale competenze" per trovare il primo valore numerico nel range plausibile del TFR (5% - 10% del lordo)
+  if (tfrAmount === 0) {
+    let compIndex = -1
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].toLowerCase()
+      if (line.includes('totale competenze') || line.includes('tot. competenze')) {
+        compIndex = i
+        break
+      }
+    }
+    if (compIndex > 0) {
+      const tfrMin = grossAmount > 0 ? grossAmount * 0.05 : 10
+      const tfrMax = grossAmount > 0 ? grossAmount * 0.10 : 300
+      for (let i = compIndex - 1; i >= 0 && i >= compIndex - 80; i--) {
+        const line = lines[i].toLowerCase()
+        const hasTfrExcludes = ['ctr', 'contributi', 'contrib', 'irpef', 'trattenuta', 'add.'].some(ex => line.includes(ex))
+        if (hasTfrExcludes) continue
+
+        const val = extractAmount(lines[i], tfrMin, tfrMax)
+        if (val !== null) {
+          tfrAmount = val
+          break
+        }
+      }
+    }
+  }
 
   return {
     month,
@@ -170,4 +227,5 @@ export function parsePayslipText(text) {
     tfrAmount
   }
 }
+
 
