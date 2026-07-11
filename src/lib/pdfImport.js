@@ -6,7 +6,7 @@
  *
  * Esempi reali:
  *   23.06.2026 Cotrap Bari SI Trasporti varie € -2,60
- *   28.05.2026 Bonifico istantaneo disposto da Xxxxxx Xxxxxxx SI Stipendi e pensioni € 500,00
+ *   28.05.2026 Bonifico istantaneo disposto da Xxxxxx Xxxxx sxx SI Stipendi e pensioni € 500,00
  *   05.06.2026 Accantonamento sul Salvadanaio SI Investimenti, BDR e Salvadanaio € -151,00
  *
  * I movimenti verso/dal Salvadanaio (BDR) sono transferimenti interni e vengono
@@ -20,7 +20,7 @@ import { createWorker } from 'tesseract.js'
 
 // Polyfill per supportare l'iteratore asincrono di ReadableStream su Safari
 if (typeof ReadableStream !== 'undefined' && !ReadableStream.prototype[Symbol.asyncIterator]) {
-  ReadableStream.prototype[Symbol.asyncIterator] = async function*() {
+  ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
     const reader = this.getReader();
     try {
       while (true) {
@@ -277,40 +277,40 @@ export async function extractTextViaOCR(file, onProgress) {
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
   const pdf = await loadingTask.promise
   const totalPages = pdf.numPages
-  
+
   let ocrText = ''
-  
+
   // Inizializza il worker Tesseract in lingua italiana
   const worker = await createWorker('ita')
-  
+
   for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
     const page = await pdf.getPage(pageNum)
-    
+
     // Scala 2.0 per migliorare l'accuratezza del riconoscimento OCR
     const viewport = page.getViewport({ scale: 2.0 })
     const canvas = document.createElement('canvas')
     const context = canvas.getContext('2d')
     canvas.height = viewport.height
     canvas.width = viewport.width
-    
+
     // Background bianco per evitare trasparenze che confondono l'OCR
     context.fillStyle = '#FFFFFF'
     context.fillRect(0, 0, canvas.width, canvas.height)
-    
+
     // Renderizza la pagina del PDF sul canvas
     const renderContext = {
       canvasContext: context,
       viewport: viewport
     }
     await page.render(renderContext).promise
-    
+
     // Esegui il riconoscimento OCR del canvas
     const { data: { text } } = await worker.recognize(canvas)
     ocrText += text + '\n'
-    
+
     onProgress?.(pageNum, totalPages)
   }
-  
+
   await worker.terminate()
   return ocrText
 }
