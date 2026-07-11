@@ -6,7 +6,7 @@
  *
  * Esempi reali:
  *   23.06.2026 Cotrap Bari SI Trasporti varie € -2,60
- *   28.05.2026 Bonifico istantaneo disposto da Xxxxxx Xxxxx sxx SI Stipendi e pensioni € 500,00
+ *   28.05.2026 Bonifico istantaneo disposto da Xxxxxx Xxxxxxx SI Stipendi e pensioni € 500,00
  *   05.06.2026 Accantonamento sul Salvadanaio SI Investimenti, BDR e Salvadanaio € -151,00
  *
  * I movimenti verso/dal Salvadanaio (BDR) sono transferimenti interni e vengono
