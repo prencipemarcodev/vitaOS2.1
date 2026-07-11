@@ -113,7 +113,7 @@ function BudgetConfig() {
           {expenseCategories.map((cat) => (
             <div 
               key={cat.id} 
-              className="group relative p-4 rounded-2xl bg-white border border-[var(--border-subtle)] hover:border-[var(--color-primary-ghost)] hover:bg-[var(--bg-elevated)] transition-all flex flex-col justify-between overflow-hidden"
+              className="group relative p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:border-[var(--color-primary-ghost)] hover:bg-[var(--bg-elevated)] transition-all flex flex-col justify-between overflow-hidden"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ function BudgetConfig() {
                 </div>
                 <button 
                   onClick={() => handleOpenEdit(cat)}
-                  className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 transition-all"
+                  className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[var(--bg-hover)] transition-all"
                 >
                   <Edit3 size={12} className="text-gray-400" />
                 </button>

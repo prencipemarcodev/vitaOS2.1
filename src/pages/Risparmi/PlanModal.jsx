@@ -115,7 +115,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
             type="button"
             className={clsx(
               "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
-              formData.type === 'goal' ? "bg-white shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)]"
+              formData.type === 'goal' ? "bg-[var(--bg-surface)] shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)]"
             )}
             onClick={() => setFormData({ ...formData, type: 'goal' })}
           >
@@ -125,7 +125,7 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
             type="button"
             className={clsx(
               "flex-1 py-2 text-xs font-bold rounded-lg transition-all",
-              formData.type === 'piggy_bank' ? "bg-white shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)]"
+              formData.type === 'piggy_bank' ? "bg-[var(--bg-surface)] shadow-sm text-[var(--color-primary)]" : "text-[var(--text-muted)]"
             )}
             onClick={() => setFormData({ ...formData, type: 'piggy_bank', icon: 'PiggyBank' })}
           >

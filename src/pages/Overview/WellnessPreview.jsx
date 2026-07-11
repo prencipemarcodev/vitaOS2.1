@@ -91,7 +91,7 @@ function WellnessPreview() {
           <div className="flex items-center justify-center gap-3 mt-2">
             <button 
               onClick={() => handleAddWater(-WATER_STEP_ML)}
-              className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center text-blue-500 active:scale-90 transition-transform"
+              className="w-7 h-7 rounded-full bg-[var(--bg-surface)] shadow-sm flex items-center justify-center text-blue-500 active:scale-90 transition-transform"
             >
               <Minus size={14} />
             </button>
@@ -130,7 +130,7 @@ function WellnessPreview() {
           </div>
 
           <div className="mt-2 flex justify-center">
-            <div className="px-2.5 py-1 rounded-full bg-white text-[9px] font-bold text-indigo-500 shadow-sm border border-indigo-50">
+            <div className="px-2.5 py-1 rounded-full bg-[var(--bg-surface)] text-[9px] font-bold text-indigo-500 shadow-sm border border-[var(--border-subtle)]">
               {todaySleep ? `${todaySleep.bedtime} - ${todaySleep.wakeup}` : 'Registra'}
             </div>
           </div>

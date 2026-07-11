@@ -56,7 +56,7 @@ function IconPickerModal({ isOpen, onClose, onSelect, currentIcon }) {
                   "flex flex-col items-center justify-center p-3 rounded-2xl border transition-all group",
                   isSelected 
                     ? "bg-[var(--color-primary-ghost)] border-[var(--color-primary)] text-[var(--color-primary)]" 
-                    : "bg-white border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                    : "bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                 )}
                 title={name}
               >

@@ -163,7 +163,7 @@ function DayDrawer({ isOpen, onClose, date, events, absences, recurringEvents = 
               {isHoliday(date) && (
                 <section>
                   <div className="p-4 rounded-2xl bg-[var(--color-danger-ghost)] border border-[var(--color-danger)]/20 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[var(--color-danger)] shadow-sm">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] flex items-center justify-center text-[var(--color-danger)] shadow-sm">
                       <Star size={20} fill="currentColor" />
                     </div>
                     <div>

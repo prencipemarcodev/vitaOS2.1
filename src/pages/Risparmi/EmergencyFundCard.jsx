@@ -139,25 +139,25 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
   }
 
   return (
-    <div className="group relative bg-gradient-to-br from-[#241D16] to-[#18140F] dark:from-[#1c1813] dark:to-[#0f0d0b] text-[#EFE9DD] rounded-[var(--radius-lg)] p-6 mb-6 shadow-md transition-all hover:shadow-lg">
+    <div className="group relative bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] dark:bg-gradient-to-br dark:from-[#241D16] dark:to-[#18140F] dark:text-[#EFE9DD] dark:border-stone-800/40 rounded-[var(--radius-lg)] p-6 mb-6 shadow-md transition-all hover:shadow-lg">
       {/* Edit/Delete icons */}
       <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button onClick={onEdit} className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-800 hover:text-white transition-colors">
+        <button onClick={onEdit} className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--color-primary)] dark:hover:bg-stone-800 dark:hover:text-white transition-colors">
           <Edit2 size={13} />
         </button>
-        <button onClick={handleDelete} className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-800 hover:text-[var(--color-danger)] transition-colors">
+        <button onClick={handleDelete} className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--color-danger)] dark:hover:bg-stone-800 dark:hover:text-[var(--color-danger)] transition-colors">
           <Trash2 size={13} />
         </button>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-100/10 dark:bg-purple-950/20 flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-            <Vault size={24} className="text-purple-400" />
+          <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/20 flex items-center justify-center flex-shrink-0 border border-purple-200 dark:border-purple-500/20">
+            <Vault size={24} className="text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white leading-snug">{plan.name || 'Fondo di Emergenza'}</h3>
-            <p className="text-[11px] text-stone-400 mt-1 max-w-[340px] italic">
+            <h3 className="text-sm font-bold text-[var(--text-primary)] dark:text-white leading-snug">{plan.name || 'Fondo di Emergenza'}</h3>
+            <p className="text-[11px] text-[var(--text-secondary)] dark:text-stone-400 mt-1 max-w-[340px] italic">
               "Salvadanaio libero: metti da parte quello che puoi, senza fretta."
             </p>
           </div>
@@ -165,24 +165,24 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
 
         <div className="flex flex-wrap items-center gap-6 justify-between md:justify-end">
           <div className="text-left md:text-right">
-            <span className="text-xs text-stone-500 uppercase tracking-wider block">Saldo attuale</span>
-            <span className="font-display text-xl font-medium text-white">{formatCurrency(plan.current_amount)}</span>
+            <span className="text-xs text-[var(--text-muted)] dark:text-stone-500 uppercase tracking-wider block">Saldo attuale</span>
+            <span className="font-display text-xl font-medium text-[var(--text-primary)] dark:text-white">{formatCurrency(plan.current_amount)}</span>
           </div>
           {advice?.safetyThreshold > 0 && (
             <div className="text-left md:text-right">
-              <span className="text-xs text-stone-500 uppercase tracking-wider block">Soglia minima</span>
-              <span className="font-display text-xl font-medium text-white">{formatCurrency(advice.safetyThreshold)}</span>
+              <span className="text-xs text-[var(--text-muted)] dark:text-stone-500 uppercase tracking-wider block">Soglia minima</span>
+              <span className="font-display text-xl font-medium text-[var(--text-primary)] dark:text-white">{formatCurrency(advice.safetyThreshold)}</span>
             </div>
           )}
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-purple-950/40 text-purple-300 border border-purple-800/30">
+            <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/30">
               Emergenza
             </span>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={clsx(
                 "w-7 h-7 rounded-lg bg-[var(--color-primary)] hover:opacity-90 active:scale-95 text-white flex items-center justify-center shadow-sm transition-all",
-                isExpanded && "bg-stone-700"
+                isExpanded && "bg-stone-700 dark:bg-stone-800"
               )}
             >
               <Plus size={14} className={clsx("transition-transform duration-200", isExpanded && "rotate-45")} />
@@ -199,11 +199,11 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden mt-6 pt-4 border-t border-stone-800 space-y-4 max-w-md"
+            className="overflow-hidden mt-6 pt-4 border-t border-[var(--border-subtle)] dark:border-stone-800 space-y-4 max-w-md"
           >
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Account toggle */}
-              <div className="flex border border-stone-800 rounded-lg overflow-hidden flex-1 bg-stone-900/60 p-[2px]">
+              <div className="flex border border-[var(--border-subtle)] dark:border-stone-800 rounded-lg overflow-hidden flex-1 bg-[var(--bg-base)] dark:bg-stone-900/60 p-[2px]">
                 {getAccounts(userConfig).map(acc => (
                   <button 
                     key={acc.id}
@@ -211,8 +211,8 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
                     className={clsx(
                       "flex-1 text-center text-[10px] py-1.5 font-bold rounded-md transition-all uppercase whitespace-nowrap px-1.5",
                       method === acc.id 
-                        ? "bg-stone-800 text-white shadow-sm" 
-                        : "text-stone-500 hover:text-stone-300"
+                        ? "bg-white dark:bg-stone-800 text-[var(--text-primary)] dark:text-white shadow-sm" 
+                        : "text-[var(--text-muted)] dark:text-stone-500 hover:text-[var(--text-secondary)] dark:hover:text-stone-300"
                     )}
                     style={{
                       color: method === acc.id ? acc.color : undefined
@@ -225,11 +225,11 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
               </div>
 
               {/* Input quota */}
-              <div className="flex items-center gap-2 bg-stone-900/60 p-1.5 rounded-xl border border-stone-800 flex-1">
+              <div className="flex items-center gap-2 bg-[var(--bg-base)] dark:bg-stone-900/60 p-1.5 rounded-xl border border-[var(--border-subtle)] dark:border-stone-800 flex-1">
                 <input 
                   type="number" 
                   placeholder="Quota €"
-                  className="flex-1 bg-transparent border-0 text-xs font-bold px-2 focus:ring-0 placeholder:text-stone-600 text-white"
+                  className="flex-1 bg-transparent border-0 text-xs font-bold px-2 focus:ring-0 placeholder:text-[var(--text-muted)] dark:placeholder:text-stone-600 text-[var(--text-primary)] dark:text-white"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value)}
                 />
@@ -237,7 +237,7 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
                   <button 
                     type="button" 
                     onClick={() => setCustomAmount('')}
-                    className="text-[9px] font-bold text-stone-500 hover:text-stone-300 px-2"
+                    className="text-[9px] font-bold text-[var(--text-muted)] dark:text-stone-500 hover:text-[var(--text-secondary)] dark:hover:text-stone-300 px-2"
                   >
                     Cancella
                   </button>
@@ -249,7 +249,7 @@ export default function EmergencyFundCard({ plan, onEdit, advice = null }) {
               <button 
                 type="button"
                 onClick={() => handleAdjust('withdrawal')}
-                className="flex-1 py-2 rounded-xl text-xs font-bold border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors"
+                className="flex-1 py-2 rounded-xl text-xs font-bold border border-[var(--color-danger)] dark:border-red-500/50 text-[var(--color-danger)] dark:text-red-400 hover:bg-[var(--color-danger-ghost)] dark:hover:bg-red-500/10 transition-colors"
               >
                 Preleva dal fondo
               </button>
