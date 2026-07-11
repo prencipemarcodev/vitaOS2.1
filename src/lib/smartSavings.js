@@ -88,6 +88,9 @@ export function calculateSmartAdvice({
     }
 
     if (monthlyContrib <= 0) {
+      const monthsLeft = plan.target_date 
+        ? Math.max(1, differenceInMonths(parseISO(plan.target_date), new Date()))
+        : 12
       return {
         planId: plan.id,
         planName: plan.name,
@@ -96,7 +99,7 @@ export function calculateSmartAdvice({
         isAtRisk: plan.target_date ? true : false,
         monthsToComplete: Infinity,
         estimatedCompletionDate: 'Mai (Nessun contributo impostato)',
-        extraContributionNeeded: plan.target_date ? (missing / 12) : 0,
+        extraContributionNeeded: plan.target_date ? (missing / monthsLeft) : 0,
         statusLabel: plan.target_date ? 'A Rischio (Quota €0)' : 'Nessun Contributo'
       }
     }

@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button'
 import { toast } from 'sonner'
 import IconPickerModal from '@/components/ui/IconPickerModal'
 import { getIcon } from '@/lib/icons'
+import { differenceInMonths, parseISO } from 'date-fns'
 
 function PlanModal({ isOpen, onClose, planToEdit = null }) {
   const { addPlan, updatePlan } = useSavingsStore()
@@ -54,6 +55,22 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
       })
     }
   }, [planToEdit, isOpen])
+
+  const recommendedContribution = useMemo(() => {
+    if (formData.type !== 'goal') return null
+    const target = parseFloat(formData.target_amount) || 0
+    const current = parseFloat(formData.current_amount) || 0
+    const dateStr = formData.target_date
+
+    if (target <= 0 || !dateStr) return null
+
+    const missing = Math.max(0, target - current)
+    const targetDate = parseISO(dateStr)
+    const today = new Date()
+
+    const monthsLeft = Math.max(1, differenceInMonths(targetDate, today))
+    return Math.ceil(missing / monthsLeft)
+  }, [formData.target_amount, formData.current_amount, formData.target_date, formData.type])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -158,6 +175,16 @@ function PlanModal({ isOpen, onClose, planToEdit = null }) {
               placeholder="100"
               value={formData.monthly_contribution} 
               onChange={e => setFormData({ ...formData, monthly_contribution: e.target.value })} 
+              helper={
+                recommendedContribution !== null && recommendedContribution > 0 ? (
+                  <span 
+                    className="text-[10px] text-[var(--color-primary)] font-bold cursor-pointer hover:underline flex items-center gap-1 mt-0.5"
+                    onClick={() => setFormData(prev => ({ ...prev, monthly_contribution: recommendedContribution.toString() }))}
+                  >
+                    Consigliato per scadenza: {recommendedContribution} € (Clicca per applicare)
+                  </span>
+                ) : null
+              }
             />
           </div>
         )}
