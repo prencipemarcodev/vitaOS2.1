@@ -30,8 +30,9 @@ export function calculateSmartAdvice({
   const surplus = Math.max(actualIncome, baseIncome) - actualExpenses
   
   // SOGLIA DI SICUREZZA (Commercialista Mode)
-  // Se il saldo totale è < 500€ o < spese mensili, siamo in zona rischio
-  const safetyThreshold = Math.max(500, actualExpenses * 1.2)
+  // Se il saldo totale è < userThreshold o < spese mensili, siamo in zona rischio
+  const userThreshold = userConfig.liquidity_safety_threshold !== undefined ? parseFloat(userConfig.liquidity_safety_threshold) : 200
+  const safetyThreshold = Math.max(userThreshold, actualExpenses * 1.2)
   const isLiquidityLow = totalBalance < safetyThreshold
 
   let liquidityStatus = {

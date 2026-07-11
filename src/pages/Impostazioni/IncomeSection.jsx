@@ -105,6 +105,27 @@ function IncomeSection() {
           </p>
         )}
       </Card>
+
+      {/* Soglia sicurezza liquidità */}
+      <Card padding="lg" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-[var(--text-primary)]">Soglia sicurezza liquidità</p>
+          <span className="text-lg font-semibold text-[var(--color-primary)] font-num">€{userConfig?.liquidity_safety_threshold ?? 200}</span>
+        </div>
+        <input
+          type="range" min={0} max={2000} step={50}
+          value={userConfig?.liquidity_safety_threshold ?? 200}
+          onChange={(e) => save('liquidity_safety_threshold', parseFloat(e.target.value) || 0)}
+          className="w-full accent-[var(--color-primary)]"
+        />
+        <div className="flex justify-between text-xs text-[var(--text-muted)]">
+          <span>0 €</span>
+          <span>2.000 €</span>
+        </div>
+        <p className="text-xs text-[var(--text-secondary)] text-center">
+          Il sistema non ti suggerirà di risparmiare se il tuo saldo scende sotto questa soglia.
+        </p>
+      </Card>
     </div>
   )
 }

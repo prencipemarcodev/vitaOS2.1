@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useSavingsStore } from '@/store/useSavingsStore'
 import { useFinanceStore } from '@/store/useFinanceStore'
 import { useAppStore } from '@/store/useAppStore'
@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { 
   Sparkles, AlertCircle, TrendingUp, Calendar, 
-  ShieldCheck, AlertTriangle, HelpCircle, ArrowRight,
+  ShieldCheck, AlertTriangle, ArrowRight,
   LineChart, CheckCircle2
 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -21,6 +21,7 @@ function SmartAdvicePanel() {
   const { transactions, categories, cumulativeBalance, addTransaction, setCumulativeBalance } = useFinanceStore()
   const { userConfig, selectedMonth } = useAppStore()
   const [applying, setApplying] = useState(false)
+  const [adjustedAllocations, setAdjustedAllocations] = useState({})
 
   const totalBalance = cumulativeBalance
 
@@ -34,8 +35,75 @@ function SmartAdvicePanel() {
     })
   }, [userConfig, transactions, plans, selectedMonth, totalBalance])
 
+  const maxBudget = useMemo(() => {
+    if (!advice) return 0
+    const safety = userConfig?.liquidity_safety_threshold !== undefined 
+      ? parseFloat(userConfig.liquidity_safety_threshold) 
+      : 200
+    // Il massimo budget è il surplus, ma limitato da quanto saldo effettivo abbiamo sopra la soglia
+    return Math.max(0, Math.min(advice.surplus, totalBalance - safety))
+  }, [advice, userConfig, totalBalance])
+
+  // Inizializza lo stato degli slider quando l'advice cambia
+  useEffect(() => {
+    if (plans && advice) {
+      const initial = {}
+      plans.forEach(p => {
+        initial[p.id] = 0
+      })
+      if (advice.allocations) {
+        advice.allocations.forEach(a => {
+          initial[a.plan_id] = a.amount
+        })
+      }
+      setAdjustedAllocations(initial)
+    }
+  }, [plans, advice])
+
+  const totalAllocated = useMemo(() => {
+    return Object.values(adjustedAllocations).reduce((sum, val) => sum + val, 0)
+  }, [adjustedAllocations])
+
+  const handleSliderChange = (planId, value) => {
+    setAdjustedAllocations(prev => {
+      const copy = { ...prev }
+      const oldVal = copy[planId] || 0
+      const currentSum = Object.values(copy).reduce((s, v) => s + v, 0)
+      const sumOthers = currentSum - oldVal
+      
+      const maxAllowed = Math.max(0, maxBudget - sumOthers)
+      const clampedValue = Math.min(value, maxAllowed)
+      
+      copy[planId] = parseFloat(clampedValue.toFixed(2))
+      return copy
+    })
+  }
+
+  const resetToRecommended = () => {
+    if (plans && advice) {
+      const initial = {}
+      plans.forEach(p => {
+        initial[p.id] = 0
+      })
+      if (advice.allocations) {
+        advice.allocations.forEach(a => {
+          initial[a.plan_id] = a.amount
+        })
+      }
+      setAdjustedAllocations(initial)
+    }
+  }
+
   const handleApply = async () => {
-    if (!advice || advice.allocations.length === 0) return
+    const allocationsToApply = Object.entries(adjustedAllocations)
+      .map(([planId, amount]) => ({
+        plan_id: planId,
+        plan_name: plans.find(p => p.id === planId)?.name || 'Piano',
+        amount
+      }))
+      .filter(a => a.amount > 0)
+
+    if (allocationsToApply.length === 0) return
     setApplying(true)
     try {
       const today = new Date().toISOString().split('T')[0]
@@ -44,7 +112,7 @@ function SmartAdvicePanel() {
       // Cerca categoria "Risparmi" per le transazioni finanziarie
       const savingsCategory = categories.find(c => c.name.toLowerCase().includes('risparmi'))
       
-      for (const alloc of advice.allocations) {
+      for (const alloc of allocationsToApply) {
         const allocAmount = parseFloat(alloc.amount.toFixed(2))
 
         const payload = {
@@ -52,7 +120,7 @@ function SmartAdvicePanel() {
           amount: allocAmount,
           type: 'deposit',
           date: today,
-          notes: 'Accantonamento automatico distribuito tramite Smart Advice'
+          notes: 'Accantonamento manuale distribuito tramite Smart Advice'
         }
         
         // 1. Inserisci il movimento in Supabase
@@ -82,7 +150,7 @@ function SmartAdvicePanel() {
               amount: allocAmount,
               type: 'expense',
               category: savingsCategory?.name || 'Risparmio',
-              description: `Accantonamento automatico: ${alloc.plan_name}`,
+              description: `Accantonamento: ${alloc.plan_name}`,
               payment_method: 'bank',
               date: today
             })
@@ -106,7 +174,7 @@ function SmartAdvicePanel() {
       toast.success('Distribuzione risparmio applicata con successo! 💰')
     } catch (err) {
       console.error(err)
-      toast.error("Errore nell'applicazione del risparmio consigliato")
+      toast.error("Errore nell'applicazione della distribuzione")
     } finally {
       setApplying(false)
     }
@@ -236,8 +304,8 @@ function SmartAdvicePanel() {
       </Card>
 
       {/* 3. SURPLUS ALLOCATION CARD */}
-      {advice.allocations.length > 0 && (
-        <Card padding="md" className="bg-[var(--bg-elevated)] border-dashed border-2 border-[var(--border-strong)] relative overflow-hidden">
+      {maxBudget > 0 && plans.filter(p => p.is_active).length > 0 && (
+        <Card padding="md" className="bg-[var(--bg-surface)] border-dashed border-2 border-[var(--border-strong)] relative overflow-hidden">
           {/* Shine effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
 
@@ -245,37 +313,43 @@ function SmartAdvicePanel() {
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                 <ArrowRight size={14} className="text-[#ff851b]" />
-                Distribuzione Consigliata
+                Distribuzione Personalizzata
               </p>
               <p className="text-xs text-[var(--text-primary)] leading-relaxed">
-                Surplus di questo mese: <span className="font-bold">{formatCurrency(advice.surplus)}</span>. Ti consigliamo di accantonare <span className="text-[var(--color-success)] font-bold">{formatCurrency(advice.suggestedBudget)}</span>:
+                Surplus mensile: <span className="font-bold">{formatCurrency(advice.surplus)}</span>. Puoi distribuire fino a <span className="text-[var(--color-success)] font-bold">{formatCurrency(maxBudget)}</span> (rispettando la soglia di sicurezza):
               </p>
             </div>
 
-            <div className="space-y-2">
-              {advice.allocations.map((alloc, idx) => {
-                const plan = plans.find(p => p.id === alloc.plan_id)
-                const isGoal = plan?.type !== 'piggy_bank'
-                const progress = (isGoal && plan?.target_amount) 
-                  ? (parseFloat(plan.current_amount || 0) / parseFloat(plan.target_amount)) * 100 
-                  : 0
+            <div className="space-y-3.5">
+              {plans.filter(p => p.is_active).map((plan, idx) => {
+                const amount = adjustedAllocations[plan.id] || 0
                 
+                // Max for this slider: remaining budget + current amount
+                const currentSum = Object.values(adjustedAllocations).reduce((s, v) => s + v, 0)
+                const sumOthers = currentSum - amount
+                const sliderMax = Math.max(0, maxBudget - sumOthers)
+
                 return (
                   <motion.div 
-                    key={alloc.plan_id}
+                    key={plan.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="space-y-1"
+                    transition={{ delay: idx * 0.05 }}
+                    className="space-y-1.5"
                   >
                     <div className="flex justify-between items-center text-[11px]">
-                      <span className="font-semibold text-[var(--text-secondary)]">{alloc.plan_name}</span>
-                      <span className="font-bold text-[var(--text-primary)]">+{formatCurrency(alloc.amount)}</span>
+                      <span className="font-bold text-[var(--text-secondary)]">{plan.name}</span>
+                      <span className="font-mono font-bold text-[var(--text-primary)]">+{formatCurrency(amount)}</span>
                     </div>
-                    <div className="h-1 bg-[var(--border-subtle)] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[var(--color-primary)] opacity-60" 
-                        style={{ width: `${progress}%` }} 
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="range"
+                        min={0}
+                        max={Math.max(sliderMax, amount)} 
+                        step={5}
+                        value={amount}
+                        onChange={(e) => handleSliderChange(plan.id, parseFloat(e.target.value) || 0)}
+                        className="flex-1 accent-[var(--color-primary)] h-1 bg-[var(--border-subtle)] rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
                   </motion.div>
@@ -283,11 +357,22 @@ function SmartAdvicePanel() {
               })}
             </div>
 
+            <div className="flex justify-between items-center text-[10px] text-[var(--text-muted)] font-bold border-t border-[var(--border-subtle)] pt-3">
+              <span>Allocato: <strong className="text-[var(--text-primary)]">{formatCurrency(totalAllocated)}</strong> / {formatCurrency(maxBudget)}</span>
+              <button 
+                onClick={resetToRecommended}
+                className="text-[var(--color-primary)] hover:underline flex items-center gap-1 font-bold"
+              >
+                Reimposta consigliati
+              </button>
+            </div>
+
             <Button 
               variant="primary" 
               size="xs" 
               className="w-full mt-2 font-bold hover:scale-[1.01] active:scale-[0.99] transition-all"
               loading={applying}
+              disabled={totalAllocated <= 0}
               onClick={handleApply}
             >
               Applica distribuzione

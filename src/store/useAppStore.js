@@ -85,6 +85,8 @@ export const useAppStore = create(
             }
           }
 
+          const liquidity_safety_threshold = nextConfig.liquidity_safety_threshold !== undefined ? parseFloat(nextConfig.liquidity_safety_threshold) : 200
+
           return {
             userConfig: {
               ...nextConfig,
@@ -92,7 +94,8 @@ export const useAppStore = create(
               gps_jitter_meters,
               gps_keepalive,
               gps_keepalive_interval_ms,
-              custom_accounts
+              custom_accounts,
+              liquidity_safety_threshold
             }
           }
         }
