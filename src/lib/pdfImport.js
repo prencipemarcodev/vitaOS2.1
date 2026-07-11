@@ -16,6 +16,22 @@
 import * as pdfjsLib from 'pdfjs-dist'
 import PDFWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker'
 
+// Polyfill per supportare l'iteratore asincrono di ReadableStream su Safari
+if (typeof ReadableStream !== 'undefined' && !ReadableStream.prototype[Symbol.asyncIterator]) {
+  ReadableStream.prototype[Symbol.asyncIterator] = async function*() {
+    const reader = this.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) return;
+        yield value;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  };
+}
+
 // Inizializza il worker in modo nativo tramite Vite usando workerPort.
 // Questo crea un vero Worker del browser locale senza problemi di cross-origin o CDN.
 pdfjsLib.GlobalWorkerOptions.workerPort = new PDFWorker()
