@@ -43,6 +43,33 @@ function PlanCard({ plan, onEdit, advice = null }) {
     return advice?.forecasts?.find(f => f.planId === plan.id)
   }, [advice, plan.id])
 
+  const movements = useSavingsStore(s => s.movements || [])
+  const depositedThisMonth = useMemo(() => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() // 0-indexed
+    
+    return movements
+      .filter(m => {
+        if (m.plan_id !== plan.id || m.type !== 'deposit') return false
+        const mDate = new Date(m.date)
+        return mDate.getFullYear() === currentYear && mDate.getMonth() === currentMonth
+      })
+      .reduce((sum, m) => sum + parseFloat(m.amount || 0), 0)
+  }, [movements, plan.id])
+
+  // Quota mensile richiesta per l'obiettivo
+  const requiredMonthly = useMemo(() => {
+    if (plan.type === 'piggy_bank') return 0
+    return forecast?.isAtRisk
+      ? (parseFloat(plan.monthly_contribution || 0) + parseFloat(forecast?.extraContributionNeeded || 0))
+      : parseFloat(plan.monthly_contribution || 0)
+  }, [plan, forecast])
+
+  const isQuotaCompletedThisMonth = useMemo(() => {
+    return requiredMonthly > 0 && depositedThisMonth >= (requiredMonthly - 0.01)
+  }, [requiredMonthly, depositedThisMonth])
+
   const [customAmount, setCustomAmount] = useState('')
   const [method, setMethod] = useState(() => {
     const accounts = getAccounts(userConfig)
@@ -208,29 +235,39 @@ function PlanCard({ plan, onEdit, advice = null }) {
             "flex gap-2 items-start p-3 rounded-[var(--radius-sm)] text-[12px] leading-snug",
             progress >= 100 
               ? "bg-[rgba(61,153,112,0.08)] text-[var(--color-success)]"
-              : forecast?.isAtRisk 
-                ? "bg-[rgba(224,82,82,0.08)] text-[var(--color-danger)] font-medium"
-                : "bg-[var(--color-primary-ghost)] text-[var(--color-primary-dark)]"
+              : isQuotaCompletedThisMonth
+                ? "bg-[rgba(61,153,112,0.08)] text-[var(--color-success)] font-medium"
+                : forecast?.isAtRisk 
+                  ? "bg-[rgba(224,82,82,0.08)] text-[var(--color-danger)] font-medium"
+                  : "bg-[var(--color-primary-ghost)] text-[var(--color-primary-dark)]"
           )}>
             {progress >= 100 ? (
               <>
                 <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" />
                 <span>Obiettivo completato con successo! 🎉</span>
               </>
+            ) : isQuotaCompletedThisMonth ? (
+              <>
+                <CheckCircle2 size={13} className="flex-shrink-0 mt-0.5" />
+                <span>
+                  Quota di questo mese versata con successo! (<strong>{formatCurrency(depositedThisMonth)}</strong>).
+                </span>
+              </>
             ) : (
               <>
                 <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
                 <span>
-                  Scade a {format(parseISO(plan.target_date), 'MMMM yyyy', { locale: it })}. Servono{' '}
-                  <strong>
-                    {formatCurrency(
-                      forecast?.isAtRisk
-                        ? (parseFloat(plan.monthly_contribution || 0) + parseFloat(forecast?.extraContributionNeeded || 0))
-                        : parseFloat(plan.monthly_contribution || 0)
-                    )}
-                    /mese
-                  </strong>{' '}
-                  per arrivare in tempo.
+                  Scade a {format(parseISO(plan.target_date), 'MMMM yyyy', { locale: it })}. 
+                  {depositedThisMonth > 0 ? (
+                    <>
+                      {' '}Hai versato {formatCurrency(depositedThisMonth)} questo mese. Servono ancora{' '}
+                      <strong>{formatCurrency(requiredMonthly - depositedThisMonth)}</strong> per arrivare in tempo.
+                    </>
+                  ) : (
+                    <>
+                      {' '}Servono <strong>{formatCurrency(requiredMonthly)}/mese</strong> per arrivare in tempo.
+                    </>
+                  )}
                 </span>
               </>
             )}
