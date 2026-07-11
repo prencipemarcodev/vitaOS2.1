@@ -30,7 +30,7 @@ const PaceChart = ({ data }) => (
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="bg-white p-2 border border-[var(--border-subtle)] rounded-lg shadow-sm text-[10px] font-bold">
+                <div className="bg-[var(--bg-surface)] p-2 border border-[var(--border-subtle)] rounded-lg shadow-sm text-[10px] font-bold">
                   {formatPace(payload[0].value)}/km
                 </div>
               )
@@ -120,7 +120,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   if (status === 'idle' && permissionStatus !== 'granted' && countdown === null) {
     content = (
       <div className="flex flex-col h-full">
-        <header className="px-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
+        <header className="px-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
           <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
             <ChevronLeft size={16} />
             Torna a Salute
@@ -180,7 +180,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
   else if (status === 'waiting_gps' || (status === 'idle' && permissionStatus === 'granted')) {
     content = (
       <div className="flex flex-col h-full">
-        <header className="px-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-white shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
+        <header className="px-4 pb-3 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 20px) + 12px)' }}>
           <button onClick={onCancel} className="flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]">
             <ChevronLeft size={16} />
             Torna a Salute
@@ -229,7 +229,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
           <div className="mt-10 w-full max-w-xs">
             <button 
               onClick={handleManualStart}
-              className={clsx("w-full py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95", accuracy <= 15 ? "bg-[var(--color-primary)] text-white shadow-[var(--color-primary-ghost)]" : "bg-white border-2 border-[var(--color-primary)] text-[var(--color-primary)] shadow-sm")}
+              className={clsx("w-full py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95", accuracy <= 15 ? "bg-[var(--color-primary)] text-white shadow-[var(--color-primary-ghost)]" : "bg-[var(--bg-surface)] border-2 border-[var(--color-primary)] text-[var(--color-primary)] shadow-sm")}
             >
               Inizia Corsa
             </button>
@@ -300,7 +300,7 @@ function RunTrackingScreen({ onFinish, onCancel }) {
                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Andamento (Passo/KM)</p>
                       <p className="text-[10px] font-bold text-[var(--text-primary)]">{splits.length} KM completati</p>
                     </div>
-                    <Card padding="sm" className="bg-white/50">
+                    <Card padding="sm" className="bg-[var(--bg-surface)]/50">
                       {splits.length > 0 || distanceKm >= 0.1 ? (
                         <PaceChart data={
                           distanceKm % 1 > 0.1 

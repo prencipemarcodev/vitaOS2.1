@@ -206,7 +206,7 @@ function SleepTracker({ sleepLog }) {
                 content={({ active, payload }) => {
                   if (active && payload?.length) {
                     return (
-                      <div className="bg-white border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
+                      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
                         {payload[0].value}h
                       </div>
                     )
@@ -411,7 +411,7 @@ function WaterTracker({ waterLog }) {
                   if (active && payload?.length) {
                     const ml = payload[0].value
                     return (
-                      <div className="bg-white border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
+                      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
                         {ml >= 1000 ? `${(ml / 1000).toFixed(1)}L` : `${ml}ml`}
                       </div>
                     )
@@ -573,7 +573,7 @@ function WeightTracker({ weightLog }) {
                 content={({ active, payload }) => {
                   if (active && payload?.length) {
                     return (
-                      <div className="bg-white border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
+                      <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-2 py-1 rounded-lg shadow text-[10px] font-bold">
                         {payload[0].value} kg
                       </div>
                     )

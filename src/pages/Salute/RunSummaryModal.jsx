@@ -72,9 +72,9 @@ function RunSummaryModal({ isOpen, onClose, tracker }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Riepilogo corsa" className="!max-w-2xl">
       <div className="space-y-6 pt-2">
         {/* Mappa con overlay distanza */}
-        <div className="relative rounded-3xl overflow-hidden border border-[var(--border-subtle)] bg-gray-100 h-48">
+        <div className="relative rounded-3xl overflow-hidden border border-[var(--border-subtle)] bg-[var(--bg-base)] h-48">
           <RunMap polyline={tracker.polyline} isLive={false} height={192} />
-          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] shadow-sm">
+          <div className="absolute top-4 right-4 bg-[var(--bg-surface)]/90 backdrop-blur px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] shadow-sm">
             <p className="text-[10px] font-black">{tracker.distanceKm.toFixed(2)} km</p>
           </div>
         </div>

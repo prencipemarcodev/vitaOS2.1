@@ -71,7 +71,7 @@ function Note() {
             <input 
               type="text" 
               placeholder="Cerca note..." 
-              className="w-full bg-white border border-[var(--border-subtle)] rounded-2xl pl-11 pr-4 py-3 text-sm shadow-sm"
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl pl-11 pr-4 py-3 text-sm shadow-sm"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />

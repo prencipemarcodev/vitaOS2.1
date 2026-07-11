@@ -29,7 +29,7 @@ function RunStats({ sessions }) {
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1 tracking-widest">{payload[0].payload.fullDate}</p>
                       <p className="text-lg font-bold text-[var(--text-primary)]">{payload[0].value} km</p>
                     </div>

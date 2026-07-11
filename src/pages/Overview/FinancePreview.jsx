@@ -129,7 +129,7 @@ function FinancePreview({ transactions }) {
           customTooltip={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="bg-white border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-4 shadow-2xl rounded-[var(--radius-lg)]">
                   <p className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-widest">
                     {payload[0].payload.fullDate}
                   </p>

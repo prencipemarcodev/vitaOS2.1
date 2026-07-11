@@ -39,7 +39,7 @@ function DistributionPie({ title, data, colors }) {
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-white border border-[var(--border-subtle)] p-3 shadow-2xl rounded-2xl">
+                    <div className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-3 shadow-2xl rounded-2xl">
                       <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mb-1 tracking-widest">{payload[0].name}</p>
                       <p className="text-sm font-bold text-[var(--text-primary)]">{formatCurrency(payload[0].value)}</p>
                     </div>

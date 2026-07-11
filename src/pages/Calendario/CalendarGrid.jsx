@@ -36,7 +36,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
   const weekDays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
   return (
-    <div className="flex flex-col h-full border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-white shadow-sm">
+    <div className="flex flex-col h-full border border-[var(--border-subtle)] rounded-xl overflow-hidden bg-[var(--bg-surface)] shadow-sm">
       {/* Week header */}
       <div className="grid grid-cols-7 border-b border-[var(--border-subtle)] bg-[var(--bg-base)]">
         {weekDays.map(d => (
@@ -67,7 +67,7 @@ function CalendarGrid({ selectedMonth, events, absences, recurringEvents = [], s
               onClick={() => onDayClick(day)}
               className={clsx(
                 'min-h-[72px] sm:min-h-[100px] p-1 sm:p-1.5 cursor-pointer transition-colors relative group',
-                !isCurrentMonth ? 'bg-[var(--bg-base)] opacity-40' : 'bg-white hover:bg-[var(--bg-elevated)]',
+                !isCurrentMonth ? 'bg-[var(--bg-base)] opacity-40' : 'bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)]',
                 isToday(day) && 'bg-[var(--color-primary-ghost)]'
               )}
             >

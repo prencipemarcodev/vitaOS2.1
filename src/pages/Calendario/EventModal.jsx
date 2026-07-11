@@ -144,14 +144,14 @@ function EventModal({ isOpen, onClose, initialDate }) {
                 <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => resolveShorten(c)}
-                    className="flex flex-col items-center gap-1 p-2 bg-white border border-[var(--border-subtle)] rounded-lg hover:border-[var(--color-primary)] transition-all"
+                    className="flex flex-col items-center gap-1 p-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg hover:border-[var(--color-primary)] transition-all"
                   >
                     <Clock size={14} className="text-[var(--color-primary)]" />
                     <span className="text-[9px] font-bold">Accorcia "{c.title}"</span>
                   </button>
                   <button 
                     onClick={() => resolvePostpone(c)}
-                    className="flex flex-col items-center gap-1 p-2 bg-white border border-[var(--border-subtle)] rounded-lg hover:border-[var(--color-primary)] transition-all"
+                    className="flex flex-col items-center gap-1 p-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg hover:border-[var(--color-primary)] transition-all"
                   >
                     <ArrowRight size={14} className="text-[var(--color-primary)]" />
                     <span className="text-[9px] font-bold">Posticipa nuovo</span>
@@ -225,7 +225,7 @@ function EventModal({ isOpen, onClose, initialDate }) {
                 className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-colors ${
                   formData.category === c 
                     ? 'bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--bg-surface)] shadow-md' 
-                    : 'bg-white border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
+                    : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--text-primary)]'
                 }`}
               >
                 {c}

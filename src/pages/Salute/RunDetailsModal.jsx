@@ -111,9 +111,9 @@ function RunDetailsModal({ isOpen, onClose, session }) {
 
         {/* Mappa con overlay distanza */}
         {polyline.length > 0 && (
-          <div className="relative rounded-3xl overflow-hidden border border-[var(--border-subtle)] bg-gray-100 h-48">
+          <div className="relative rounded-3xl overflow-hidden border border-[var(--border-subtle)] bg-[var(--bg-base)] h-48">
             <RunMap polyline={polyline} isLive={false} height={192} />
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] shadow-sm">
+            <div className="absolute top-4 right-4 bg-[var(--bg-surface)]/90 backdrop-blur px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] shadow-sm">
               <p className="text-[10px] font-black">{distanceKm.toFixed(2)} km</p>
             </div>
           </div>
