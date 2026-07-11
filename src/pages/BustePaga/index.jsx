@@ -381,7 +381,7 @@ export default function BustePaga() {
                 label="Netto in Busta (€)"
                 type="number"
                 step="0.01"
-                value={formData.netAmount}
+                value={formData.netAmount === 0 ? '' : formData.netAmount}
                 onChange={e => setFormData({ ...formData, netAmount: parseFloat(e.target.value) || 0 })}
                 required
               />
@@ -390,7 +390,7 @@ export default function BustePaga() {
                 label="Lordo/Competenze (€)"
                 type="number"
                 step="0.01"
-                value={formData.grossAmount}
+                value={formData.grossAmount === 0 ? '' : formData.grossAmount}
                 onChange={e => setFormData({ ...formData, grossAmount: parseFloat(e.target.value) || 0 })}
               />
 
@@ -398,7 +398,7 @@ export default function BustePaga() {
                 label="IRPEF / Tasse (€)"
                 type="number"
                 step="0.01"
-                value={formData.taxes}
+                value={formData.taxes === 0 ? '' : formData.taxes}
                 onChange={e => setFormData({ ...formData, taxes: parseFloat(e.target.value) || 0 })}
               />
 
@@ -406,7 +406,7 @@ export default function BustePaga() {
                 label="Contributi Previdenziali (€)"
                 type="number"
                 step="0.01"
-                value={formData.contributions}
+                value={formData.contributions === 0 ? '' : formData.contributions}
                 onChange={e => setFormData({ ...formData, contributions: parseFloat(e.target.value) || 0 })}
               />
 
@@ -414,7 +414,7 @@ export default function BustePaga() {
                 label="Ore Ordinarie Lavorate"
                 type="number"
                 step="0.1"
-                value={formData.workedHours}
+                value={formData.workedHours === 0 ? '' : formData.workedHours}
                 onChange={e => setFormData({ ...formData, workedHours: parseFloat(e.target.value) || 0 })}
               />
 
@@ -422,7 +422,7 @@ export default function BustePaga() {
                 label="Ferie Residue/Maturate (ore)"
                 type="number"
                 step="0.01"
-                value={formData.accruedVacation}
+                value={formData.accruedVacation === 0 ? '' : formData.accruedVacation}
                 onChange={e => setFormData({ ...formData, accruedVacation: parseFloat(e.target.value) || 0 })}
               />
 
@@ -430,7 +430,7 @@ export default function BustePaga() {
                 label="Quota Accantonamento TFR (€)"
                 type="number"
                 step="0.01"
-                value={formData.tfrAmount}
+                value={formData.tfrAmount === 0 ? '' : formData.tfrAmount}
                 onChange={e => setFormData({ ...formData, tfrAmount: parseFloat(e.target.value) || 0 })}
               />
             </div>
