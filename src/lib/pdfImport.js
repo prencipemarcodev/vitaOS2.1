@@ -15,6 +15,8 @@
 
 import * as pdfjsLib from 'pdfjs-dist'
 import PDFWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker'
+import { createWorker } from 'tesseract.js'
+
 
 // Polyfill per supportare l'iteratore asincrono di ReadableStream su Safari
 if (typeof ReadableStream !== 'undefined' && !ReadableStream.prototype[Symbol.asyncIterator]) {
@@ -260,3 +262,56 @@ export function getBankImportStats(rows, errors) {
     netBalance: totalIncome - totalExpense,
   }
 }
+
+/**
+ * Esegue l'OCR di un file PDF scansionato.
+ * Disegna ogni pagina su un canvas ad alta risoluzione (scala 2.0)
+ * e la invia a Tesseract.js con lingua italiana ('ita').
+ *
+ * @param {File} file - Il file PDF caricato dall'utente
+ * @param {function} onProgress - Callback(pagesDone, totalPages)
+ * @returns {Promise<string>}
+ */
+export async function extractTextViaOCR(file, onProgress) {
+  const arrayBuffer = await file.arrayBuffer()
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+  const pdf = await loadingTask.promise
+  const totalPages = pdf.numPages
+  
+  let ocrText = ''
+  
+  // Inizializza il worker Tesseract in lingua italiana
+  const worker = await createWorker('ita')
+  
+  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+    const page = await pdf.getPage(pageNum)
+    
+    // Scala 2.0 per migliorare l'accuratezza del riconoscimento OCR
+    const viewport = page.getViewport({ scale: 2.0 })
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    canvas.height = viewport.height
+    canvas.width = viewport.width
+    
+    // Background bianco per evitare trasparenze che confondono l'OCR
+    context.fillStyle = '#FFFFFF'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    
+    // Renderizza la pagina del PDF sul canvas
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport
+    }
+    await page.render(renderContext).promise
+    
+    // Esegui il riconoscimento OCR del canvas
+    const { data: { text } } = await worker.recognize(canvas)
+    ocrText += text + '\n'
+    
+    onProgress?.(pageNum, totalPages)
+  }
+  
+  await worker.terminate()
+  return ocrText
+}
+

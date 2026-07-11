@@ -10,7 +10,7 @@ import Input from '@/components/ui/Input'
 import Badge from '@/components/ui/Badge'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { extractTextFromPDF } from '@/lib/pdfImport'
+import { extractTextFromPDF, extractTextViaOCR } from '@/lib/pdfImport'
 import { parsePayslipText } from '@/lib/payslipParser'
 import { formatCurrency } from '@/lib/formatters'
 import {
@@ -97,30 +97,67 @@ export default function BustePaga() {
     setProgress({ current: 0, total: 0 })
 
     try {
-      // Estrai il testo usando l'utility pdfjs-dist
-      const text = await extractTextFromPDF(selectedFile, (current, total) => {
+      // 1. Prova prima l'estrazione del testo digitale
+      let text = await extractTextFromPDF(selectedFile, (current, total) => {
         setProgress({ current, total })
       })
 
+      let usingOcr = false
+
+      // 2. Se non rileva testo, attiva l'OCR in locale nel browser
       if (!text || text.trim().length === 0) {
-        toast.error("Non è stato possibile rilevare testo in questo PDF. Assicurati che sia una busta paga digitale (non scansionata).")
-        setParsing(false)
-        setFile(null)
-        return
+        toast.info("PDF scansionato rilevato. Avvio del riconoscimento del testo (OCR)... Potrebbe richiedere qualche secondo.")
+        setParsing(true)
+        setProgress({ current: 0, total: 0 })
+        
+        text = await extractTextViaOCR(selectedFile, (current, total) => {
+          setProgress({ current, total })
+        })
+        usingOcr = true
       }
 
-      // Parsa il testo estratto
+      // 3. Parsa il testo (sia digitale che OCR)
       const data = parsePayslipText(text)
       if (data) {
         setFormData(data)
         setShowPreview(true)
-        toast.success('Dati della busta paga letti con successo!')
+        if (usingOcr) {
+          toast.success('Testo riconosciuto tramite OCR! Verifica ed eventualmente completa i dati.')
+        } else {
+          toast.success('Dati della busta paga letti con successo!')
+        }
       } else {
-        toast.error('Errore durante la decodifica dei campi della busta paga.')
+        // Fallback: consenti compilazione manuale
+        setFormData({
+          month: 'Aprile',
+          year: new Date().getFullYear(),
+          netAmount: 0,
+          grossAmount: 0,
+          taxes: 0,
+          contributions: 0,
+          workedHours: 0,
+          accruedVacation: 0,
+          tfrAmount: 0
+        })
+        setShowPreview(true)
+        toast.warning('Impossibile decodificare i dati automaticamente. Compila la form manualmente.')
       }
     } catch (err) {
       console.error(err)
-      toast.error('Errore durante l\'importazione del file PDF.')
+      // Fallback anche in caso di eccezioni (es: file protetto, errore OCR, ecc.)
+      setFormData({
+        month: 'Aprile',
+        year: new Date().getFullYear(),
+        netAmount: 0,
+        grossAmount: 0,
+        taxes: 0,
+        contributions: 0,
+        workedHours: 0,
+        accruedVacation: 0,
+        tfrAmount: 0
+      })
+      setShowPreview(true)
+      toast.warning('Errore durante l\'importazione. Puoi procedere con l\'inserimento manuale.')
     } finally {
       setParsing(false)
     }
